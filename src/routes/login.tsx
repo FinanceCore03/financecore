@@ -26,7 +26,7 @@ function Login() {
       // Delay to show the smooth animation before navigating
       const timer = setTimeout(() => {
         navigate({ to: "/", replace: true });
-      }, 1500);
+      }, 500);
       
       return () => clearTimeout(timer);
     }
