@@ -86,6 +86,40 @@ function TransactionsPage() {
     }
   };
 
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
+    const now = new Date();
+    
+    return transactions.filter(tx => {
+      if (!tx.data) return true;
+      const txDate = new Date(tx.data);
+      
+      if (periodFilter === "Hoje") {
+        return txDate.toDateString() === now.toDateString();
+      }
+      
+      if (periodFilter === "Esta semana") {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        return txDate >= startOfWeek;
+      }
+      
+      if (periodFilter === "Este mês") {
+        return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+      }
+      
+      if (periodFilter === "Últimos 3 meses") {
+        const threeMonthsAgo = new Date(now);
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+        threeMonthsAgo.setHours(0, 0, 0, 0);
+        return txDate >= threeMonthsAgo;
+      }
+      
+      return true;
+    });
+  }, [transactions, periodFilter]);
+
   const totals = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
