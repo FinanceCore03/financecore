@@ -1,4 +1,5 @@
-import { LayoutDashboard, LineChart, ArrowLeftRight, Tags, Target, FileBarChart, Settings, Wallet } from "lucide-react";
+import { LayoutDashboard, LineChart, ArrowLeftRight, Tags, Target, FileBarChart, Settings, Wallet, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, active: true },
@@ -11,6 +12,9 @@ const items = [
 ];
 
 export function Sidebar() {
+  const { user, signOut } = useAuth();
+  const userInitial = user?.email?.[0].toUpperCase() || "U";
+  const userEmail = user?.email || "Usuário";
   return (
     <aside className="w-60 shrink-0 bg-card border-r border-border flex flex-col h-screen sticky top-0">
       <div className="px-6 py-6 flex items-center gap-2">
@@ -36,14 +40,23 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-3 border-t border-border mx-3 mb-4 mt-3 pt-4 flex items-center gap-3">
-        <div className="size-9 rounded-full bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center text-primary-foreground text-sm font-semibold">
-          U
+      <div className="p-3 border-t border-border mx-3 mb-4 mt-3 pt-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="size-9 rounded-full bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center text-primary-foreground text-sm font-semibold shrink-0">
+            {userInitial}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-medium truncate">{userEmail.split('@')[0]}</div>
+            <div className="text-xs text-muted-foreground truncate">{userEmail}</div>
+          </div>
         </div>
-        <div className="min-w-0">
-          <div className="text-sm font-medium truncate">Usuário</div>
-          <div className="text-xs text-muted-foreground truncate">Conta pessoal</div>
-        </div>
+        <button 
+          onClick={() => signOut()}
+          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors shrink-0"
+          title="Sair"
+        >
+          <LogOut size={18} />
+        </button>
       </div>
     </aside>
   );
