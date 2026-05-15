@@ -33,10 +33,10 @@ function Login() {
       <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white rounded-[32px] shadow-[0_25px_60px_rgba(0,0,0,0.15)] p-12 flex flex-col items-center">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-[28px] font-bold text-gray-800 leading-tight">
+          <h1 className="text-[32px] font-bold text-gray-800 leading-tight">
             Olá, bem-vindo
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-400 text-sm mt-2">
             Entre para acessar sua conta
           </p>
         </div>
