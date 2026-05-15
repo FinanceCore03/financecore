@@ -46,103 +46,110 @@ function Login() {
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center font-sans overflow-hidden">
-      {/* Background with Ocean/Wave Image */}
+      {/* Background with Ocean/Wave Image - Switched to cool tones */}
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
         style={{ 
-          backgroundImage: 'url("https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2000&auto=format&fit=crop")',
+          backgroundImage: 'url("https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop")',
         }}
       >
-        {/* Soft overlay to highlight the card */}
-        <div className="absolute inset-0 bg-black/10 backdrop-blur-[2px]" />
+        {/* Soft light overlay to highlight the card and make it look luminous */}
+        <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]" />
       </div>
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white rounded-[32px] shadow-[0_25px_60px_rgba(0,0,0,0.15)] p-12 flex flex-col items-center">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-[32px] font-bold text-gray-800 leading-tight">
+      <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white/95 backdrop-blur-sm rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-10 md:p-14 flex flex-col items-center">
+        {/* Header - More spacing and refined typography */}
+        <div className="text-center mb-10 w-full">
+          <h1 className="text-[34px] font-bold text-gray-800 leading-tight tracking-tight mb-3">
             Olá, bem-vindo
           </h1>
-          <p className="text-gray-400 text-sm mt-2">
+          <p className="text-gray-400 text-[16px] font-medium">
             Entre para acessar sua conta
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="w-full space-y-5">
+        <form onSubmit={handleSubmit} className="w-full space-y-7">
           {error && (
             <div className="bg-red-50 text-red-500 text-xs p-3 rounded-xl text-center border border-red-100">
               {error}
             </div>
           )}
-          {/* Email Field */}
-          <div className="space-y-1.5">
-            <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <Mail size={20} />
+          
+          {/* Email Field with label above */}
+          <div className="space-y-2">
+            <label className="text-[15px] font-semibold text-gray-700 ml-1">
+              E-mail
+            </label>
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-turquoise-500 transition-colors">
+                <Mail size={18} />
               </div>
               <input
                 type="email"
-                placeholder="E-mail"
+                placeholder="Seu e-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-[54px] pl-12 pr-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4ade80]/20 focus:border-[#4ade80]/50 transition-all text-gray-700 placeholder:text-gray-400"
+                className="w-full h-[58px] pl-12 pr-4 bg-[#f8fafc] border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#00CED1]/10 focus:border-[#00CED1]/30 transition-all text-gray-700 placeholder:text-gray-300"
                 required
               />
             </div>
           </div>
 
-          {/* Password Field */}
-          <div className="space-y-1.5">
-            <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <Lock size={20} />
+          {/* Password Field with label above */}
+          <div className="space-y-2">
+            <label className="text-[15px] font-semibold text-gray-700 ml-1">
+              Senha
+            </label>
+            <div className="relative group">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-turquoise-500 transition-colors">
+                <Lock size={18} />
               </div>
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="Senha"
+                placeholder="Sua senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-[54px] pl-12 pr-4 bg-gray-50/50 border border-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#4ade80]/20 focus:border-[#4ade80]/50 transition-all text-gray-700 placeholder:text-gray-400"
+                className="w-full h-[58px] pl-12 pr-4 bg-[#f8fafc] border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#00CED1]/10 focus:border-[#00CED1]/30 transition-all text-gray-700 placeholder:text-gray-300"
                 required
               />
             </div>
           </div>
 
-          {/* Options Line */}
-          <div className="flex items-center justify-between text-xs px-1">
+          {/* Options Line - Small and discreet */}
+          <div className="flex items-center justify-between text-[13px] px-1">
             <label className="flex items-center gap-2 cursor-pointer group select-none text-gray-400 hover:text-gray-600 transition-colors">
               <div className="relative flex items-center justify-center">
                 <input
                   type="checkbox"
                   checked={showPassword}
                   onChange={() => setShowPassword(!showPassword)}
-                  className="peer appearance-none w-4 h-4 rounded border border-gray-300 bg-white checked:bg-[#4ade80] checked:border-[#4ade80] transition-all"
+                  className="peer appearance-none w-4.5 h-4.5 rounded-md border border-gray-200 bg-white checked:bg-[#00CED1] checked:border-[#00CED1] transition-all"
                 />
-                <Check className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                <Check className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
               </div>
-              <span>Mostrar senha</span>
+              <span className="font-medium">Mostrar senha</span>
             </label>
-            <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors font-medium">
+            <a href="#" className="text-[#00CED1] hover:text-[#008B8B] transition-colors font-semibold">
               Esqueci minha senha?
             </a>
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-4">
+          {/* Submit Button - Turquoise/Teal gradient look */}
+          <div className="pt-2">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-[58px] bg-[#4ade80] hover:bg-[#3ecb70] text-white font-bold text-lg rounded-2xl shadow-[0_8px_20px_rgba(74,222,128,0.25)] transform transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full h-[60px] bg-[#00CED1] hover:bg-[#20B2AA] text-white font-bold text-[18px] rounded-2xl shadow-[0_10px_25px_rgba(0,206,209,0.25)] transform transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : "Entrar"}
             </button>
           </div>
         </form>
 
-        {/* Padding for harmony */}
-        <div className="mt-2" />
+        {/* Footer padding for visual balance */}
+        <div className="mt-4" />
       </div>
     </div>
   );
