@@ -1,5 +1,6 @@
 import { LayoutDashboard, LineChart, ArrowLeftRight, Tags, Target, FileBarChart, Settings, Wallet, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Link, useLocation } from "@tanstack/react-router";
 
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
@@ -13,8 +14,10 @@ const items = [
 
 export function Sidebar() {
   const { user, signOut } = useAuth();
+  const location = useLocation();
   const userInitial = user?.email?.[0].toUpperCase() || "U";
   const userEmail = user?.email || "Usuário";
+
   return (
     <aside className="w-60 shrink-0 bg-card border-r border-border flex flex-col h-screen sticky top-0">
       <div className="px-6 py-6 flex items-center gap-2">
@@ -25,19 +28,23 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 space-y-1">
-        {items.map(({ label, icon: Icon, active }) => (
-          <button
-            key={label}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-              active
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <Icon className="size-[18px]" strokeWidth={1.7} />
-            <span className="font-medium">{label}</span>
-          </button>
-        ))}
+        {items.map(({ label, icon: Icon, href }) => {
+          const active = location.pathname === href;
+          return (
+            <Link
+              key={label}
+              to={href as any}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                active
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <Icon className="size-[18px]" strokeWidth={1.7} />
+              <span className="font-medium">{label}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="p-3 border-t border-border mx-3 mb-4 mt-3 pt-4 flex items-center justify-between gap-2">
