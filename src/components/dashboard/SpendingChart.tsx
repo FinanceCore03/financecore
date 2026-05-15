@@ -37,7 +37,7 @@ export function SpendingChart() {
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "oklch(0.55 0.02 270)" }} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
             <Tooltip
               contentStyle={{ borderRadius: 12, border: "1px solid oklch(0.93 0.008 270)", fontSize: 12, boxShadow: "0 4px 16px rgba(16,24,40,0.08)" }}
-              formatter={(v: any) => [fmt(Number(v)), "Gasto"]}
+              formatter={(v: number) => [fmt(v), "Gasto"]}
               labelStyle={{ color: "oklch(0.55 0.02 270)", fontSize: 11 }}
             />
             <Area type="monotone" dataKey="v" stroke="oklch(0.62 0.18 290)" strokeWidth={2.5} fill="url(#gradLine)" dot={{ r: 0 }} activeDot={{ r: 5, strokeWidth: 2, stroke: "white" }} />
