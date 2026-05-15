@@ -5,6 +5,8 @@ import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus,
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
