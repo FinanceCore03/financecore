@@ -138,9 +138,15 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error("Erro ao enviar webhook", error);
-      toast.error("Erro ao salvar transação: " + error.message);
+      console.error("ERRO DETALHADO NO SALVAMENTO:", error);
+      const errorMessage = error.message || "Ocorreu um erro inesperado.";
+      toast.error(`Erro: ${errorMessage}`);
+      // Fallback para alert se o toast falhar por algum motivo
+      if (typeof window !== 'undefined') {
+        console.log("Exibindo fallback de erro");
+      }
     } finally {
+      console.log("Finalizando estado de loading");
       setLoading(false);
     }
   };
