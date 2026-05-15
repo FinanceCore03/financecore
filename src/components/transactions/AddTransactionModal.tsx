@@ -105,7 +105,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       // 3. Preparar Payload
       const payload = {
         tipo,
-        quantia: quantia.replace(",", "."),
+        quantia: quantia.replace(/\./g, "").replace(",", "."),
         categoria,
         metodo_pagamento: metodo,
         data: format(data, "yyyy-MM-dd"),
