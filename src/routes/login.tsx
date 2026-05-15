@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Mail, Lock, Check, Loader2 } from "lucide-react";
+import { Mail, Lock, Check, Loader2, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,106 +13,130 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFinalAnimation, setShowFinalAnimation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
-    // Only navigate if user is actually authenticated
-    if (user) {
-      console.log("User detected on login page, navigating to home");
-      navigate({ to: "/", replace: true });
+    if (user && !showFinalAnimation) {
+      console.log("User detected, starting final animation");
+      setShowFinalAnimation(true);
+      
+      // Delay to show the smooth animation before navigating
+      const timer = setTimeout(() => {
+        navigate({ to: "/", replace: true });
+      }, 1500);
+      
+      return () => clearTimeout(timer);
     }
-  }, [user, navigate]);
+  }, [user, navigate, showFinalAnimation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || showFinalAnimation) return;
 
     setIsSubmitting(true);
     setError(null);
     
     try {
-      console.log("Attempting sign in with:", email);
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (error) throw error;
-      
-      console.log("Login successful");
-      // AuthContext will update and triggering the useEffect above
+      // Success is handled by the useEffect watching 'user'
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err.message || "Erro ao fazer login. Verifique suas credenciais.");
-    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center font-sans overflow-hidden bg-slate-100">
-      {/* Background with Ocean/Wave Image - Switched to cool tones */}
+    <div className="relative min-h-screen w-full flex items-center justify-center font-sans overflow-hidden bg-[#e0f2f1]">
+      {/* Background with Ocean/Wave Image - Light and soft tones */}
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ 
-          backgroundImage: 'url("https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop")',
+          backgroundImage: 'url("https://images.unsplash.com/photo-1505118380757-91f5f5632de0?q=80&w=2000&auto=format&fit=crop")',
         }}
       >
-        {/* Soft light overlay to highlight the card and make it look luminous */}
-        <div className="absolute inset-0 bg-white/5 backdrop-blur-[1px]" />
+        {/* Soft light overlay to lighten the background */}
+        <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px]" />
       </div>
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white/95 backdrop-blur-sm rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-10 md:p-14 flex flex-col items-center animate-in fade-in zoom-in duration-500">
-        {/* Header - More spacing and refined typography */}
-        <div className="text-center mb-10 w-full">
-          <h1 className="text-[34px] font-bold text-gray-800 leading-tight tracking-tight mb-3">
-            Olá, bem-vindo
+      {/* Login Card - Moderated border-radius and refined spacing */}
+      <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white rounded-[24px] shadow-[0_10px_40px_rgba(0,0,0,0.06)] p-8 md:p-12 flex flex-col items-center animate-in fade-in zoom-in duration-500">
+        
+        {/* Final Success Animation Overlay */}
+        {showFinalAnimation && (
+          <div className="absolute inset-0 z-20 bg-white rounded-[24px] flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
+            <div className="relative">
+              <div className="absolute inset-0 bg-[#40E0D0]/20 rounded-full animate-ping duration-1000" />
+              <div className="relative bg-white p-4 rounded-full shadow-lg border border-[#40E0D0]/10">
+                <BarChart3 className="text-[#40E0D0] w-12 h-12" />
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <span className="text-[#40E0D0] font-bold text-xl">Finance Core</span>
+              <div className="flex gap-1.5">
+                <div className="w-2 h-2 bg-[#40E0D0] rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <div className="w-2 h-2 bg-[#40E0D0] rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <div className="w-2 h-2 bg-[#40E0D0] rounded-full animate-bounce" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Header - Refined typography */}
+        <div className="text-center mb-8 w-full">
+          <h1 className="text-[28px] font-bold text-[#333] leading-tight mb-2">
+            Olá, Bem Vindo ao Finance Core
           </h1>
-          <p className="text-gray-400 text-[16px] font-medium">
+          <p className="text-gray-400 text-[14px]">
             Entre para acessar sua conta
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="w-full space-y-7">
+        <form onSubmit={handleSubmit} className="w-full space-y-6">
           {error && (
-            <div className="bg-red-50 text-red-500 text-sm p-4 rounded-xl text-center border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="bg-red-50 text-red-500 text-[13px] p-3 rounded-lg text-center border border-red-100">
               {error}
             </div>
           )}
           
-          {/* Email Field with label above */}
-          <div className="space-y-2">
-            <label className="text-[15px] font-semibold text-gray-700 ml-1">
+          {/* Email Field */}
+          <div className="space-y-1.5">
+            <label className="text-[14px] font-medium text-[#555] ml-0.5">
               E-mail
             </label>
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#00CED1] transition-colors pointer-events-none">
-                <Mail size={18} />
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
+                <Mail size={16} />
               </div>
               <input
                 type="email"
-                placeholder="Seu e-mail"
+                placeholder="Ex: seuemail@email.com"
                 value={email}
                 autoComplete="email"
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full h-[58px] pl-12 pr-4 bg-[#f8fafc] border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#00CED1]/10 focus:border-[#00CED1]/30 transition-all text-gray-700 placeholder:text-gray-300"
+                className="w-full h-[50px] pl-11 pr-4 bg-[#fcfcfc] border border-gray-100 rounded-xl focus:outline-none focus:border-[#40E0D0]/50 transition-all text-gray-700 placeholder:text-gray-300 text-[14px]"
                 required
               />
             </div>
           </div>
 
-          {/* Password Field with label above */}
-          <div className="space-y-2">
-            <label className="text-[15px] font-semibold text-gray-700 ml-1">
+          {/* Password Field */}
+          <div className="space-y-1.5">
+            <label className="text-[14px] font-medium text-[#555] ml-0.5">
               Senha
             </label>
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#00CED1] transition-colors pointer-events-none">
-                <Lock size={18} />
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
+                <Lock size={16} />
               </div>
               <input
                 type={showPassword ? "text" : "password"}
@@ -120,45 +144,47 @@ function Login() {
                 value={password}
                 autoComplete="current-password"
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-[58px] pl-12 pr-4 bg-[#f8fafc] border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#00CED1]/10 focus:border-[#00CED1]/30 transition-all text-gray-700 placeholder:text-gray-300"
+                className="w-full h-[50px] pl-11 pr-4 bg-[#fcfcfc] border border-gray-100 rounded-xl focus:outline-none focus:border-[#40E0D0]/50 transition-all text-gray-700 placeholder:text-gray-300 text-[14px]"
                 required
               />
             </div>
           </div>
 
-          {/* Options Line - Small and discreet */}
-          <div className="flex items-center justify-between text-[13px] px-1">
-            <label className="flex items-center gap-2 cursor-pointer group select-none text-gray-400 hover:text-gray-600 transition-colors">
+          {/* Options Line */}
+          <div className="flex items-center justify-between text-[12px]">
+            <label className="flex items-center gap-2 cursor-pointer select-none text-gray-400">
               <div className="relative flex items-center justify-center">
                 <input
                   type="checkbox"
                   checked={showPassword}
                   onChange={() => setShowPassword(!showPassword)}
-                  className="peer appearance-none w-4.5 h-4.5 rounded-md border border-gray-200 bg-white checked:bg-[#00CED1] checked:border-[#00CED1] transition-all"
+                  className="peer appearance-none w-4 h-4 rounded border border-gray-200 bg-white checked:bg-[#40E0D0] checked:border-[#40E0D0] transition-all"
                 />
-                <Check className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                <Check className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
               </div>
-              <span className="font-medium">Mostrar senha</span>
+              <span>Mostrar senha</span>
             </label>
-            <a href="#" className="text-[#00CED1] hover:text-[#008B8B] transition-colors font-semibold">
+            <a href="#" className="text-[#40E0D0] font-medium hover:underline">
               Esqueci minha senha?
             </a>
           </div>
 
-          {/* Submit Button - Turquoise/Teal gradient look */}
+          {/* Submit Button - Turquoise color with subtle shadow */}
           <div className="pt-2">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full h-[60px] bg-[#00CED1] hover:bg-[#20B2AA] text-white font-bold text-[18px] rounded-2xl shadow-[0_10px_25px_rgba(0,206,209,0.25)] transform transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={isSubmitting || showFinalAnimation}
+              className="w-full h-[52px] bg-[#40E0D0] hover:bg-[#36c7ba] text-white font-semibold text-[16px] rounded-xl shadow-[0_4px_12px_rgba(64,224,208,0.2)] transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-70"
             >
-              {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : "Entrar"}
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="animate-spin" size={20} />
+                  <span>Entrando...</span>
+                </div>
+              ) : "Entrar"}
             </button>
           </div>
         </form>
-
-        {/* Footer padding for visual balance */}
-        <div className="mt-4" />
       </div>
     </div>
   );
