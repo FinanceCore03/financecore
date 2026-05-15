@@ -10,6 +10,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { Toaster } from "sonner";
 import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
@@ -157,6 +158,7 @@ function RootComponent() {
       <AuthProvider>
         <AuthGuard>
           <Outlet />
+          <Toaster position="top-right" richColors closeButton />
         </AuthGuard>
       </AuthProvider>
     </QueryClientProvider>

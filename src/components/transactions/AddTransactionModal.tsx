@@ -77,32 +77,35 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
 
   const handleSave = async () => {
     if (!isFormValid) {
-      toast.error("Por favor, preencha todos os campos obrigatórios (Tipo, Quantia, Categoria, Método e Data).");
+      toast.error("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
-    console.log("Iniciando salvamento da transação");
+    console.log("Iniciando salvamento da transação...");
     setLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-      console.log("Usuário Auth encontrado", user.id);
 
+    try {
+      // 1. Obter usuário do Auth
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) throw new Error("Usuário não autenticado no sistema.");
+      console.log("Usuário autenticado:", user.id);
+
+      // 2. Buscar ID interno na tabela Usuarios
       const { data: userData, error: userError } = await supabase
         .from("Usuarios")
         .select("id")
         .eq("id_auth", user.id)
-        .single();
+        .maybeSingle();
 
-      if (userError || !userData) {
-        console.error("Erro ao buscar usuário interno:", userError);
-        throw new Error("Usuário não encontrado na tabela Usuarios");
-      }
-      console.log("Usuário interno encontrado", userData.id);
+      if (userError) throw new Error(`Erro ao consultar tabela Usuarios: ${userError.message}`);
+      if (!userData) throw new Error("Seu usuário não foi encontrado na tabela 'Usuarios'.");
+      
+      console.log("ID interno do usuário encontrado:", userData.id);
 
+      // 3. Preparar Payload
       const payload = {
         tipo,
-        quantia: quantia.replace(",", "."),
+        quantia: quantia.replace(/\./g, "").replace(",", "."),
         categoria,
         metodo_pagamento: metodo,
         data: format(data, "yyyy-MM-dd"),
@@ -110,37 +113,41 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
         id_usuario: userData.id,
       };
 
-      console.log("Enviando webhook", payload);
-      try {
-        const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+      console.log("Payload preparado para o webhook:", payload);
 
-        console.log("Status do webhook:", response.status);
+      // 4. Enviar Webhook
+      console.log("Chamando webhook...");
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Erro na resposta do webhook:", response.status, errorText);
-          throw new Error(`Erro no webhook: ${response.status} ${response.statusText}`);
-        }
+      console.log("Resposta do webhook recebida. Status:", response.status);
 
-        console.log("Webhook enviado com sucesso");
-      } catch (fetchError: any) {
-        console.error("Erro de rede ou ao chamar fetch:", fetchError);
-        throw new Error(`Falha na comunicação com o servidor: ${fetchError.message}`);
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error("Resposta de erro do servidor:", errorBody);
+        throw new Error(`O servidor do webhook retornou erro (${response.status}): ${response.statusText}`);
       }
-      toast.success("Transação adicionada com sucesso!");
+
+      console.log("Webhook executado com sucesso!");
+      
+      // 5. Sucesso
+      toast.success("Transação salva com sucesso!");
       resetForm();
       onSuccess();
       onClose();
+
     } catch (error: any) {
-      console.error("Erro ao enviar webhook", error);
-      toast.error("Erro ao salvar transação: " + error.message);
+      console.error("FALHA NO PROCESSO DE SALVAMENTO:", error);
+      const msg = error.message || "Erro desconhecido";
+      toast.error(`Falha ao salvar: ${msg}`);
+      alert(`Erro crítico: ${msg}\n\nVerifique o console para mais detalhes.`);
     } finally {
+      console.log("Finalizando processo (loading: false)");
       setLoading(false);
     }
   };
