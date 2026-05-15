@@ -9,7 +9,7 @@ import {
   useNavigate,
   useLocation,
 } from "@tanstack/react-router";
-import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
