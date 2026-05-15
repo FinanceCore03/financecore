@@ -114,6 +114,34 @@ function TransactionsPage() {
     });
   }, [transactions, periodFilter]);
 
+  const distributionData = useMemo(() => {
+    const categoriesMap: Record<string, number> = {};
+    let totalExps = 0;
+
+    transactions
+      .filter(tx => tx.tipo === "saida")
+      .forEach(tx => {
+        const cat = tx.categoria || "Outros";
+        const val = parseFloat(tx.valor || "0");
+        categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
+        totalExps += val;
+      });
+
+    const colors = ["var(--primary)", "#8E9196", "#D3E4FD", "#FDE1D3", "#FEC6A1", "#E5DEFF"];
+
+    return Object.entries(categoriesMap).map(([name, value], i) => ({
+      name,
+      value: totalExps > 0 ? Math.round((value / totalExps) * 100) : 0,
+      amount: value,
+      color: colors[i % colors.length]
+    })).sort((a, b) => b.amount - a.amount);
+  }, [transactions]);
+
+  const subscriptions = useMemo(() => {
+    // Por enquanto retornamos vazio ou filtros de transações que pareçam assinaturas
+    return [];
+  }, [transactions]);
+
   const totals = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
