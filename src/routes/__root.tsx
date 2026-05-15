@@ -118,13 +118,13 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
-    // If not loading and no user, only redirect if not on /login
-    if (!isLoading && !user && location.pathname !== "/login") {
-      navigate({ to: "/login" });
+    if (isLoading) return;
+
+    if (!user && location.pathname !== "/login") {
+      navigate({ to: "/login", replace: true });
     }
   }, [user, isLoading, navigate, location.pathname]);
 
-  // Handle loading state
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -133,8 +133,6 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If there's no user and we're not on the login page, we're about to redirect
-  // Let's render null to avoid briefly showing protected content
   if (!user && location.pathname !== "/login") {
     return null;
   }
