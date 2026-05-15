@@ -224,29 +224,14 @@ function TransactionsPage() {
 
             {/* Right Column: Distribution & Subscriptions */}
             <div className="w-full lg:w-80 space-y-6 shrink-0">
-              {/* Distribution Bar Chart Card */}
+              {/* Distribution Doughnut Chart Card */}
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-semibold tracking-tight">Distribuição dos Gastos</h3>
                   <button className="text-[11px] text-primary font-semibold hover:underline">Ver detalhes</button>
                 </div>
                 
-                <div className="space-y-4">
-                  {categories.map((cat) => (
-                    <div key={cat.name} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">{cat.name}</span>
-                        <span className="font-semibold">{cat.pct}%</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full ${cat.color} rounded-full transition-all duration-500`} 
-                          style={{ width: `${cat.pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ExpenseDoughnutChart data={categories} />
               </div>
 
               {/* Subscriptions Card */}
