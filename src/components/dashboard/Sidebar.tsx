@@ -41,7 +41,7 @@ export function Sidebar() {
       const { data: usuarioPorEmail, error: erroEmail } = await supabase
         .from("Usuarios")
         .select("*")
-        .eq("Email", user.email)
+        .eq("Email", user.email || "")
         .maybeSingle();
         
       console.log("Busca por Email:", usuarioPorEmail || "NÃO ENCONTRADO");
