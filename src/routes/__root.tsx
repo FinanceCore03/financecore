@@ -118,29 +118,30 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
+    // Only redirect if we're NOT on the login page, we're NOT loading, and there's NO user
     if (!isLoading && !user && location.pathname !== "/login") {
       navigate({ to: "/login", replace: true });
     }
   }, [user, isLoading, navigate, location.pathname]);
 
-  // If we are on the login page, always render children (Login component)
+  // If we are on the login page, always render children immediately to avoid "white screen" flashes
   if (location.pathname === "/login") {
     return <>{children}</>;
   }
 
-  // Handle loading state for protected routes
+  // Handle loading state for protected routes only
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white text-gray-800">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#4ade80] border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#00CED1] border-t-transparent" />
           <p className="text-sm font-medium">Carregando...</p>
         </div>
       </div>
     );
   }
 
-  // If no user, we're redirecting, so show nothing
+  // If no user and not on login, we're about to redirect
   if (!user) {
     return null;
   }
