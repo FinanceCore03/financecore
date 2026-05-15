@@ -383,6 +383,12 @@ function TransactionsPage() {
           </footer>
         </main>
       </div>
+
+      <AddTransactionModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={fetchTransactions}
+      />
     </div>
   );
 }
