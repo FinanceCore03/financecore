@@ -1,7 +1,12 @@
 import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 import { Mail, Lock, Check } from "lucide-react";
 
-export default function Login() {
+export const Route = createFileRoute("/login")({
+  component: Login,
+});
+
+function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
