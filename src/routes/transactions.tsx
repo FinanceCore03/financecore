@@ -43,14 +43,24 @@ function TransactionsPage() {
     const fetchTransactions = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const { data, error } = await supabase
-          .from("Transacoes")
-          .select("*")
-          .eq("id_cliente", session.user.id)
-          .order("data", { ascending: false });
-        
-        if (data) {
-          setTransactions(data);
+        // Primeiro buscamos o ID do usuário na tabela Usuarios usando o id_auth (UUID do Supabase Auth)
+        const { data: userData } = await supabase
+          .from("Usuarios")
+          .select("id")
+          .eq("id_auth", session.user.id)
+          .single();
+
+        if (userData) {
+          // Agora filtramos as transações usando o ID interno (id_usuario)
+          const { data, error } = await supabase
+            .from("Transacoes")
+            .select("*")
+            .eq("id_usuario", userData.id)
+            .order("data", { ascending: false });
+          
+          if (data) {
+            setTransactions(data);
+          }
         }
       }
       setLoading(false);
