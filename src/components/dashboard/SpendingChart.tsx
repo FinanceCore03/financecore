@@ -1,16 +1,13 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { ChevronDown } from "lucide-react";
 
-const data = [
-  { m: "Jan", v: 2100 }, { m: "Fev", v: 2400 }, { m: "Mar", v: 1980 },
-  { m: "Abr", v: 2650 }, { m: "Mai", v: 3100 }, { m: "Jun", v: 2780 },
-  { m: "Jul", v: 3320 }, { m: "Ago", v: 2950 }, { m: "Set", v: 3480 },
-  { m: "Out", v: 3050 }, { m: "Nov", v: 2840 }, { m: "Dez", v: 3200 },
-];
+interface SpendingChartProps {
+  data: { m: string; v: number }[];
+}
 
 const fmt = (n: number) => `R$ ${n.toLocaleString("pt-BR")}`;
 
-export function SpendingChart() {
+export function SpendingChart({ data }: SpendingChartProps) {
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full">
       <div className="flex items-center justify-between mb-4">

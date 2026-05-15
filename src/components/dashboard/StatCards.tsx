@@ -1,5 +1,14 @@
 import { Wallet, TrendingUp, TrendingDown, PiggyBank } from "lucide-react";
 
+interface StatCardsProps {
+  stats: {
+    totalBalance: number;
+    monthIncome: number;
+    monthExpenses: number;
+    availableToSpend: number;
+  };
+}
+
 interface CardProps {
   title: string;
   value: string;
@@ -33,38 +42,40 @@ function StatCard({ title, value, helper, badge, icon, iconBg }: CardProps) {
   );
 }
 
-export function StatCards() {
+export function StatCards({ stats }: StatCardsProps) {
+  const formatBRL = (val: number) => `R$ ${val.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <StatCard
-        title="Saldo Inicial"
-        value="R$ 3.500,00"
-        helper="Valor disponível no início do mês"
-        badge={{ text: "Estável", tone: "primary" }}
+        title="Saldo Geral"
+        value={formatBRL(stats.totalBalance)}
+        helper="Total acumulado em todas as contas"
+        badge={{ text: stats.totalBalance >= 0 ? "Positivo" : "Negativo", tone: stats.totalBalance >= 0 ? "success" : "danger" }}
         icon={<Wallet className="size-5" />}
         iconBg="bg-primary-soft text-primary"
       />
       <StatCard
-        title="Salário Recebido"
-        value="R$ 5.000,00"
-        helper="Entrada principal do mês"
-        badge={{ text: "+100%", tone: "success" }}
+        title="Entradas (Mês)"
+        value={formatBRL(stats.monthIncome)}
+        helper="Total recebido este mês"
+        badge={{ text: "Mensal", tone: "success" }}
         icon={<TrendingUp className="size-5" />}
         iconBg="bg-success-soft text-success"
       />
       <StatCard
-        title="Gasto no Mês"
-        value="R$ 2.840,00"
-        helper="Total de despesas até hoje"
-        badge={{ text: "56,8% do salário", tone: "danger" }}
+        title="Gasto (Mês)"
+        value={formatBRL(stats.monthExpenses)}
+        helper="Total de despesas este mês"
+        badge={{ text: `${((stats.monthExpenses / (stats.monthIncome || 1)) * 100).toFixed(0)}% da renda`, tone: "danger" }}
         icon={<TrendingDown className="size-5" />}
         iconBg="bg-danger-soft text-danger"
       />
       <StatCard
-        title="Disponível para Gastar"
-        value="R$ 2.160,00"
-        helper="Saldo restante do salário mensal"
-        badge={{ text: "43,2% restante", tone: "success" }}
+        title="Disponível"
+        value={formatBRL(stats.availableToSpend)}
+        helper="Saldo restante do mês"
+        badge={{ text: stats.availableToSpend >= 0 ? "Economizando" : "No vermelho", tone: stats.availableToSpend >= 0 ? "success" : "danger" }}
         icon={<PiggyBank className="size-5" />}
         iconBg="bg-success-soft text-success"
       />
