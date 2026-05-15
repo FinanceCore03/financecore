@@ -43,6 +43,7 @@ function TransactionsPage() {
   const [periodFilter, setPeriodFilter] = useState("Este mês");
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -53,9 +54,10 @@ function TransactionsPage() {
         .from("Usuarios")
         .select("id")
         .eq("id_auth", user.id)
-        .single();
+        .maybeSingle();
 
       if (usuario) {
+        setUsuarioId(usuario.id);
         const { data, error: transacoesError } = await supabase
           .from("Transacoes")
           .select("*")
@@ -65,6 +67,9 @@ function TransactionsPage() {
         if (data) {
           setTransactions(data);
         }
+      } else {
+        console.error("Usuário não encontrado na tabela Usuarios");
+        toast.error("Erro ao carregar dados do usuário.");
       }
     }
     setLoading(false);
@@ -75,9 +80,19 @@ function TransactionsPage() {
   }, []);
 
   const deleteTransaction = async (id: number) => {
-    const { error } = await supabase.from("Transacoes").delete().eq("id", id);
+    if (!usuarioId) return;
+    
+    const { error } = await supabase
+      .from("Transacoes")
+      .delete()
+      .eq("id", id)
+      .eq("id_usuario", usuarioId); // Garante que só deleta o que pertence ao usuário
+
     if (!error) {
+      toast.success("Transação excluída.");
       setTransactions(prev => prev.filter(tx => tx.id !== id));
+    } else {
+      toast.error("Erro ao excluir transação.");
     }
   };
 
