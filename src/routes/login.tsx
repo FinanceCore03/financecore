@@ -20,14 +20,10 @@ function Login() {
 
   useEffect(() => {
     if (user && !showFinalAnimation) {
-      console.log("User detected, starting final animation");
       setShowFinalAnimation(true);
-      
-      // Delay to show the smooth animation before navigating
       const timer = setTimeout(() => {
         navigate({ to: "/", replace: true });
       }, 500);
-      
       return () => clearTimeout(timer);
     }
   }, [user, navigate, showFinalAnimation]);
@@ -42,11 +38,10 @@ function Login() {
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
-        password,
+        password: password,
       });
 
       if (error) throw error;
-      // Success is handled by the useEffect watching 'user'
     } catch (err: any) {
       console.error("Login error:", err);
       setError(err.message || "Erro ao fazer login. Verifique suas credenciais.");
@@ -120,7 +115,7 @@ function Login() {
               <input
                 type="email"
                 placeholder="Ex: seuemail@email.com"
-                value={email}
+                value={email || ""}
                 autoComplete="email"
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-[50px] pl-11 pr-4 bg-[#fcfcfc] border border-gray-100 rounded-xl focus:outline-none focus:border-[#40E0D0]/50 transition-all text-gray-700 placeholder:text-gray-300 text-[14px]"
@@ -141,7 +136,7 @@ function Login() {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Sua senha"
-                value={password}
+                value={password || ""}
                 autoComplete="current-password"
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full h-[50px] pl-11 pr-4 bg-[#fcfcfc] border border-gray-100 rounded-xl focus:outline-none focus:border-[#40E0D0]/50 transition-all text-gray-700 placeholder:text-gray-300 text-[14px]"
