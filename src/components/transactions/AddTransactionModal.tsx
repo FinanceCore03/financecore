@@ -108,7 +108,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       const { data: usuarioPorEmail, error: erroEmail } = await supabase
         .from("Usuarios")
         .select("id, id_auth, Email, Nome")
-        .eq("Email", user.email)
+        .eq("Email", user.email || "")
         .maybeSingle();
 
       console.log("Usuário encontrado por Email:", usuarioPorEmail);
