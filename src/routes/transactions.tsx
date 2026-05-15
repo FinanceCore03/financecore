@@ -357,8 +357,8 @@ function TransactionsPage() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Total</div>
-                    <div className="text-lg font-bold tracking-tight">R$ 2.356</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Total Gastos</div>
+                    <div className="text-lg font-bold tracking-tight">R$ {totals.monthSaidas.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
                   </div>
                 </div>
 
