@@ -42,42 +42,35 @@ function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState("Este mês");
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+  const fetchTransactions = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
 
-      if (user) {
-        // 1. Buscar na tabela Usuarios o registro onde Usuarios.id_auth = user.id
-        const { data: usuario, error: usuarioError } = await supabase
-          .from("Usuarios")
-          .select("id")
-          .eq("id_auth", user.id)
-          .single();
+    if (user) {
+      const { data: usuario, error: usuarioError } = await supabase
+        .from("Usuarios")
+        .select("id")
+        .eq("id_auth", user.id)
+        .single();
 
-        if (usuarioError) {
-          console.error("Usuário não encontrado na tabela Usuarios:", usuarioError);
-        }
-
-        if (usuario) {
-          // 2. Buscar na tabela Transacoes as linhas onde Transacoes.id_usuario = Usuarios.id
-          const { data, error: transacoesError } = await supabase
-            .from("Transacoes")
-            .select("*")
-            .eq("id_usuario", usuario.id)
-            .order("data", { ascending: false });
-          
-          if (transacoesError) {
-            console.error("Erro ao buscar transações:", transacoesError);
-          }
-
-          if (data) {
-            setTransactions(data);
-          }
+      if (usuario) {
+        const { data, error: transacoesError } = await supabase
+          .from("Transacoes")
+          .select("*")
+          .eq("id_usuario", usuario.id)
+          .order("data", { ascending: false });
+        
+        if (data) {
+          setTransactions(data);
         }
       }
-      setLoading(false);
-    };
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchTransactions();
   }, []);
 
