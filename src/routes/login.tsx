@@ -19,12 +19,11 @@ function Login() {
   const { user } = useAuth();
 
   useEffect(() => {
-    console.log("Login check: user =", !!user, "animation =", showFinalAnimation);
+    // If user is already logged in and we're not already showing the final animation
     if (user && !showFinalAnimation) {
-      console.log("User detected, starting transition...");
+      console.log("User detected, proceeding to dashboard");
       setShowFinalAnimation(true);
       const timer = setTimeout(() => {
-        console.log("Navigating to dashboard...");
         navigate({ to: "/", replace: true });
       }, 500);
       return () => clearTimeout(timer);
@@ -33,30 +32,36 @@ function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
     if (isSubmitting || showFinalAnimation) return;
 
-    console.log("Login attempt started for:", email);
+    console.log("Submit clicked", { email });
     setIsSubmitting(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
       });
 
-      if (error) {
-        console.log("Login error from Supabase:", error.message);
-        throw error;
+      if (signInError) {
+        console.error("Sign in error:", signInError);
+        throw signInError;
       }
       
-      console.log("Login success!", data.user?.id);
-      // Success will be handled by the useEffect watching 'user'
+      console.log("Sign in successful", data.user?.id);
+      // Success is handled by the useEffect above
     } catch (err: any) {
-      console.error("Login catch block:", err);
+      console.error("Caught error during login:", err);
       setError(err.message || "Erro ao fazer login. Verifique suas credenciais.");
       setIsSubmitting(false);
     }
+  };
+
+  const togglePasswordVisibility = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setShowPassword(e.target.checked);
   };
 
   return (
@@ -125,7 +130,7 @@ function Login() {
               <input
                 type="email"
                 placeholder="Ex: seuemail@email.com"
-                value={email || ""}
+                value={email}
                 autoComplete="email"
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-[50px] pl-11 pr-4 bg-[#fcfcfc] border border-gray-100 rounded-xl focus:outline-none focus:border-[#40E0D0]/50 transition-all text-gray-700 placeholder:text-gray-300 text-[14px]"
@@ -146,7 +151,7 @@ function Login() {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Sua senha"
-                value={password || ""}
+                value={password}
                 autoComplete="current-password"
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full h-[50px] pl-11 pr-4 bg-[#fcfcfc] border border-gray-100 rounded-xl focus:outline-none focus:border-[#40E0D0]/50 transition-all text-gray-700 placeholder:text-gray-300 text-[14px]"
@@ -162,7 +167,7 @@ function Login() {
                 <input
                   type="checkbox"
                   checked={showPassword}
-                  onChange={() => setShowPassword(!showPassword)}
+                  onChange={togglePasswordVisibility}
                   className="peer appearance-none w-4 h-4 rounded border border-gray-200 bg-white checked:bg-[#40E0D0] checked:border-[#40E0D0] transition-all"
                 />
                 <Check className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
