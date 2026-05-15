@@ -19,23 +19,7 @@ export const Route = createFileRoute("/transactions")({
 
 // As variáveis de estado e efeitos foram movidas para dentro do componente TransactionsPage
 
-const distributionData = [
-  { name: "Moradia", value: 42, color: "var(--primary)" },
-  { name: "Alimentação", value: 24, color: "#8E9196" }, // Soft Neutral
-  { name: "Transporte", value: 13, color: "#D3E4FD" }, // Soft Blue
-  { name: "Lazer", value: 11, color: "#FDE1D3" }, // Soft Orange/Peach
-  { name: "Assinaturas", value: 6, color: "#FEC6A1" }, // Soft Orange
-  { name: "Outros", value: 4, color: "#E5DEFF" }, // Soft Purple
-];
-
-const subscriptions = [
-  { name: "Netflix", icon: Tv, color: "bg-danger-soft text-danger", price: "R$ 39,90", period: "Mensal" },
-  { name: "Spotify", icon: Tv, color: "bg-success-soft text-success", price: "R$ 21,90", period: "Mensal" },
-  { name: "YouTube Premium", icon: Tv, color: "bg-danger-soft text-danger", price: "R$ 24,90", period: "Mensal" },
-  { name: "Google One", icon: Wallet, color: "bg-info-soft text-info", price: "R$ 9,90", period: "Mensal" },
-  { name: "iCloud", icon: Wallet, color: "bg-info-soft text-info", price: "R$ 14,90", period: "Mensal" },
-  { name: "Amazon Prime", icon: ShoppingBag, color: "bg-warning-soft text-warning", price: "R$ 19,90", period: "Mensal" },
-];
+// Removidos dados estáticos para cálculo dinâmico
 
 function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
