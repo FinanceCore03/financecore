@@ -264,9 +264,9 @@ function TransactionsPage() {
                     <tbody className="divide-y divide-border">
                       {loading ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Carregando...</td></tr>
-                      ) : transactions.length === 0 ? (
+                      ) : filteredTransactions.length === 0 ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
-                      ) : transactions.map((tx) => {
+                      ) : filteredTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
                         const dateObj = tx.data ? new Date(tx.data) : null;
                         return (
