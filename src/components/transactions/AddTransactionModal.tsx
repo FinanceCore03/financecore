@@ -119,23 +119,24 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-card border-none shadow-2xl animate-in fade-in zoom-in duration-200">
-          <div className="p-6 space-y-6">
+        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-none shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="p-8 space-y-8">
             <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <DialogTitle className="text-xl font-bold">Adicionar Transação</DialogTitle>
+              <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar Transação</DialogTitle>
               <button 
                 onClick={handleClose}
-                className="rounded-full p-1 hover:bg-muted transition-colors"
+                className="rounded-full p-2 hover:bg-muted transition-colors"
               >
                 <X className="size-5 text-muted-foreground" />
               </button>
             </DialogHeader>
 
-            <div className="grid gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+              {/* Linha 1 */}
               <div className="grid gap-2">
                 <Label htmlFor="tipo" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo</Label>
                 <Select value={tipo} onValueChange={setTipo}>
-                  <SelectTrigger id="tipo" className="rounded-xl border-border bg-muted/30 focus:ring-primary/20">
+                  <SelectTrigger id="tipo" className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -146,9 +147,24 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
               </div>
 
               <div className="grid gap-2">
+                <Label htmlFor="quantia" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quantia</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">R$</span>
+                  <Input
+                    id="quantia"
+                    placeholder="0,00"
+                    value={quantia}
+                    onChange={(e) => setQuantia(e.target.value)}
+                    className="h-11 pl-9 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
+                  />
+                </div>
+              </div>
+
+              {/* Linha 2 */}
+              <div className="grid gap-2">
                 <Label htmlFor="categoria" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Categoria</Label>
                 <Select value={categoria} onValueChange={setCategoria}>
-                  <SelectTrigger id="categoria" className="rounded-xl border-border bg-muted/30 focus:ring-primary/20">
+                  <SelectTrigger id="categoria" className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20">
                     <SelectValue placeholder="Selecione a categoria" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -160,12 +176,27 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
               </div>
 
               <div className="grid gap-2">
+                <Label htmlFor="metodo" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Método de Pagamento</Label>
+                <Select value={metodo} onValueChange={setMetodo}>
+                  <SelectTrigger id="metodo" className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20">
+                    <SelectValue placeholder="Selecione o método" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {paymentMethods.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Linha 3 */}
+              <div className="grid gap-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className={`w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
+                      className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
@@ -189,57 +220,29 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="quantia" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quantia</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">R$</span>
-                  <Input
-                    id="quantia"
-                    placeholder="0,00"
-                    value={quantia}
-                    onChange={(e) => setQuantia(e.target.value)}
-                    className="pl-9 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="metodo" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Método de Pagamento</Label>
-                <Select value={metodo} onValueChange={setMetodo}>
-                  <SelectTrigger id="metodo" className="rounded-xl border-border bg-muted/30 focus:ring-primary/20">
-                    <SelectValue placeholder="Selecione o método" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {paymentMethods.map((m) => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
                 <Label htmlFor="descricao" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Descrição</Label>
                 <Input
                   id="descricao"
                   placeholder="Ex: Compra do mês"
                   value={descricao}
                   onChange={(e) => setDescricao(e.target.value)}
-                  className="rounded-xl border-border bg-muted/30 focus:ring-primary/20"
+                  className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-4">
+            <div className="flex items-center gap-4 pt-2">
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={handleClose}
-                className="flex-1 rounded-xl text-muted-foreground hover:bg-muted font-semibold"
+                className="flex-1 h-12 rounded-xl border-border text-muted-foreground hover:bg-muted font-bold transition-all"
               >
                 Cancelar
               </Button>
               <Button
                 onClick={handleSave}
                 disabled={loading}
-                className="flex-1 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-md shadow-primary/20"
+                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
               >
                 {loading ? "Salvando..." : "Salvar"}
               </Button>
