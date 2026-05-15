@@ -120,11 +120,47 @@ function TransactionsPage() {
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar />
+        {/* Removed TopBar as requested */}
         <main className="flex-1 px-8 py-6 space-y-6">
-          <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
-            <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
+          <header className="flex flex-row items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
+              <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsPeriodOpen(!isPeriodOpen)}
+                  className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
+                >
+                  <span>{periodFilter}</span>
+                  <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isPeriodOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                    {["Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => {
+                          setPeriodFilter(option);
+                          setIsPeriodOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm">
+                <Plus className="size-4" />
+                <span>Adicionar Transação</span>
+              </button>
+            </div>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
