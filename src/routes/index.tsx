@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Dashboard financeiro pessoal moderno com visão geral de saldo, gastos e categorias." },
     ],
   }),
-  component: Dashboard,
+  component: () => <Dashboard />,
 });
 
 function Dashboard() {
