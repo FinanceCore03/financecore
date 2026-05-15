@@ -19,10 +19,10 @@ function Login() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // If user is already logged in and we're not already showing the final animation
-    if (user && !showFinalAnimation) {
-      console.log("User detected, proceeding to dashboard");
-      setShowFinalAnimation(true);
+    // Check for user ONLY after a submission has been made or if we need to redirect
+    // but don't auto-redirect just by landing on the page if that was causing loops
+    if (user && showFinalAnimation) {
+      console.log("User authenticated, redirecting to dashboard");
       const timer = setTimeout(() => {
         navigate({ to: "/", replace: true });
       }, 500);
@@ -33,7 +33,6 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    // Prevent multiple submissions
     if (isSubmitting || showFinalAnimation) return;
 
     console.log("Login attempt initiated", { email });
@@ -47,13 +46,13 @@ function Login() {
       });
 
       if (signInError) {
-        console.error("Supabase signInWithPassword error:", signInError.message);
         throw signInError;
       }
       
-      console.log("Supabase signInWithPassword success:", data.user?.id);
+      console.log("Login success");
+      setShowFinalAnimation(true);
     } catch (err: any) {
-      console.error("Login process exception:", err);
+      console.error("Login error:", err);
       setError(err.message || "Erro ao fazer login. Verifique suas credenciais.");
       setIsSubmitting(false);
     }
