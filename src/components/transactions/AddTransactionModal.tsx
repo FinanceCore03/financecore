@@ -114,9 +114,24 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       console.log("Usuário encontrado por Email:", usuarioPorEmail);
       console.log("Erro ao buscar por Email:", erroEmail);
 
-      // 4. Verificações de diagnóstico
+      // 4. Verificações de diagnóstico e correção automática de id_auth se necessário
       if (usuarioPorEmail && !usuarioPorAuth) {
-        console.log("O Email existe na tabela Usuarios, mas o id_auth não corresponde ao user.id do Supabase Auth.");
+        console.log("Diagnóstico: Email encontrado, mas id_auth não corresponde. Tentando associar automaticamente...");
+        
+        const { data: updatedUser, error: updateError } = await supabase
+          .from("Usuarios")
+          .update({ id_auth: user.id })
+          .eq("id", usuarioPorEmail.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error("Erro ao tentar associar id_auth automaticamente:", updateError);
+        } else {
+          console.log("Sucesso! Usuário associado ao id_auth do login atual:", updatedUser);
+          // Substitui usuarioPorAuth pelo usuário atualizado para prosseguir com o salvamento
+          (usuarioPorAuth as any) = updatedUser;
+        }
       }
 
       if (!usuarioPorAuth && !usuarioPorEmail) {
