@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { useState, useEffect, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -13,18 +15,7 @@ export const Route = createFileRoute("/transactions")({
   component: () => <TransactionsPage />,
 });
 
-const transactions = [
-  { id: 1, category: "Salário", icon: Wallet, color: "bg-success-soft text-success", date: "10/11/2025", time: "08:15", amount: "+R$ 5.000,00", method: "Pix" },
-  { id: 2, category: "Mercado", icon: ShoppingBag, color: "bg-primary-soft text-primary", date: "11/11/2025", time: "14:20", amount: "-R$ 320,00", method: "Cartão de Débito" },
-  { id: 3, category: "Transporte", icon: Car, color: "bg-info-soft text-info", date: "12/11/2025", time: "09:40", amount: "-R$ 48,00", method: "Cartão de Crédito" },
-  { id: 4, category: "Restaurante", icon: Utensils, color: "bg-warning-soft text-warning", date: "12/11/2025", time: "21:10", amount: "-R$ 120,00", method: "Pix" },
-  { id: 5, category: "Freelance", icon: Briefcase, color: "bg-primary-soft text-primary", date: "13/11/2025", time: "16:30", amount: "+R$ 800,00", method: "Transferência" },
-  { id: 6, category: "Netflix", icon: Tv, color: "bg-danger-soft text-danger", date: "14/11/2025", time: "07:00", amount: "-R$ 39,90", method: "Cartão de Crédito" },
-  { id: 7, category: "Academia", icon: Dumbbell, color: "bg-info-soft text-info", date: "15/11/2025", time: "10:00", amount: "-R$ 99,90", method: "Cartão de Crédito" },
-  { id: 8, category: "Aluguel", icon: Home, color: "bg-danger-soft text-danger", date: "05/11/2025", time: "08:00", amount: "-R$ 1.200,00", method: "Pix" },
-  { id: 9, category: "Farmácia", icon: PillIcon, color: "bg-warning-soft text-warning", date: "16/11/2025", time: "18:45", amount: "-R$ 85,00", method: "Cartão de Débito" },
-  { id: 10, category: "Uber", icon: Car, color: "bg-info-soft text-info", date: "17/11/2025", time: "22:15", amount: "-R$ 42,00", method: "Cartão de Crédito" },
-];
+// As variáveis de estado e efeitos foram movidas para dentro do componente TransactionsPage
 
 const distributionData = [
   { name: "Moradia", value: 42, color: "var(--primary)" },
@@ -45,59 +36,121 @@ const subscriptions = [
 ];
 
 function TransactionsPage() {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // First find the internal user id
+        const { data: userData } = await supabase
+          .from("Usuarios")
+          .select("id")
+          .eq("id_auth", session.user.id)
+          .single();
+
+        if (userData) {
+          const { data, error } = await supabase
+            .from("Transacoes")
+            .select("*")
+            .eq("id_usuario", userData.id)
+            .order("data", { ascending: false });
+          
+          if (data) {
+            setTransactions(data);
+          }
+        }
+      }
+      setLoading(false);
+    };
+    fetchTransactions();
+  }, []);
+
+  const deleteTransaction = async (id: number) => {
+    const { error } = await supabase.from("Transacoes").delete().eq("id", id);
+    if (!error) {
+      setTransactions(prev => prev.filter(tx => tx.id !== id));
+    }
+  };
+
+  const totals = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let totalAccount = 0;
+    let monthEntradas = 0;
+    let monthSaidas = 0;
+
+    transactions.forEach(tx => {
+      const val = parseFloat(tx.valor || "0");
+      const isEntrada = tx.tipo === "entrada";
+      
+      // Total account: sum all entries, subtract all exits
+      if (isEntrada) totalAccount += val;
+      else totalAccount -= val;
+
+      // Current month stats
+      if (tx.data) {
+        const txDate = new Date(tx.data);
+        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+          if (isEntrada) monthEntradas += val;
+          else monthSaidas += val;
+        }
+      }
+    });
+
+    return { totalAccount, monthEntradas, monthSaidas };
+  }, [transactions]);
+
   return (
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
         <TopBar />
         <main className="flex-1 px-8 py-6 space-y-6">
-          {/* Page Title */}
           <header className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
             <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total em Conta */}
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
                 <Wallet className="size-5" />
               </div>
               <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ 6.358,00</div>
-              <div className="text-xs text-success font-medium mt-2">+6,4% em relação ao mês passado</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ {totals.totalAccount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-success font-medium mt-2">Saldo total disponível</div>
             </div>
-            {/* Entradas */}
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
                 <TrendingUp className="size-5" />
               </div>
-              <div className="text-xs text-muted-foreground mb-1">Entradas</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ 4.296,00</div>
-              <div className="text-xs text-success font-medium mt-2">Crescimento positivo</div>
+              <div className="text-xs text-muted-foreground mb-1">Entradas (Mês)</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ {totals.monthEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-success font-medium mt-2">Total recebido este mês</div>
             </div>
-            {/* Saídas */}
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="size-10 rounded-xl bg-danger-soft text-danger flex items-center justify-center mb-4">
                 <TrendingDown className="size-5" />
               </div>
-              <div className="text-xs text-muted-foreground mb-1">Saídas</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ 2.356,00</div>
-              <div className="text-xs text-danger font-medium mt-2">Aumento de gastos</div>
+              <div className="text-xs text-muted-foreground mb-1">Saídas (Mês)</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ {totals.monthSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-danger font-medium mt-2">Total gasto este mês</div>
             </div>
-            {/* Economia no Mês */}
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
                 <PiggyBank className="size-5" />
               </div>
               <div className="text-xs text-muted-foreground mb-1">Economia no Mês</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ 1.940,00</div>
-              <div className="text-xs text-success font-medium mt-2">Meta de economia atingida</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ {(totals.monthEntradas - totals.monthSaidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-success font-medium mt-2">Balanço mensal</div>
             </div>
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Column: Transactions Activity Card */}
             <div className="flex-1 min-w-0">
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -111,13 +164,6 @@ function TransactionsPage() {
                         className="bg-muted/50 border border-border rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary w-48"
                       />
                     </div>
-                    <button className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-lg text-sm font-medium hover:bg-muted transition">
-                      <Filter className="size-4" />
-                      <span>Filtrar</span>
-                    </button>
-                    <button className="p-1.5 border border-border rounded-lg text-muted-foreground hover:bg-muted transition">
-                      <MoreHorizontal className="size-4" />
-                    </button>
                   </div>
                 </div>
 
@@ -134,45 +180,45 @@ function TransactionsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {transactions.map((tx) => (
-                        <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
-                          <td className="py-4 px-2">
-                            <div className="flex items-center gap-3">
-                              <div className={`size-8 rounded-full flex items-center justify-center ${tx.color}`}>
-                                <tx.icon className="size-4" />
+                      {loading ? (
+                        <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Carregando...</td></tr>
+                      ) : transactions.length === 0 ? (
+                        <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
+                      ) : transactions.map((tx) => {
+                        const isEntrada = tx.tipo === "entrada";
+                        const dateObj = tx.data ? new Date(tx.data) : null;
+                        return (
+                          <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
+                            <td className="py-4 px-2">
+                              <div className="flex items-center gap-3">
+                                <div className={`size-8 rounded-full flex items-center justify-center ${isEntrada ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
+                                  <Wallet className="size-4" />
+                                </div>
+                                <span className="font-medium">{tx.categoria || "Geral"}</span>
                               </div>
-                              <span className="font-medium">{tx.category}</span>
-                            </div>
-                          </td>
-                          <td className="py-4 px-2 text-muted-foreground">{tx.date}</td>
-                          <td className="py-4 px-2 text-muted-foreground">{tx.time}</td>
-                          <td className={`py-4 px-2 font-semibold tabular-nums ${tx.amount.startsWith('+') ? 'text-success' : 'text-danger'}`}>
-                            {tx.amount}
-                          </td>
-                          <td className="py-4 px-2">
-                            <span className="px-2 py-1 bg-muted rounded-md text-[11px] font-medium">{tx.method}</span>
-                          </td>
-                          <td className="py-4 px-2 text-right">
-                            <button className="p-1 text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="size-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleDateString('pt-BR') || "-"}</td>
+                            <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || "-"}</td>
+                            <td className={`py-4 px-2 font-semibold tabular-nums ${isEntrada ? 'text-success' : 'text-danger'}`}>
+                              {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-4 px-2">
+                              <span className="px-2 py-1 bg-muted rounded-md text-[11px] font-medium">{tx.metodo_pagamento || "N/A"}</span>
+                            </td>
+                            <td className="py-4 px-2 text-right">
+                              <button 
+                                onClick={() => deleteTransaction(tx.id)}
+                                className="p-1 text-muted-foreground hover:text-danger transition-colors"
+                                title="Excluir transação"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
-                </div>
-
-                {/* Pagination */}
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-                  <span className="text-xs text-muted-foreground">Exibindo 10 de 45 transações</span>
-                  <div className="flex items-center gap-2">
-                    <button className="px-3 py-1 border border-border rounded text-xs font-medium hover:bg-muted disabled:opacity-50" disabled>Anterior</button>
-                    <button className="px-3 py-1 border border-primary bg-primary text-primary-foreground rounded text-xs font-medium">1</button>
-                    <button className="px-3 py-1 border border-border rounded text-xs font-medium hover:bg-muted">2</button>
-                    <button className="px-3 py-1 border border-border rounded text-xs font-medium hover:bg-muted">3</button>
-                    <button className="px-3 py-1 border border-border rounded text-xs font-medium hover:bg-muted">Próximo</button>
-                  </div>
                 </div>
               </div>
             </div>
