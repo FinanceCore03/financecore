@@ -109,7 +109,7 @@ function Login() {
         </form>
 
         {/* Padding for harmony */}
-        <div className="mt-4" />
+        <div className="mt-2" />
       </div>
     </div>
   );
