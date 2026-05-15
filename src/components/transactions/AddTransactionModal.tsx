@@ -93,17 +93,27 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
 
       if (userError || !userData) throw new Error("Usuário não encontrado");
 
-      const { error } = await supabase.from("Transacoes").insert({
-        id_usuario: userData.id,
+      const payload = {
         tipo,
+        quantia: quantia.replace(",", "."),
         categoria,
-        data: data.toISOString(),
-        valor: quantia.replace(",", "."),
         metodo_pagamento: metodo,
+        data: format(data, "yyyy-MM-dd"),
         descricao,
+        id_usuario: userData.id,
+      };
+
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`Erro no webhook: ${response.statusText}`);
+      }
 
       toast.success("Transação adicionada com sucesso!");
       resetForm();
