@@ -118,9 +118,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
-    if (isLoading) return;
-
-    if (!user && location.pathname !== "/login") {
+    if (!isLoading && !user && location.pathname !== "/login") {
       navigate({ to: "/login", replace: true });
     }
   }, [user, isLoading, navigate, location.pathname]);
@@ -136,13 +134,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Allow access to login page even if not logged in
-  if (location.pathname === "/login") {
-    return <>{children}</>;
-  }
-
-  // Redirecting...
-  if (!user) {
+  // If no user and not on login page, we're redirecting, so show nothing
+  if (!user && location.pathname !== "/login") {
     return null;
   }
 
