@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, CreditCard, Send } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -25,12 +26,13 @@ const transactions = [
   { id: 10, category: "Uber", icon: Car, color: "bg-info-soft text-info", date: "17/11/2025", time: "22:15", amount: "-R$ 42,00", method: "Cartão de Crédito" },
 ];
 
-const categories = [
-  { name: "Moradia", pct: 42, color: "bg-primary" },
-  { name: "Alimentação", pct: 24, color: "bg-chart-2" },
-  { name: "Transporte", pct: 13, color: "bg-chart-4" },
-  { name: "Lazer", pct: 11, color: "bg-chart-3" },
-  { name: "Assinaturas", pct: 6, color: "bg-chart-5" },
+const distributionData = [
+  { name: "Moradia", value: 42, color: "var(--primary)" },
+  { name: "Alimentação", value: 24, color: "#8E9196" }, // Soft Neutral
+  { name: "Transporte", value: 13, color: "#D3E4FD" }, // Soft Blue
+  { name: "Lazer", value: 11, color: "#FDE1D3" }, // Soft Orange/Peach
+  { name: "Assinaturas", value: 6, color: "#FEC6A1" }, // Soft Orange
+  { name: "Outros", value: 4, color: "#E5DEFF" }, // Soft Purple
 ];
 
 const subscriptions = [
@@ -55,39 +57,49 @@ function TransactionsPage() {
             <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
           </header>
 
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* Left Column: Stats & Main Table */}
-            <div className="flex-1 space-y-6 min-w-0">
-              {/* Resumo Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-                  <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
-                    <Wallet className="size-5" />
-                  </div>
-                  <div className="text-xs text-muted-foreground mb-1">Total de Transações</div>
-                  <div className="text-2xl font-semibold tracking-tight">R$ 6.358,00</div>
-                  <div className="text-xs text-success font-medium mt-2">+6,4% em relação ao mês passado</div>
-                </div>
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-                  <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
-                    <TrendingUp className="size-5" />
-                  </div>
-                  <div className="text-xs text-muted-foreground mb-1">Entradas</div>
-                  <div className="text-2xl font-semibold tracking-tight">R$ 4.296,00</div>
-                  <div className="text-xs text-success font-medium mt-2">Crescimento positivo</div>
-                </div>
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-                  <div className="size-10 rounded-xl bg-danger-soft text-danger flex items-center justify-center mb-4">
-                    <TrendingDown className="size-5" />
-                  </div>
-                  <div className="text-xs text-muted-foreground mb-1">Saídas</div>
-                  <div className="text-2xl font-semibold tracking-tight">R$ 2.356,00</div>
-                  <div className="text-xs text-danger font-medium mt-2">Aumento de gastos</div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total em Conta */}
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
+                <Wallet className="size-5" />
               </div>
+              <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ 6.358,00</div>
+              <div className="text-xs text-success font-medium mt-2">+6,4% em relação ao mês passado</div>
+            </div>
+            {/* Entradas */}
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
+                <TrendingUp className="size-5" />
+              </div>
+              <div className="text-xs text-muted-foreground mb-1">Entradas</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ 4.296,00</div>
+              <div className="text-xs text-success font-medium mt-2">Crescimento positivo</div>
+            </div>
+            {/* Saídas */}
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              <div className="size-10 rounded-xl bg-danger-soft text-danger flex items-center justify-center mb-4">
+                <TrendingDown className="size-5" />
+              </div>
+              <div className="text-xs text-muted-foreground mb-1">Saídas</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ 2.356,00</div>
+              <div className="text-xs text-danger font-medium mt-2">Aumento de gastos</div>
+            </div>
+            {/* Economia no Mês */}
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
+                <PiggyBank className="size-5" />
+              </div>
+              <div className="text-xs text-muted-foreground mb-1">Economia no Mês</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ 1.940,00</div>
+              <div className="text-xs text-success font-medium mt-2">Meta de economia atingida</div>
+            </div>
+          </div>
 
-              {/* Transactions Activity Card */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left Column: Transactions Activity Card */}
+            <div className="flex-1 min-w-0">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <h3 className="font-semibold text-lg tracking-tight">Atividade de Transações</h3>
                   <div className="flex items-center gap-2">
@@ -167,26 +179,44 @@ function TransactionsPage() {
 
             {/* Right Column: Distribution & Subscriptions */}
             <div className="w-full lg:w-80 space-y-6 shrink-0">
-              {/* Distribution Bar Chart Card */}
+              {/* Distribution Donut Chart Card */}
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold tracking-tight">Distribuição dos Gastos</h3>
                   <button className="text-[11px] text-primary font-semibold hover:underline">Ver detalhes</button>
                 </div>
                 
-                <div className="space-y-4">
-                  {categories.map((cat) => (
-                    <div key={cat.name} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">{cat.name}</span>
-                        <span className="font-semibold">{cat.pct}%</span>
+                <div className="relative h-[180px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie 
+                        data={distributionData} 
+                        dataKey="value" 
+                        innerRadius={55} 
+                        outerRadius={80} 
+                        paddingAngle={2} 
+                        stroke="none"
+                      >
+                        {distributionData.map((d, i) => (
+                          <Cell key={`cell-${i}`} fill={d.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Total</div>
+                    <div className="text-lg font-bold tracking-tight">R$ 2.356</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-2 gap-y-3 mt-4">
+                  {distributionData.map((d) => (
+                    <div key={d.name} className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className="size-2 rounded-full" style={{ backgroundColor: d.color }} />
+                        <span className="text-[10px] text-muted-foreground font-medium truncate">{d.name}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full ${cat.color} rounded-full transition-all duration-500`} 
-                          style={{ width: `${cat.pct}%` }}
-                        />
-                      </div>
+                      <span className="text-xs font-bold tabular-nums ml-3.5">{d.value}%</span>
                     </div>
                   ))}
                 </div>
