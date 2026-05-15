@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Mail, Lock, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Mail, Lock, Check, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -10,10 +12,36 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      navigate({ to: "/" });
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login attempt:", { email, password });
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+      
+      navigate({ to: "/" });
+    } catch (err: any) {
+      setError(err.message || "Erro ao fazer login");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,6 +71,11 @@ function Login() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="w-full space-y-5">
+          {error && (
+            <div className="bg-red-50 text-red-500 text-xs p-3 rounded-xl text-center border border-red-100">
+              {error}
+            </div>
+          )}
           {/* Email Field */}
           <div className="space-y-1.5">
             <div className="relative">
@@ -99,11 +132,11 @@ function Login() {
           {/* Submit Button */}
           <div className="pt-4">
             <button
-              type="button"
-              onClick={() => window.location.href = "/"}
-              className="w-full h-[58px] bg-[#4ade80] hover:bg-[#3ecb70] text-white font-bold text-lg rounded-2xl shadow-[0_8px_20px_rgba(74,222,128,0.25)] transform transition-all active:scale-[0.98] cursor-pointer"
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full h-[58px] bg-[#4ade80] hover:bg-[#3ecb70] text-white font-bold text-lg rounded-2xl shadow-[0_8px_20px_rgba(74,222,128,0.25)] transform transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Entrar
+              {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : "Entrar"}
             </button>
           </div>
         </form>
