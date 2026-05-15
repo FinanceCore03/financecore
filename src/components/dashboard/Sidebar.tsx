@@ -1,6 +1,8 @@
 import { LayoutDashboard, LineChart, ArrowLeftRight, Tags, Target, FileBarChart, Settings, Wallet, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
@@ -17,6 +19,41 @@ export function Sidebar() {
   const location = useLocation();
   const userInitial = user?.email?.[0].toUpperCase() || "U";
   const userEmail = user?.email || "Usuário";
+  
+  // Log temporário para diagnóstico do usuário logado e sua relação com a tabela Usuarios
+  useEffect(() => {
+    async function debugUser() {
+      if (!user) return;
+      
+      console.log("=== DIAGNÓSTICO DE USUÁRIO LOGADO ===");
+      console.log("Email no Auth:", user.email);
+      console.log("ID no Auth (user.id):", user.id);
+      
+      const { data: usuarioPorAuth, error: erroAuth } = await supabase
+        .from("Usuarios")
+        .select("*")
+        .eq("id_auth", user.id)
+        .maybeSingle();
+        
+      console.log("Busca por id_auth:", usuarioPorAuth || "NÃO ENCONTRADO");
+      if (erroAuth) console.error("Erro busca id_auth:", erroAuth);
+      
+      const { data: usuarioPorEmail, error: erroEmail } = await supabase
+        .from("Usuarios")
+        .select("*")
+        .eq("Email", user.email || "")
+        .maybeSingle();
+        
+      console.log("Busca por Email:", usuarioPorEmail || "NÃO ENCONTRADO");
+      if (erroEmail) console.error("Erro busca Email:", erroEmail);
+      
+      if (usuarioPorEmail && !usuarioPorAuth) {
+        console.warn("ALERTA: O email existe na tabela Usuarios, mas o id_auth está incorreto ou vazio.");
+      }
+      console.log("======================================");
+    }
+    debugUser();
+  }, [user]);
 
   return (
     <aside className="w-60 shrink-0 bg-card border-r border-border flex flex-col h-screen sticky top-0">
