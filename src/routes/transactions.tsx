@@ -13,18 +13,42 @@ export const Route = createFileRoute("/transactions")({
   component: () => <TransactionsPage />,
 });
 
-const transactions = [
-  { id: 1, category: "Salário", icon: Wallet, color: "bg-success-soft text-success", date: "10/11/2025", time: "08:15", amount: "+R$ 5.000,00", method: "Pix" },
-  { id: 2, category: "Mercado", icon: ShoppingBag, color: "bg-primary-soft text-primary", date: "11/11/2025", time: "14:20", amount: "-R$ 320,00", method: "Cartão de Débito" },
-  { id: 3, category: "Transporte", icon: Car, color: "bg-info-soft text-info", date: "12/11/2025", time: "09:40", amount: "-R$ 48,00", method: "Cartão de Crédito" },
-  { id: 4, category: "Restaurante", icon: Utensils, color: "bg-warning-soft text-warning", date: "12/11/2025", time: "21:10", amount: "-R$ 120,00", method: "Pix" },
-  { id: 5, category: "Freelance", icon: Briefcase, color: "bg-primary-soft text-primary", date: "13/11/2025", time: "16:30", amount: "+R$ 800,00", method: "Transferência" },
-  { id: 6, category: "Netflix", icon: Tv, color: "bg-danger-soft text-danger", date: "14/11/2025", time: "07:00", amount: "-R$ 39,90", method: "Cartão de Crédito" },
-  { id: 7, category: "Academia", icon: Dumbbell, color: "bg-info-soft text-info", date: "15/11/2025", time: "10:00", amount: "-R$ 99,90", method: "Cartão de Crédito" },
-  { id: 8, category: "Aluguel", icon: Home, color: "bg-danger-soft text-danger", date: "05/11/2025", time: "08:00", amount: "-R$ 1.200,00", method: "Pix" },
-  { id: 9, category: "Farmácia", icon: PillIcon, color: "bg-warning-soft text-warning", date: "16/11/2025", time: "18:45", amount: "-R$ 85,00", method: "Cartão de Débito" },
-  { id: 10, category: "Uber", icon: Car, color: "bg-info-soft text-info", date: "17/11/2025", time: "22:15", amount: "-R$ 42,00", method: "Cartão de Crédito" },
-];
+const [transactions, setTransactions] = useState<any[]>([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  const fetchTransactions = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data, error } = await supabase
+        .from("Transacoes")
+        .select("*")
+        .eq("id_usuario", user.id) // Assuming id_usuario corresponds to auth user id or user table id
+        .order("data", { ascending: false });
+      
+      if (data) {
+        setTransactions(data.map(tx => ({
+          ...tx,
+          id: tx.id,
+          category: tx.categoria,
+          icon: Wallet, // Placeholder
+          color: tx.tipo === 'entrada' ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger',
+          date: tx.data ? new Date(tx.data).toLocaleDateString('pt-BR') : '',
+          time: tx.data ? new Date(tx.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '',
+          amount: `${tx.tipo === 'entrada' ? '+' : '-'}R$ ${parseFloat(tx.valor || '0').toFixed(2)}`,
+          method: tx.metodo_pagamento || 'N/A'
+        })));
+      }
+    }
+    setLoading(false);
+  };
+  fetchTransactions();
+}, []);
+
+const deleteTransaction = async (id: number) => {
+  await supabase.from("Transacoes").delete().eq("id", id);
+  setTransactions(prev => prev.filter(tx => tx.id !== id));
+};
 
 const distributionData = [
   { name: "Moradia", value: 42, color: "var(--primary)" },
