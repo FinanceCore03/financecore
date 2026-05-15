@@ -19,23 +19,7 @@ export const Route = createFileRoute("/transactions")({
 
 // As variáveis de estado e efeitos foram movidas para dentro do componente TransactionsPage
 
-const distributionData = [
-  { name: "Moradia", value: 42, color: "var(--primary)" },
-  { name: "Alimentação", value: 24, color: "#8E9196" }, // Soft Neutral
-  { name: "Transporte", value: 13, color: "#D3E4FD" }, // Soft Blue
-  { name: "Lazer", value: 11, color: "#FDE1D3" }, // Soft Orange/Peach
-  { name: "Assinaturas", value: 6, color: "#FEC6A1" }, // Soft Orange
-  { name: "Outros", value: 4, color: "#E5DEFF" }, // Soft Purple
-];
-
-const subscriptions = [
-  { name: "Netflix", icon: Tv, color: "bg-danger-soft text-danger", price: "R$ 39,90", period: "Mensal" },
-  { name: "Spotify", icon: Tv, color: "bg-success-soft text-success", price: "R$ 21,90", period: "Mensal" },
-  { name: "YouTube Premium", icon: Tv, color: "bg-danger-soft text-danger", price: "R$ 24,90", period: "Mensal" },
-  { name: "Google One", icon: Wallet, color: "bg-info-soft text-info", price: "R$ 9,90", period: "Mensal" },
-  { name: "iCloud", icon: Wallet, color: "bg-info-soft text-info", price: "R$ 14,90", period: "Mensal" },
-  { name: "Amazon Prime", icon: ShoppingBag, color: "bg-warning-soft text-warning", price: "R$ 19,90", period: "Mensal" },
-];
+// Removidos dados estáticos para cálculo dinâmico
 
 function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -43,6 +27,7 @@ function TransactionsPage() {
   const [periodFilter, setPeriodFilter] = useState("Este mês");
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -53,9 +38,10 @@ function TransactionsPage() {
         .from("Usuarios")
         .select("id")
         .eq("id_auth", user.id)
-        .single();
+        .maybeSingle();
 
       if (usuario) {
+        setUsuarioId(usuario.id);
         const { data, error: transacoesError } = await supabase
           .from("Transacoes")
           .select("*")
@@ -65,6 +51,9 @@ function TransactionsPage() {
         if (data) {
           setTransactions(data);
         }
+      } else {
+        console.error("Usuário não encontrado na tabela Usuarios");
+        toast.error("Erro ao carregar dados do usuário.");
       }
     }
     setLoading(false);
@@ -75,9 +64,19 @@ function TransactionsPage() {
   }, []);
 
   const deleteTransaction = async (id: number) => {
-    const { error } = await supabase.from("Transacoes").delete().eq("id", id);
+    if (!usuarioId) return;
+    
+    const { error } = await supabase
+      .from("Transacoes")
+      .delete()
+      .eq("id", id)
+      .eq("id_usuario", usuarioId); // Garante que só deleta o que pertence ao usuário
+
     if (!error) {
+      toast.success("Transação excluída.");
       setTransactions(prev => prev.filter(tx => tx.id !== id));
+    } else {
+      toast.error("Erro ao excluir transação.");
     }
   };
 
@@ -114,6 +113,34 @@ function TransactionsPage() {
       return true;
     });
   }, [transactions, periodFilter]);
+
+  const distributionData = useMemo(() => {
+    const categoriesMap: Record<string, number> = {};
+    let totalExps = 0;
+
+    transactions
+      .filter(tx => tx.tipo === "saida")
+      .forEach(tx => {
+        const cat = tx.categoria || "Outros";
+        const val = parseFloat(tx.valor || "0");
+        categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
+        totalExps += val;
+      });
+
+    const colors = ["var(--primary)", "#8E9196", "#D3E4FD", "#FDE1D3", "#FEC6A1", "#E5DEFF"];
+
+    return Object.entries(categoriesMap).map(([name, value], i) => ({
+      name,
+      value: totalExps > 0 ? Math.round((value / totalExps) * 100) : 0,
+      amount: value,
+      color: colors[i % colors.length]
+    })).sort((a, b) => b.amount - a.amount);
+  }, [transactions]);
+
+  const subscriptions = useMemo<any[]>(() => {
+    // Por enquanto retornamos vazio
+    return [];
+  }, [transactions]);
 
   const totals = useMemo(() => {
     const now = new Date();
@@ -330,8 +357,8 @@ function TransactionsPage() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Total</div>
-                    <div className="text-lg font-bold tracking-tight">R$ 2.356</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Total Gastos</div>
+                    <div className="text-lg font-bold tracking-tight">R$ {totals.monthSaidas.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
                   </div>
                 </div>
 

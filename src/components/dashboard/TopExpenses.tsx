@@ -1,12 +1,16 @@
-const rows = [
-  { cat: "Moradia", val: "R$ 1.200,00", pct: "42%", tone: "text-primary" },
-  { cat: "Alimentação", val: "R$ 680,00", pct: "24%", tone: "text-chart-2" },
-  { cat: "Transporte", val: "R$ 360,00", pct: "13%", tone: "text-chart-4" },
-  { cat: "Lazer", val: "R$ 300,00", pct: "11%", tone: "text-chart-3" },
-  { cat: "Assinaturas", val: "R$ 180,00", pct: "6%", tone: "text-chart-5" },
-];
+interface TopExpensesProps {
+  categories: {
+    name: string;
+    value: number;
+    pct: number;
+    color: string;
+    bg: string;
+  }[];
+}
 
-export function TopExpenses() {
+export function TopExpenses({ categories }: TopExpensesProps) {
+  const displayCategories = categories.slice(0, 5);
+
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full">
       <div className="flex items-center justify-between mb-4">
@@ -19,16 +23,22 @@ export function TopExpenses() {
       </div>
 
       <div className="divide-y divide-border">
-        {rows.map((r) => (
-          <div key={r.cat} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center py-3 text-sm">
-            <div>
-              <div className="font-medium">{r.cat}</div>
-              <div className="text-[11px] text-muted-foreground mt-0.5">Despesa fixa</div>
+        {displayCategories.length === 0 ? (
+          <div className="py-4 text-center text-xs text-muted-foreground">Sem despesas registradas.</div>
+        ) : (
+          displayCategories.map((r) => (
+            <div key={r.name} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center py-3 text-sm">
+              <div>
+                <div className="font-medium">{r.name}</div>
+                <div className="text-[11px] text-muted-foreground mt-0.5">Gasto acumulado</div>
+              </div>
+              <div className="font-semibold tabular-nums">
+                R$ {r.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </div>
+              <div className={`text-xs font-semibold`} style={{ color: r.color }}>{r.pct}%</div>
             </div>
-            <div className="font-semibold tabular-nums">{r.val}</div>
-            <div className={`text-xs font-semibold ${r.tone}`}>{r.pct}</div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

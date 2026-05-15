@@ -8,6 +8,7 @@ import { TopExpenses } from "@/components/dashboard/TopExpenses";
 import { Transactions } from "@/components/dashboard/Transactions";
 import { CategoryBars } from "@/components/dashboard/CategoryBars";
 import { DistributionDonut } from "@/components/dashboard/DistributionDonut";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +21,22 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
+  const { 
+    transactions, 
+    loading, 
+    stats, 
+    chartData, 
+    categoriesData 
+  } = useDashboardData();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground animate-pulse">Carregando dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex">
       <Sidebar />
@@ -34,17 +51,21 @@ function Dashboard() {
             <Filters />
           </header>
 
-          <StatCards />
+          <StatCards stats={stats} />
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-            <div className="xl:col-span-2"><SpendingChart /></div>
-            <div><TopExpenses /></div>
+            <div className="xl:col-span-2">
+              <SpendingChart data={chartData} />
+            </div>
+            <div>
+              <TopExpenses categories={categoriesData.list} />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <Transactions />
-            <CategoryBars />
-            <DistributionDonut />
+            <Transactions transactions={transactions.slice(0, 5)} />
+            <CategoryBars categories={categoriesData.list} total={categoriesData.total} />
+            <DistributionDonut data={categoriesData.list} total={categoriesData.total} />
           </div>
 
           <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">

@@ -1,14 +1,19 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
-const data = [
-  { name: "Moradia", value: 42, color: "oklch(0.62 0.18 290)" },
-  { name: "Alimentação", value: 24, color: "oklch(0.72 0.14 340)" },
-  { name: "Transporte", value: 13, color: "oklch(0.72 0.13 220)" },
-  { name: "Lazer", value: 11, color: "oklch(0.78 0.13 80)" },
-  { name: "Outros", value: 10, color: "oklch(0.72 0.14 155)" },
-];
+interface DistributionDonutProps {
+  data: {
+    name: string;
+    value: number;
+    pct: number;
+    color: string;
+    bg: string;
+  }[];
+  total: number;
+}
 
-export function DistributionDonut() {
+export function DistributionDonut({ data, total }: DistributionDonutProps) {
+  const displayData = data.slice(0, 5);
+
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full">
       <div className="flex items-center justify-between mb-4">
@@ -17,27 +22,44 @@ export function DistributionDonut() {
       </div>
 
       <div className="relative h-[180px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={data} dataKey="value" innerRadius={55} outerRadius={80} paddingAngle={2} stroke="none">
-              {data.map((d) => <Cell key={d.name} fill={d.color} />)}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <div className="text-[11px] text-muted-foreground">Total</div>
-          <div className="text-lg font-semibold tracking-tight">R$ 2.840</div>
-        </div>
+        {displayData.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground italic">
+            Sem dados
+          </div>
+        ) : (
+          <>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie 
+                  data={displayData} 
+                  dataKey="value" 
+                  innerRadius={55} 
+                  outerRadius={80} 
+                  paddingAngle={2} 
+                  stroke="none"
+                >
+                  {displayData.map((d) => <Cell key={d.name} fill={d.color} />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className="text-[11px] text-muted-foreground">Total Gasto</div>
+              <div className="text-lg font-semibold tracking-tight">
+                R$ {total.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-4">
-        {data.map((d) => (
+        {displayData.map((d) => (
           <div key={d.name} className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span className="size-2 rounded-full" style={{ background: d.color }} />
-              <span className="text-muted-foreground">{d.name}</span>
+              <span className="text-muted-foreground truncate max-w-[80px]">{d.name}</span>
             </div>
-            <span className="font-semibold tabular-nums">{d.value}%</span>
+            <span className="font-semibold tabular-nums">{d.pct}%</span>
           </div>
         ))}
       </div>

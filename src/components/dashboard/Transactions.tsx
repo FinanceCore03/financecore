@@ -1,14 +1,29 @@
-import { ShoppingCart, Wallet, Car, Tv, Utensils } from "lucide-react";
+import { ShoppingCart, Wallet, Car, Tv, Utensils, HelpCircle } from "lucide-react";
 
-const tx = [
-  { name: "Supermercado", type: "Gasto", value: "R$ 320,00", icon: ShoppingCart, bg: "bg-primary-soft text-primary" },
-  { name: "Salário", type: "Entrada", value: "R$ 5.000,00", icon: Wallet, bg: "bg-success-soft text-success" },
-  { name: "Uber", type: "Gasto", value: "R$ 48,00", icon: Car, bg: "bg-info-soft text-info" },
-  { name: "Netflix", type: "Gasto", value: "R$ 39,90", icon: Tv, bg: "bg-danger-soft text-danger" },
-  { name: "Restaurante", type: "Gasto", value: "R$ 120,00", icon: Utensils, bg: "bg-warning-soft text-warning" },
-];
+interface TransactionsProps {
+  transactions: any[];
+}
 
-export function Transactions() {
+const getIcon = (categoria: string) => {
+  const c = categoria.toLowerCase();
+  if (c.includes("alimento") || c.includes("restaurante")) return Utensils;
+  if (c.includes("transporte") || c.includes("uber")) return Car;
+  if (c.includes("assinatura") || c.includes("netflix")) return Tv;
+  if (c.includes("salário") || c.includes("receita")) return Wallet;
+  if (c.includes("mercado") || c.includes("compra")) return ShoppingCart;
+  return HelpCircle;
+};
+
+const getBg = (tipo: string, categoria: string) => {
+  if (tipo === "entrada") return "bg-success-soft text-success";
+  const c = categoria.toLowerCase();
+  if (c.includes("alimento")) return "bg-warning-soft text-warning";
+  if (c.includes("transporte")) return "bg-info-soft text-info";
+  if (c.includes("assinatura")) return "bg-danger-soft text-danger";
+  return "bg-primary-soft text-primary";
+};
+
+export function Transactions({ transactions }: TransactionsProps) {
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full">
       <div className="flex items-center justify-between mb-4">
@@ -21,18 +36,32 @@ export function Transactions() {
       </div>
 
       <div className="divide-y divide-border">
-        {tx.map((t) => (
-          <div key={t.name} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center py-3 text-sm">
-            <div className="flex items-center gap-3">
-              <div className={`size-8 rounded-full flex items-center justify-center ${t.bg}`}>
-                <t.icon className="size-4" />
+        {transactions.length === 0 ? (
+          <div className="py-4 text-center text-xs text-muted-foreground">Nenhuma transação recente.</div>
+        ) : (
+          transactions.map((t) => {
+            const Icon = getIcon(t.categoria || "");
+            const bg = getBg(t.tipo, t.categoria || "");
+            const isEntrada = t.tipo === "entrada";
+            
+            return (
+              <div key={t.id} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center py-3 text-sm">
+                <div className="flex items-center gap-3">
+                  <div className={`size-8 rounded-full flex items-center justify-center ${bg}`}>
+                    <Icon className="size-4" />
+                  </div>
+                  <span className="font-medium truncate max-w-[120px]">{t.descricao || t.categoria || "Sem descrição"}</span>
+                </div>
+                <span className={`text-xs font-semibold ${isEntrada ? "text-success" : "text-danger"}`}>
+                  {isEntrada ? "Entrada" : "Gasto"}
+                </span>
+                <span className="font-semibold tabular-nums">
+                  R$ {parseFloat(t.valor || "0").toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
               </div>
-              <span className="font-medium">{t.name}</span>
-            </div>
-            <span className={`text-xs font-semibold ${t.type === "Entrada" ? "text-success" : "text-danger"}`}>{t.type}</span>
-            <span className="font-semibold tabular-nums">{t.value}</span>
-          </div>
-        ))}
+            );
+          })
+        )}
       </div>
     </div>
   );
