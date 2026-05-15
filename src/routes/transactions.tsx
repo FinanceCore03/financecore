@@ -41,23 +41,32 @@ function TransactionsPage() {
 
   useEffect(() => {
     const fetchTransactions = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Primeiro buscamos o usuário na tabela Usuarios usando o e-mail ou id_auth
-        const { data: userData } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // 1. Buscar na tabela Usuarios o registro onde Usuarios.id_auth = user.id
+        const { data: usuario, error: usuarioError } = await supabase
           .from("Usuarios")
           .select("id")
-          .or(`Email.eq.${session.user.email},id_auth.eq.${session.user.id}`)
+          .eq("id_auth", user.id)
           .single();
 
-        if (userData) {
-          // Buscamos as transações. O usuário informou que o campo pode ser 'id_cliente' em vez de 'id_usuario'
-          const { data } = await supabase
+        if (usuarioError) {
+          console.error("Usuário não encontrado na tabela Usuarios:", usuarioError);
+        }
+
+        if (usuario) {
+          // 2. Buscar na tabela Transacoes as linhas onde Transacoes.id_usuario = Usuarios.id
+          const { data, error: transacoesError } = await supabase
             .from("Transacoes")
             .select("*")
-            .or(`id_usuario.eq.${userData.id},id_cliente.eq.${userData.id}`)
+            .eq("id_usuario", usuario.id)
             .order("data", { ascending: false });
           
+          if (transacoesError) {
+            console.error("Erro ao buscar transações:", transacoesError);
+          }
+
           if (data) {
             setTransactions(data);
           }
