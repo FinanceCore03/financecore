@@ -43,23 +43,14 @@ function TransactionsPage() {
     const fetchTransactions = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        // First find the internal user id
-        const { data: userData } = await supabase
-          .from("Usuarios")
-          .select("id")
-          .eq("id_auth", session.user.id)
-          .single();
-
-        if (userData) {
-          const { data, error } = await supabase
-            .from("Transacoes")
-            .select("*")
-            .eq("id_usuario", userData.id)
-            .order("data", { ascending: false });
-          
-          if (data) {
-            setTransactions(data);
-          }
+        const { data, error } = await supabase
+          .from("Transacoes")
+          .select("*")
+          .eq("id_cliente", session.user.id)
+          .order("data", { ascending: false });
+        
+        if (data) {
+          setTransactions(data);
         }
       }
       setLoading(false);
