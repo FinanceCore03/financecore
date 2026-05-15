@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, CreditCard, Send } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, CreditCard, Send, ArrowUpRight, ArrowDownRight, Banknote } from "lucide-react";
+import { ExpenseDoughnutChart } from "@/components/dashboard/ExpenseDoughnutChart";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
