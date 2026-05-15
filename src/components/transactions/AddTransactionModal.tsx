@@ -49,6 +49,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   const [loading, setLoading] = useState(false);
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
 
+  const isFormValid = tipo !== "" && categoria !== "" && quantia !== "" && metodo !== "" && data !== null;
   const isFormDirty = tipo !== "saida" || categoria !== "" || quantia !== "" || metodo !== "" || descricao !== "";
 
   const resetForm = () => {
@@ -75,15 +76,17 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   };
 
   const handleSave = async () => {
-    if (!categoria || !quantia || !metodo) {
-      toast.error("Por favor, preencha todos os campos obrigatórios (Categoria, Quantia e Método).");
+    if (!isFormValid) {
+      toast.error("Por favor, preencha todos os campos obrigatórios (Tipo, Quantia, Categoria, Método e Data).");
       return;
     }
 
+    console.log("Iniciando salvamento da transação");
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
+      console.log("Usuário Auth encontrado", user.id);
 
       const { data: userData, error: userError } = await supabase
         .from("Usuarios")
@@ -91,7 +94,11 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
         .eq("id_auth", user.id)
         .single();
 
-      if (userError || !userData) throw new Error("Usuário não encontrado");
+      if (userError || !userData) {
+        console.error("Erro ao buscar usuário interno:", userError);
+        throw new Error("Usuário não encontrado na tabela Usuarios");
+      }
+      console.log("Usuário interno encontrado", userData.id);
 
       const payload = {
         tipo,
@@ -99,10 +106,11 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
         categoria,
         metodo_pagamento: metodo,
         data: format(data, "yyyy-MM-dd"),
-        descricao,
+        descricao: descricao || "",
         id_usuario: userData.id,
       };
 
+      console.log("Enviando webhook", payload);
       const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
         method: "POST",
         headers: {
@@ -112,14 +120,17 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       });
 
       if (!response.ok) {
+        console.error("Erro na resposta do webhook:", response.status, response.statusText);
         throw new Error(`Erro no webhook: ${response.statusText}`);
       }
 
+      console.log("Webhook enviado com sucesso");
       toast.success("Transação adicionada com sucesso!");
       resetForm();
       onSuccess();
       onClose();
     } catch (error: any) {
+      console.error("Erro ao enviar webhook", error);
       toast.error("Erro ao salvar transação: " + error.message);
     } finally {
       setLoading(false);
@@ -251,8 +262,12 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
               </Button>
               <Button
                 onClick={handleSave}
-                disabled={loading}
-                className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+                disabled={loading || !isFormValid}
+                className={`flex-1 h-12 rounded-xl font-bold shadow-lg transition-all active:scale-[0.98] ${
+                  !isFormValid 
+                    ? "bg-white border border-border text-muted-foreground/50 cursor-not-allowed opacity-50" 
+                    : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20"
+                }`}
               >
                 {loading ? "Salvando..." : "Salvar"}
               </Button>
