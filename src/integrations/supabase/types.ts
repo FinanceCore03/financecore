@@ -89,18 +89,21 @@ export type Database = {
       }
       Usuarios: {
         Row: {
+          Email: string | null
           id: number
           id_auth: string | null
           Moeda: string | null
           Nome: string | null
         }
         Insert: {
+          Email?: string | null
           id?: number
           id_auth?: string | null
           Moeda?: string | null
           Nome?: string | null
         }
         Update: {
+          Email?: string | null
           id?: number
           id_auth?: string | null
           Moeda?: string | null
