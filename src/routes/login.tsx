@@ -25,7 +25,7 @@ function Login() {
       console.log("User authenticated, redirecting to dashboard");
       const timer = setTimeout(() => {
         navigate({ to: "/", replace: true });
-      }, 500);
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [user, navigate, showFinalAnimation]);
