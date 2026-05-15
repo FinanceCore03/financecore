@@ -19,9 +19,12 @@ function Login() {
   const { user } = useAuth();
 
   useEffect(() => {
+    console.log("Login check: user =", !!user, "animation =", showFinalAnimation);
     if (user && !showFinalAnimation) {
+      console.log("User detected, starting transition...");
       setShowFinalAnimation(true);
       const timer = setTimeout(() => {
+        console.log("Navigating to dashboard...");
         navigate({ to: "/", replace: true });
       }, 500);
       return () => clearTimeout(timer);
@@ -32,18 +35,25 @@ function Login() {
     e.preventDefault();
     if (isSubmitting || showFinalAnimation) return;
 
+    console.log("Login attempt started for:", email);
     setIsSubmitting(true);
     setError(null);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.log("Login error from Supabase:", error.message);
+        throw error;
+      }
+      
+      console.log("Login success!", data.user?.id);
+      // Success will be handled by the useEffect watching 'user'
     } catch (err: any) {
-      console.error("Login error:", err);
+      console.error("Login catch block:", err);
       setError(err.message || "Erro ao fazer login. Verifique suas credenciais.");
       setIsSubmitting(false);
     }
