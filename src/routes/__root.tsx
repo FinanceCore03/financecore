@@ -127,13 +127,22 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex h-screen w-full items-center justify-center bg-white text-gray-800">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#4ade80] border-t-transparent" />
+          <p className="text-sm font-medium">Carregando...</p>
+        </div>
       </div>
     );
   }
 
-  if (!user && location.pathname !== "/login") {
+  // Allow access to login page even if not logged in
+  if (location.pathname === "/login") {
+    return <>{children}</>;
+  }
+
+  // Redirecting...
+  if (!user) {
     return null;
   }
 
