@@ -51,11 +51,11 @@ function TransactionsPage() {
           .single();
 
         if (userData) {
-          // Agora filtramos as transações usando o ID interno (id_usuario)
+          // Buscamos as transações. O usuário informou que o campo pode ser 'id_cliente' em vez de 'id_usuario'
           const { data } = await supabase
             .from("Transacoes")
             .select("*")
-            .eq("id_usuario", userData.id)
+            .or(`id_usuario.eq.${userData.id},id_cliente.eq.${userData.id}`)
             .order("data", { ascending: false });
           
           if (data) {
