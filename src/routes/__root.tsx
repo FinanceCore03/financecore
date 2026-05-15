@@ -158,6 +158,7 @@ function RootComponent() {
       <AuthProvider>
         <AuthGuard>
           <Outlet />
+          <Toaster position="top-right" richColors closeButton />
         </AuthGuard>
       </AuthProvider>
     </QueryClientProvider>
