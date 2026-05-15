@@ -285,7 +285,7 @@ function TransactionsPage() {
                               </div>
                             </td>
                             <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleDateString('pt-BR') || "-"}</td>
-                            <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || "-"}</td>
+                            <td className="py-4 px-2 text-muted-foreground truncate max-w-[150px]">{tx.descricao || "-"}</td>
                             <td className={`py-4 px-2 font-semibold tabular-nums ${isEntrada ? 'text-success' : 'text-danger'}`}>
                               {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </td>
