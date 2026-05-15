@@ -85,21 +85,48 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
     setLoading(true);
 
     try {
-      // 1. Obter usuário do Auth
+      // 1. Pegar o usuário autenticado atual
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) throw new Error("Usuário não autenticado no sistema.");
-      console.log("Usuário autenticado:", user.id);
+      
+      console.log("Auth user completo:", user);
+      console.log("Auth user id:", user?.id);
+      console.log("Auth user email:", user?.email);
 
-      // 2. Buscar ID interno na tabela Usuarios
-      const { data: userData, error: userError } = await supabase
+      if (authError || !user) throw new Error("Usuário não autenticado no sistema.");
+
+      // 2. Buscar na tabela Usuarios com o nome exato da tabela
+      const { data: usuarioPorAuth, error: erroAuth } = await supabase
         .from("Usuarios")
-        .select("id")
+        .select("id, id_auth, Email, Nome")
         .eq("id_auth", user.id)
         .maybeSingle();
 
-      if (userError) throw new Error(`Erro ao consultar tabela Usuarios: ${userError.message}`);
-      if (!userData) throw new Error("Seu usuário não foi encontrado na tabela 'Usuarios'.");
+      console.log("Usuário encontrado por id_auth:", usuarioPorAuth);
+      console.log("Erro ao buscar por id_auth:", erroAuth);
+
+      // 3. Busca auxiliar pelo e-mail para diagnóstico
+      const { data: usuarioPorEmail, error: erroEmail } = await supabase
+        .from("Usuarios")
+        .select("id, id_auth, Email, Nome")
+        .eq("Email", user.email)
+        .maybeSingle();
+
+      console.log("Usuário encontrado por Email:", usuarioPorEmail);
+      console.log("Erro ao buscar por Email:", erroEmail);
+
+      // 4. Verificações de diagnóstico
+      if (usuarioPorEmail && !usuarioPorAuth) {
+        console.log("O Email existe na tabela Usuarios, mas o id_auth não corresponde ao user.id do Supabase Auth.");
+      }
+
+      if (!usuarioPorAuth && !usuarioPorEmail) {
+        console.log("Não existe registro na tabela Usuarios para este usuário autenticado.");
+      }
+
+      if (erroAuth) throw new Error(`Erro ao consultar tabela Usuarios: ${erroAuth.message}`);
+      if (!usuarioPorAuth) throw new Error("Seu usuário não foi encontrado na tabela 'Usuarios'.");
       
+      const userData = usuarioPorAuth;
       console.log("ID interno do usuário encontrado:", userData.id);
 
       // 3. Preparar Payload
