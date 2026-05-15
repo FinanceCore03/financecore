@@ -18,37 +18,44 @@ function Login() {
   const { user } = useAuth();
 
   useEffect(() => {
+    // Only navigate if user is actually authenticated
     if (user) {
-      navigate({ to: "/" });
+      console.log("User detected on login page, navigating to home");
+      navigate({ to: "/", replace: true });
     }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
     setError(null);
     
     try {
+      console.log("Attempting sign in with:", email);
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (error) throw error;
       
-      navigate({ to: "/" });
+      console.log("Login successful");
+      // AuthContext will update and triggering the useEffect above
     } catch (err: any) {
-      setError(err.message || "Erro ao fazer login");
+      console.error("Login error:", err);
+      setError(err.message || "Erro ao fazer login. Verifique suas credenciais.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center font-sans overflow-hidden">
+    <div className="relative min-h-screen w-full flex items-center justify-center font-sans overflow-hidden bg-slate-100">
       {/* Background with Ocean/Wave Image - Switched to cool tones */}
       <div 
-        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-all duration-700"
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000"
         style={{ 
           backgroundImage: 'url("https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop")',
         }}
@@ -58,7 +65,7 @@ function Login() {
       </div>
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white/95 backdrop-blur-sm rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-10 md:p-14 flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-[460px] mx-4 bg-white/95 backdrop-blur-sm rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-10 md:p-14 flex flex-col items-center animate-in fade-in zoom-in duration-500">
         {/* Header - More spacing and refined typography */}
         <div className="text-center mb-10 w-full">
           <h1 className="text-[34px] font-bold text-gray-800 leading-tight tracking-tight mb-3">
@@ -72,7 +79,7 @@ function Login() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="w-full space-y-7">
           {error && (
-            <div className="bg-red-50 text-red-500 text-xs p-3 rounded-xl text-center border border-red-100">
+            <div className="bg-red-50 text-red-500 text-sm p-4 rounded-xl text-center border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300">
               {error}
             </div>
           )}
@@ -83,13 +90,14 @@ function Login() {
               E-mail
             </label>
             <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-turquoise-500 transition-colors">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#00CED1] transition-colors pointer-events-none">
                 <Mail size={18} />
               </div>
               <input
                 type="email"
                 placeholder="Seu e-mail"
                 value={email}
+                autoComplete="email"
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full h-[58px] pl-12 pr-4 bg-[#f8fafc] border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#00CED1]/10 focus:border-[#00CED1]/30 transition-all text-gray-700 placeholder:text-gray-300"
                 required
@@ -103,13 +111,14 @@ function Login() {
               Senha
             </label>
             <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-turquoise-500 transition-colors">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#00CED1] transition-colors pointer-events-none">
                 <Lock size={18} />
               </div>
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Sua senha"
                 value={password}
+                autoComplete="current-password"
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full h-[58px] pl-12 pr-4 bg-[#f8fafc] border border-gray-100 rounded-2xl focus:outline-none focus:ring-4 focus:ring-[#00CED1]/10 focus:border-[#00CED1]/30 transition-all text-gray-700 placeholder:text-gray-300"
                 required
