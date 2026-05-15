@@ -5,6 +5,8 @@ import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus,
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -40,42 +42,35 @@ function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState("Este mês");
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+  const fetchTransactions = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
 
-      if (user) {
-        // 1. Buscar na tabela Usuarios o registro onde Usuarios.id_auth = user.id
-        const { data: usuario, error: usuarioError } = await supabase
-          .from("Usuarios")
-          .select("id")
-          .eq("id_auth", user.id)
-          .single();
+    if (user) {
+      const { data: usuario, error: usuarioError } = await supabase
+        .from("Usuarios")
+        .select("id")
+        .eq("id_auth", user.id)
+        .single();
 
-        if (usuarioError) {
-          console.error("Usuário não encontrado na tabela Usuarios:", usuarioError);
-        }
-
-        if (usuario) {
-          // 2. Buscar na tabela Transacoes as linhas onde Transacoes.id_usuario = Usuarios.id
-          const { data, error: transacoesError } = await supabase
-            .from("Transacoes")
-            .select("*")
-            .eq("id_usuario", usuario.id)
-            .order("data", { ascending: false });
-          
-          if (transacoesError) {
-            console.error("Erro ao buscar transações:", transacoesError);
-          }
-
-          if (data) {
-            setTransactions(data);
-          }
+      if (usuario) {
+        const { data, error: transacoesError } = await supabase
+          .from("Transacoes")
+          .select("*")
+          .eq("id_usuario", usuario.id)
+          .order("data", { ascending: false });
+        
+        if (data) {
+          setTransactions(data);
         }
       }
-      setLoading(false);
-    };
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchTransactions();
   }, []);
 
@@ -190,7 +185,10 @@ function TransactionsPage() {
                 )}
               </div>
               
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm">
+              <button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm"
+              >
                 <Plus className="size-4" />
                 <span>Adicionar Transação</span>
               </button>
@@ -255,7 +253,7 @@ function TransactionsPage() {
                       <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
                         <th className="text-left font-medium py-3 px-2">Categoria</th>
                         <th className="text-left font-medium py-3 px-2">Data</th>
-                        <th className="text-left font-medium py-3 px-2">Horário</th>
+                        <th className="text-left font-medium py-3 px-2">Descrição</th>
                         <th className="text-left font-medium py-3 px-2">Quantia</th>
                         <th className="text-left font-medium py-3 px-2">Método</th>
                         <th className="text-right font-medium py-3 px-2">Ação</th>
@@ -280,7 +278,7 @@ function TransactionsPage() {
                               </div>
                             </td>
                             <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleDateString('pt-BR') || "-"}</td>
-                            <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) || "-"}</td>
+                            <td className="py-4 px-2 text-muted-foreground truncate max-w-[150px]">{tx.descricao || "-"}</td>
                             <td className={`py-4 px-2 font-semibold tabular-nums ${isEntrada ? 'text-success' : 'text-danger'}`}>
                               {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </td>
@@ -385,6 +383,12 @@ function TransactionsPage() {
           </footer>
         </main>
       </div>
+
+      <AddTransactionModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={fetchTransactions}
+      />
     </div>
   );
 }
