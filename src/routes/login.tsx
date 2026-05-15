@@ -31,12 +31,12 @@ function Login() {
   }, [user, navigate, showFinalAnimation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     
     // Prevent multiple submissions
     if (isSubmitting || showFinalAnimation) return;
 
-    console.log("Submit clicked", { email });
+    console.log("Login attempt initiated", { email });
     setIsSubmitting(true);
     setError(null);
     
@@ -47,14 +47,13 @@ function Login() {
       });
 
       if (signInError) {
-        console.error("Sign in error:", signInError);
+        console.error("Supabase signInWithPassword error:", signInError.message);
         throw signInError;
       }
       
-      console.log("Sign in successful", data.user?.id);
-      // Success is handled by the useEffect above
+      console.log("Supabase signInWithPassword success:", data.user?.id);
     } catch (err: any) {
-      console.error("Caught error during login:", err);
+      console.error("Login process exception:", err);
       setError(err.message || "Erro ao fazer login. Verifique suas credenciais.");
       setIsSubmitting(false);
     }
