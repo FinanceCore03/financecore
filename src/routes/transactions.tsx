@@ -15,42 +15,7 @@ export const Route = createFileRoute("/transactions")({
   component: () => <TransactionsPage />,
 });
 
-const [transactions, setTransactions] = useState<any[]>([]);
-const [loading, setLoading] = useState(true);
-
-useEffect(() => {
-  const fetchTransactions = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data, error } = await supabase
-        .from("Transacoes")
-        .select("*")
-        .eq("id_usuario", user.id) // Assuming id_usuario corresponds to auth user id or user table id
-        .order("data", { ascending: false });
-      
-      if (data) {
-        setTransactions(data.map(tx => ({
-          ...tx,
-          id: tx.id,
-          category: tx.categoria,
-          icon: Wallet, // Placeholder
-          color: tx.tipo === 'entrada' ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger',
-          date: tx.data ? new Date(tx.data).toLocaleDateString('pt-BR') : '',
-          time: tx.data ? new Date(tx.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '',
-          amount: `${tx.tipo === 'entrada' ? '+' : '-'}R$ ${parseFloat(tx.valor || '0').toFixed(2)}`,
-          method: tx.metodo_pagamento || 'N/A'
-        })));
-      }
-    }
-    setLoading(false);
-  };
-  fetchTransactions();
-}, []);
-
-const deleteTransaction = async (id: number) => {
-  await supabase.from("Transacoes").delete().eq("id", id);
-  setTransactions(prev => prev.filter(tx => tx.id !== id));
-};
+// As variáveis de estado e efeitos foram movidas para dentro do componente TransactionsPage
 
 const distributionData = [
   { name: "Moradia", value: 42, color: "var(--primary)" },
