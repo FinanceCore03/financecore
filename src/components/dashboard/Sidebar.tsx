@@ -1,5 +1,5 @@
 import { LayoutDashboard, LineChart, ArrowLeftRight, Tags, Target, FileBarChart, Settings, Wallet, LogOut } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, active: true },
