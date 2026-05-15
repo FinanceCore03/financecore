@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2 } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +38,8 @@ const subscriptions = [
 function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState("Este mês");
+  const [isPeriodOpen, setIsPeriodOpen] = useState(false);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -84,6 +86,40 @@ function TransactionsPage() {
     }
   };
 
+  const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
+    const now = new Date();
+    
+    return transactions.filter(tx => {
+      if (!tx.data) return true;
+      const txDate = new Date(tx.data);
+      
+      if (periodFilter === "Hoje") {
+        return txDate.toDateString() === now.toDateString();
+      }
+      
+      if (periodFilter === "Esta semana") {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        return txDate >= startOfWeek;
+      }
+      
+      if (periodFilter === "Este mês") {
+        return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+      }
+      
+      if (periodFilter === "Últimos 3 meses") {
+        const threeMonthsAgo = new Date(now);
+        threeMonthsAgo.setMonth(now.getMonth() - 3);
+        threeMonthsAgo.setHours(0, 0, 0, 0);
+        return txDate >= threeMonthsAgo;
+      }
+      
+      return true;
+    });
+  }, [transactions, periodFilter]);
+
   const totals = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -118,11 +154,47 @@ function TransactionsPage() {
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar />
+        {/* Removed TopBar as requested */}
         <main className="flex-1 px-8 py-6 space-y-6">
-          <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
-            <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
+          <header className="flex flex-row items-center justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
+              <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <button 
+                  onClick={() => setIsPeriodOpen(!isPeriodOpen)}
+                  className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
+                >
+                  <span>{periodFilter}</span>
+                  <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isPeriodOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                    {["Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => {
+                          setPeriodFilter(option);
+                          setIsPeriodOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm">
+                <Plus className="size-4" />
+                <span>Adicionar Transação</span>
+              </button>
+            </div>
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -192,9 +264,9 @@ function TransactionsPage() {
                     <tbody className="divide-y divide-border">
                       {loading ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Carregando...</td></tr>
-                      ) : transactions.length === 0 ? (
+                      ) : filteredTransactions.length === 0 ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
-                      ) : transactions.map((tx) => {
+                      ) : filteredTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
                         const dateObj = tx.data ? new Date(tx.data) : null;
                         return (
