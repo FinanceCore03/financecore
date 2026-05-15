@@ -111,20 +111,28 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       };
 
       console.log("Enviando webhook", payload);
-      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      try {
+        const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        console.error("Erro na resposta do webhook:", response.status, response.statusText);
-        throw new Error(`Erro no webhook: ${response.statusText}`);
+        console.log("Status do webhook:", response.status);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Erro na resposta do webhook:", response.status, errorText);
+          throw new Error(`Erro no webhook: ${response.status} ${response.statusText}`);
+        }
+
+        console.log("Webhook enviado com sucesso");
+      } catch (fetchError: any) {
+        console.error("Erro de rede ou ao chamar fetch:", fetchError);
+        throw new Error(`Falha na comunicação com o servidor: ${fetchError.message}`);
       }
-
-      console.log("Webhook enviado com sucesso");
       toast.success("Transação adicionada com sucesso!");
       resetForm();
       onSuccess();
