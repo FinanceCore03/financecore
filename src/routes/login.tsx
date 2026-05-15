@@ -101,7 +101,7 @@ function Login() {
             <button
               type="button"
               onClick={() => window.location.href = "/"}
-              className="w-full h-[54px] bg-[#4ade80] hover:bg-[#3ecb70] text-white font-bold rounded-2xl shadow-[0_8px_20px_rgba(74,222,128,0.3)] transform transition-all active:scale-[0.98] cursor-pointer"
+              className="w-full h-[58px] bg-[#4ade80] hover:bg-[#3ecb70] text-white font-bold text-lg rounded-2xl shadow-[0_8px_20px_rgba(74,222,128,0.25)] transform transition-all active:scale-[0.98] cursor-pointer"
             >
               Entrar
             </button>
