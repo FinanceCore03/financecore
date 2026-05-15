@@ -137,8 +137,8 @@ function TransactionsPage() {
     })).sort((a, b) => b.amount - a.amount);
   }, [transactions]);
 
-  const subscriptions = useMemo(() => {
-    // Por enquanto retornamos vazio ou filtros de transações que pareçam assinaturas
+  const subscriptions = useMemo<any[]>(() => {
+    // Por enquanto retornamos vazio
     return [];
   }, [transactions]);
 
