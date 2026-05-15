@@ -38,6 +38,8 @@ const subscriptions = [
 function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState("Este mês");
+  const [isPeriodOpen, setIsPeriodOpen] = useState(false);
 
   useEffect(() => {
     const fetchTransactions = async () => {
