@@ -78,20 +78,20 @@ function Login() {
           </div>
 
           {/* Options Line */}
-          <div className="flex items-center justify-between text-sm px-1">
-            <label className="flex items-center gap-2 cursor-pointer group select-none text-gray-500 hover:text-gray-700 transition-colors">
+          <div className="flex items-center justify-between text-xs px-1">
+            <label className="flex items-center gap-2 cursor-pointer group select-none text-gray-400 hover:text-gray-600 transition-colors">
               <div className="relative flex items-center justify-center">
                 <input
                   type="checkbox"
                   checked={showPassword}
                   onChange={() => setShowPassword(!showPassword)}
-                  className="peer appearance-none w-5 h-5 rounded-md border border-gray-300 bg-white checked:bg-[#4ade80] checked:border-[#4ade80] transition-all"
+                  className="peer appearance-none w-4 h-4 rounded border border-gray-300 bg-white checked:bg-[#4ade80] checked:border-[#4ade80] transition-all"
                 />
-                <Check className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                <Check className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
               </div>
               <span>Mostrar senha</span>
             </label>
-            <a href="#" className="text-gray-500 hover:text-gray-700 transition-colors font-medium">
+            <a href="#" className="text-gray-400 hover:text-gray-600 transition-colors font-medium">
               Esqueci minha senha?
             </a>
           </div>
