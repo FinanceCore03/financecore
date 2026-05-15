@@ -9,7 +9,6 @@ export const Route = createFileRoute("/login")({
 });
 
 function Login() {
-  console.log("Login component rendering");
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
