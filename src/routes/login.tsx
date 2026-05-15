@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Mail, Lock, Check, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "../integrations/supabase/client";
+import { useAuth } from "../contexts/AuthContext";
 
 export const Route = createFileRoute("/login")({
   component: Login,
