@@ -2,13 +2,13 @@ import { LayoutDashboard, LineChart, ArrowLeftRight, Tags, Target, FileBarChart,
 import { useAuth } from "@/contexts/AuthContext";
 
 const items = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "Gráfico de Gastos", icon: LineChart },
-  { label: "Transações", icon: ArrowLeftRight },
-  { label: "Categorias", icon: Tags },
-  { label: "Planejamento", icon: Target },
-  { label: "Relatórios", icon: FileBarChart },
-  { label: "Configurações", icon: Settings },
+  { label: "Dashboard", icon: LayoutDashboard, href: "/" },
+  { label: "Gráfico de Gastos", icon: LineChart, href: "#" },
+  { label: "Transações", icon: ArrowLeftRight, href: "/transactions" },
+  { label: "Categorias", icon: Tags, href: "#" },
+  { label: "Planejamento", icon: Target, href: "#" },
+  { label: "Relatórios", icon: FileBarChart, href: "#" },
+  { label: "Configurações", icon: Settings, href: "#" },
 ];
 
 export function Sidebar() {
