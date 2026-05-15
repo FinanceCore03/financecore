@@ -123,6 +123,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, isLoading, navigate, location.pathname]);
 
+  // If we are on the login page, always render children (Login component)
+  if (location.pathname === "/login") {
+    return <>{children}</>;
+  }
+
+  // Handle loading state for protected routes
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white text-gray-800">
@@ -134,8 +140,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If no user and not on login page, we're redirecting, so show nothing
-  if (!user && location.pathname !== "/login") {
+  // If no user, we're redirecting, so show nothing
+  if (!user) {
     return null;
   }
 
