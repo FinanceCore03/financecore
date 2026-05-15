@@ -30,7 +30,7 @@ function Login() {
       </div>
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-[420px] mx-4 bg-white/95 backdrop-blur-sm rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-10 flex flex-col items-center">
+      <div className="relative z-10 w-full max-w-[440px] mx-4 bg-white rounded-[32px] shadow-[0_25px_60px_rgba(0,0,0,0.15)] p-12 flex flex-col items-center">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-[28px] font-bold text-gray-800 leading-tight">
