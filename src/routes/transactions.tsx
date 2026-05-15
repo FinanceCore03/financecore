@@ -192,7 +192,10 @@ function TransactionsPage() {
                 )}
               </div>
               
-              <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm">
+              <button 
+                onClick={() => setIsAddModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm"
+              >
                 <Plus className="size-4" />
                 <span>Adicionar Transação</span>
               </button>
