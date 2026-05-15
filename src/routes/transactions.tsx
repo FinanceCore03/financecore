@@ -50,6 +50,62 @@ function TransactionsPage() {
       <div className="flex-1 min-w-0 flex flex-col">
         <TopBar />
         <main className="flex-1 px-8 py-6 space-y-6">
+          {/* Summary Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">Total em Conta</span>
+                <div className="size-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Banknote className="size-4" />
+                </div>
+              </div>
+              <div className="text-xl font-bold tracking-tight">R$ 12.450,00</div>
+              <div className="flex items-center gap-1 mt-2">
+                <span className="text-[10px] text-success font-medium">+2.5%</span>
+                <span className="text-[10px] text-muted-foreground">vs mês ant.</span>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">Entradas</span>
+                <div className="size-8 rounded-lg bg-success/10 text-success flex items-center justify-center">
+                  <ArrowUpRight className="size-4" />
+                </div>
+              </div>
+              <div className="text-xl font-bold tracking-tight text-success">R$ 5.800,00</div>
+              <div className="flex items-center gap-1 mt-2 text-[10px]">
+                <span className="text-success font-medium">85% da meta</span>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">Saídas</span>
+                <div className="size-8 rounded-lg bg-danger/10 text-danger flex items-center justify-center">
+                  <ArrowDownRight className="size-4" />
+                </div>
+              </div>
+              <div className="text-xl font-bold tracking-tight text-danger">R$ 3.240,00</div>
+              <div className="flex items-center gap-1 mt-2 text-[10px]">
+                <span className="text-danger font-medium">12% a mais que out</span>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-muted-foreground">Economia no Mês</span>
+                <div className="size-8 rounded-lg bg-info/10 text-info flex items-center justify-center">
+                  <TrendingUp className="size-4" />
+                </div>
+              </div>
+              <div className="text-xl font-bold tracking-tight text-primary">R$ 2.560,00</div>
+              <div className="flex items-center gap-1 mt-2 text-[10px]">
+                <span className="text-primary font-medium">44% das entradas</span>
+              </div>
+            </div>
+          </div>
+
           {/* Page Title */}
           <header className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
@@ -59,7 +115,7 @@ function TransactionsPage() {
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Left Column: Stats & Main Table */}
             <div className="flex-1 space-y-6 min-w-0">
-              {/* Resumo Cards */}
+              {/* Resumo Cards (Existing Stats) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
                   <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
