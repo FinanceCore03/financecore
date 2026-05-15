@@ -75,8 +75,8 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   };
 
   const handleSave = async () => {
-    if (!categoria || !quantia || !metodo || !descricao) {
-      toast.error("Por favor, preencha todos os campos obrigatórios.");
+    if (!categoria || !quantia || !metodo) {
+      toast.error("Por favor, preencha todos os campos obrigatórios (Categoria, Quantia e Método).");
       return;
     }
 
