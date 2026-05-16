@@ -92,6 +92,7 @@ function TransactionsPage() {
     // However, typical behavior is to filter the table too. Let's filter it.
     
     return transactions.filter(tx => {
+      if (periodFilter === "Todas") return true;
       if (!tx.data) return true;
       const txDate = new Date(tx.data);
       
