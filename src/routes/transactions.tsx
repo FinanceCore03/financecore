@@ -92,6 +92,7 @@ function TransactionsPage() {
     // However, typical behavior is to filter the table too. Let's filter it.
     
     return transactions.filter(tx => {
+      if (periodFilter === "Todas") return true;
       if (!tx.data) return true;
       const txDate = new Date(tx.data);
       
@@ -138,7 +139,7 @@ function TransactionsPage() {
 
       // Filter for period-based cards
       let inPeriod = true;
-      if (tx.data) {
+      if (periodFilter !== "Todas" && tx.data) {
         const txDate = new Date(tx.data);
         if (periodFilter === "Hoje") {
           inPeriod = txDate.toDateString() === now.toDateString();
@@ -182,6 +183,7 @@ function TransactionsPage() {
     transactions
       .filter(tx => {
         if (tx.tipo !== "saida") return false;
+        if (periodFilter === "Todas") return true;
         if (!tx.data) return true;
         const txDate = new Date(tx.data);
         if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
@@ -243,7 +245,7 @@ function TransactionsPage() {
                 
                 {isPeriodOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-                    {["Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                    {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
                       <button
                         key={option}
                         onClick={() => {
