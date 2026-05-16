@@ -223,6 +223,7 @@ function TransactionsPage() {
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
+        <TopBar />
         <main className="flex-1 px-8 py-6 space-y-6">
           <header className="flex flex-row items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
