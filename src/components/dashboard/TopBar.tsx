@@ -19,15 +19,8 @@ export function TopBar() {
         {isTransactions && (
           <div className="flex items-center gap-2 mr-2">
             <button className="px-4 py-2 bg-card border border-border rounded-full text-xs font-medium hover:bg-muted transition flex items-center gap-2">
-              Este mês
-            </button>
-            <button className="px-4 py-2 bg-card border border-border rounded-full text-xs font-medium hover:bg-muted transition flex items-center gap-2">
               <FileDown className="size-3.5" />
               Exportar
-            </button>
-            <button className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-medium hover:bg-primary/90 transition flex items-center gap-2 shadow-sm">
-              <Plus className="size-3.5" />
-              Adicionar Transação
             </button>
           </div>
         )}

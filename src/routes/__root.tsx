@@ -156,12 +156,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <AuthGuard>
-          <Outlet />
+          <div key={location.pathname} className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out">
+            <Outlet />
+          </div>
           <Toaster position="top-right" richColors closeButton />
         </AuthGuard>
       </AuthProvider>
