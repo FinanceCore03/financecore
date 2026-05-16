@@ -245,7 +245,7 @@ function TransactionsPage() {
                 
                 {isPeriodOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-                    {["Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                    {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
                       <button
                         key={option}
                         onClick={() => {
