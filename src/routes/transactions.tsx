@@ -183,6 +183,7 @@ function TransactionsPage() {
     transactions
       .filter(tx => {
         if (tx.tipo !== "saida") return false;
+        if (periodFilter === "Todas") return true;
         if (!tx.data) return true;
         const txDate = new Date(tx.data);
         if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
