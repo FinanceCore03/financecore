@@ -64,10 +64,23 @@ function TransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
-  }, []);
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isPeriodOpen && !target.closest('.period-filter-container')) {
+        setIsPeriodOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isPeriodOpen]);
 
   const deleteTransaction = async (id: number) => {
     if (!usuarioId) return;
+
+    const confirmed = window.confirm("Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.");
+    if (!confirmed) return;
     
     const { error } = await supabase
       .from("Transacoes")
@@ -234,7 +247,7 @@ function TransactionsPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="relative">
+              <div className="relative period-filter-container">
                 <button 
                   onClick={() => setIsPeriodOpen(!isPeriodOpen)}
                   className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
