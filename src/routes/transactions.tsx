@@ -17,10 +17,6 @@ export const Route = createFileRoute("/transactions")({
   component: () => <TransactionsPage />,
 });
 
-// As variáveis de estado e efeitos foram movidas para dentro do componente TransactionsPage
-
-// Removidos dados estáticos para cálculo dinâmico
-
 function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +29,8 @@ function TransactionsPage() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
 
+    console.log("Usuário autenticado atual (auth.user.id):", user?.id);
+
     if (user) {
       const { data: usuario, error: usuarioError } = await supabase
         .from("Usuarios")
@@ -40,8 +38,12 @@ function TransactionsPage() {
         .eq("id_auth", user.id)
         .maybeSingle();
 
+      console.log("Resultado encontrado na tabela Usuarios:", usuario || "Não encontrado");
+
       if (usuario) {
         setUsuarioId(usuario.id);
+        console.log("ID do usuário interno:", usuario.id);
+        
         const { data, error: transacoesError } = await supabase
           .from("Transacoes")
           .select("*")
@@ -50,6 +52,7 @@ function TransactionsPage() {
         
         if (data) {
           setTransactions(data);
+          console.log("Quantidade de transações encontradas:", data.length);
         }
       } else {
         console.error("Usuário não encontrado na tabela Usuarios");
@@ -70,7 +73,7 @@ function TransactionsPage() {
       .from("Transacoes")
       .delete()
       .eq("id", id)
-      .eq("id_usuario", usuarioId); // Garante que só deleta o que pertence ao usuário
+      .eq("id_usuario", usuarioId);
 
     if (!error) {
       toast.success("Transação excluída.");
@@ -83,6 +86,10 @@ function TransactionsPage() {
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
     const now = new Date();
+    
+    // As per user request, table activity can show all by default or respect filter if applied.
+    // The request said: "Os cards ... devem respeitar o período selecionado. A tabela ... pode continuar mostrando todas ... a menos que o filtro seja aplicado diretamente"
+    // However, typical behavior is to filter the table too. Let's filter it.
     
     return transactions.filter(tx => {
       if (!tx.data) return true;
@@ -114,12 +121,85 @@ function TransactionsPage() {
     });
   }, [transactions, periodFilter]);
 
+  const totals = useMemo(() => {
+    const now = new Date();
+    
+    let totalAccount = 0;
+    let periodEntradas = 0;
+    let periodSaidas = 0;
+
+    transactions.forEach(tx => {
+      const val = parseFloat(tx.valor || "0");
+      const isEntrada = tx.tipo === "entrada";
+      
+      // 3. Card "Total em Conta" -> all transactions of user
+      if (isEntrada) totalAccount += val;
+      else totalAccount -= val;
+
+      // Filter for period-based cards
+      let inPeriod = true;
+      if (tx.data) {
+        const txDate = new Date(tx.data);
+        if (periodFilter === "Hoje") {
+          inPeriod = txDate.toDateString() === now.toDateString();
+        } else if (periodFilter === "Esta semana") {
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          inPeriod = txDate >= startOfWeek;
+        } else if (periodFilter === "Este mês") {
+          inPeriod = txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+        } else if (periodFilter === "Últimos 3 meses") {
+          const threeMonthsAgo = new Date(now);
+          threeMonthsAgo.setMonth(now.getMonth() - 3);
+          threeMonthsAgo.setHours(0, 0, 0, 0);
+          inPeriod = txDate >= threeMonthsAgo;
+        }
+      }
+
+      if (inPeriod) {
+        if (isEntrada) periodEntradas += val;
+        else periodSaidas += val;
+      }
+    });
+
+    console.log("Totais calculados:", {
+      totalEmConta: totalAccount,
+      entradasPeriodo: periodEntradas,
+      saidasPeriodo: periodSaidas,
+      economia: periodEntradas - periodSaidas
+    });
+
+    return { totalAccount, periodEntradas, periodSaidas };
+  }, [transactions, periodFilter]);
+
   const distributionData = useMemo(() => {
     const categoriesMap: Record<string, number> = {};
     let totalExps = 0;
 
+    // "Distribuição dos Gastos deve considerar apenas as transações de saída do usuário logado ... no período selecionado"
+    const now = new Date();
     transactions
-      .filter(tx => tx.tipo === "saida")
+      .filter(tx => {
+        if (tx.tipo !== "saida") return false;
+        if (!tx.data) return true;
+        const txDate = new Date(tx.data);
+        if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
+        if (periodFilter === "Esta semana") {
+          const startOfWeek = new Date(now);
+          startOfWeek.setDate(now.getDate() - now.getDay());
+          startOfWeek.setHours(0, 0, 0, 0);
+          return txDate >= startOfWeek;
+        }
+        if (periodFilter === "Este mês") return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+        if (periodFilter === "Últimos 3 meses") {
+          const threeMonthsAgo = new Date(now);
+          threeMonthsAgo.setMonth(now.getMonth() - 3);
+          threeMonthsAgo.setHours(0, 0, 0, 0);
+          return txDate >= threeMonthsAgo;
+        }
+        return true;
+      })
       .forEach(tx => {
         const cat = tx.categoria || "Outros";
         const val = parseFloat(tx.valor || "0");
@@ -135,48 +215,14 @@ function TransactionsPage() {
       amount: value,
       color: colors[i % colors.length]
     })).sort((a, b) => b.amount - a.amount);
-  }, [transactions]);
+  }, [transactions, periodFilter]);
 
-  const subscriptions = useMemo<any[]>(() => {
-    // Por enquanto retornamos vazio
-    return [];
-  }, [transactions]);
-
-  const totals = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    let totalAccount = 0;
-    let monthEntradas = 0;
-    let monthSaidas = 0;
-
-    transactions.forEach(tx => {
-      const val = parseFloat(tx.valor || "0");
-      const isEntrada = tx.tipo === "entrada";
-      
-      // Total account: sum all entries, subtract all exits
-      if (isEntrada) totalAccount += val;
-      else totalAccount -= val;
-
-      // Current month stats
-      if (tx.data) {
-        const txDate = new Date(tx.data);
-        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
-          if (isEntrada) monthEntradas += val;
-          else monthSaidas += val;
-        }
-      }
-    });
-
-    return { totalAccount, monthEntradas, monthSaidas };
-  }, [transactions]);
+  const economyValue = totals.periodEntradas - totals.periodSaidas;
 
   return (
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Removed TopBar as requested */}
         <main className="flex-1 px-8 py-6 space-y-6">
           <header className="flex flex-row items-center justify-between gap-4">
             <div className="flex flex-col gap-1">
@@ -235,25 +281,27 @@ function TransactionsPage() {
               <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
                 <TrendingUp className="size-5" />
               </div>
-              <div className="text-xs text-muted-foreground mb-1">Entradas (Mês)</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ {totals.monthEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-              <div className="text-xs text-success font-medium mt-2">Total recebido este mês</div>
+              <div className="text-xs text-muted-foreground mb-1">Entradas ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ {totals.periodEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-success font-medium mt-2">Total recebido no período</div>
             </div>
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="size-10 rounded-xl bg-danger-soft text-danger flex items-center justify-center mb-4">
                 <TrendingDown className="size-5" />
               </div>
-              <div className="text-xs text-muted-foreground mb-1">Saídas (Mês)</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ {totals.monthSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-              <div className="text-xs text-danger font-medium mt-2">Total gasto este mês</div>
+              <div className="text-xs text-muted-foreground mb-1">Saídas ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ {totals.periodSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-xs text-danger font-medium mt-2">Total gasto no período</div>
             </div>
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-              <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
+              <div className={`size-10 rounded-xl flex items-center justify-center mb-4 ${economyValue >= 0 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
                 <PiggyBank className="size-5" />
               </div>
-              <div className="text-xs text-muted-foreground mb-1">Economia no Mês</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ {(totals.monthEntradas - totals.monthSaidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-              <div className="text-xs text-success font-medium mt-2">Balanço mensal</div>
+              <div className="text-xs text-muted-foreground mb-1">Economia ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
+              <div className="text-2xl font-semibold tracking-tight">R$ {economyValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className={`text-xs font-medium mt-2 ${economyValue >= 0 ? 'text-success' : 'text-danger'}`}>
+                {economyValue >= 0 ? 'Balanço positivo' : 'Balanço negativo'}
+              </div>
             </div>
           </div>
 
@@ -262,16 +310,6 @@ function TransactionsPage() {
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <h3 className="font-semibold text-lg tracking-tight">Atividade de Transações</h3>
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
-                      <input 
-                        type="text" 
-                        placeholder="Buscar transação" 
-                        className="bg-muted/50 border border-border rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary w-48"
-                      />
-                    </div>
-                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -330,36 +368,41 @@ function TransactionsPage() {
               </div>
             </div>
 
-            {/* Right Column: Distribution & Subscriptions */}
             <div className="w-full lg:w-80 space-y-6 shrink-0">
-              {/* Distribution Donut Chart Card */}
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold tracking-tight">Distribuição dos Gastos</h3>
-                  <button className="text-[11px] text-primary font-semibold hover:underline">Ver detalhes</button>
                 </div>
                 
                 <div className="relative h-[180px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie 
-                        data={distributionData} 
-                        dataKey="value" 
-                        innerRadius={55} 
-                        outerRadius={80} 
-                        paddingAngle={2} 
-                        stroke="none"
-                      >
-                        {distributionData.map((d, i) => (
-                          <Cell key={`cell-${i}`} fill={d.color} />
-                        ))}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Total Gastos</div>
-                    <div className="text-lg font-bold tracking-tight">R$ {totals.monthSaidas.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
-                  </div>
+                  {distributionData.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie 
+                            data={distributionData} 
+                            dataKey="amount" 
+                            innerRadius={55} 
+                            outerRadius={80} 
+                            paddingAngle={2} 
+                            stroke="none"
+                          >
+                            {distributionData.map((d, i) => (
+                              <Cell key={`cell-${i}`} fill={d.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Gastos</div>
+                        <div className="text-lg font-bold tracking-tight">R$ {totals.periodSaidas.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
+                      Nenhum gasto no período
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-x-2 gap-y-3 mt-4">
@@ -374,43 +417,10 @@ function TransactionsPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Subscriptions Card */}
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold tracking-tight">Assinaturas</h3>
-                  <button className="flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary rounded-md text-[11px] font-semibold hover:bg-primary/20 transition">
-                    <Plus className="size-3" />
-                    <span>Adicionar</span>
-                  </button>
-                </div>
-
-                <div className="divide-y divide-border">
-                  {subscriptions.map((sub) => (
-                    <div key={sub.name} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                      <div className="flex items-center gap-3">
-                        <div className={`size-8 rounded-lg flex items-center justify-center ${sub.color}`}>
-                          <sub.icon className="size-4" />
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold">{sub.name}</div>
-                          <div className="text-[10px] text-muted-foreground">{sub.period}</div>
-                        </div>
-                      </div>
-                      <div className="text-xs font-semibold tabular-nums">{sub.price}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
-
-          <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
-            Financeiro Core © 2025
-          </footer>
         </main>
       </div>
-
       <AddTransactionModal 
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
