@@ -139,7 +139,7 @@ function TransactionsPage() {
 
       // Filter for period-based cards
       let inPeriod = true;
-      if (tx.data) {
+      if (periodFilter !== "Todas" && tx.data) {
         const txDate = new Date(tx.data);
         if (periodFilter === "Hoje") {
           inPeriod = txDate.toDateString() === now.toDateString();
