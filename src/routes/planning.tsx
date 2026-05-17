@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { Target } from "lucide-react";
 
-export const Route = createFileRoute("/planning" as any)({
+export const Route = createFileRoute("/planning")({
   head: () => ({
     meta: [
       { title: "Planejamento — Financeiro Core" },

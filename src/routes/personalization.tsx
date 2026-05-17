@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/personalization" as any)({
+export const Route = createFileRoute("/personalization")({
   head: () => ({
     meta: [
       { title: "Personalização — Financeiro Core" },
