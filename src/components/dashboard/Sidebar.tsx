@@ -1,4 +1,4 @@
-import { LayoutDashboard, LineChart, ArrowLeftRight, Tags, Target, FileBarChart, Settings, Wallet, LogOut } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Target, Palette, LogOut, Wallet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
@@ -6,12 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { label: "Gráfico de Gastos", icon: LineChart, href: "#" },
   { label: "Transações", icon: ArrowLeftRight, href: "/transactions" },
-  { label: "Categorias", icon: Tags, href: "#" },
   { label: "Planejamento", icon: Target, href: "#" },
-  { label: "Relatórios", icon: FileBarChart, href: "#" },
-  { label: "Configurações", icon: Settings, href: "#" },
+  { label: "Personalização", icon: Palette, href: "/personalization" },
 ];
 
 export function Sidebar() {
