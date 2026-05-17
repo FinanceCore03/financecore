@@ -482,9 +482,10 @@ function PersonalizationPage() {
             <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteItem}
+              disabled={isSubmitting}
               className="rounded-xl bg-danger text-white hover:bg-danger/90"
             >
-              Excluir
+              {isSubmitting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
