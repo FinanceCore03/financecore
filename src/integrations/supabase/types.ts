@@ -16,22 +16,22 @@ export type Database = {
     Tables: {
       Opcoes: {
         Row: {
-          categoria: string | null
           id: number
           id_usuario: number | null
-          metodo_pagamento: string | null
+          Nome: string | null
+          Tipo: string | null
         }
         Insert: {
-          categoria?: string | null
           id?: number
           id_usuario?: number | null
-          metodo_pagamento?: string | null
+          Nome?: string | null
+          Tipo?: string | null
         }
         Update: {
-          categoria?: string | null
           id?: number
           id_usuario?: number | null
-          metodo_pagamento?: string | null
+          Nome?: string | null
+          Tipo?: string | null
         }
         Relationships: [
           {
