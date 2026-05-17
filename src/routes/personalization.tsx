@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Tags, CreditCard, Plus, Trash2, Edit2, ChevronRight } from "lucide-react";
+import { Tags, CreditCard, Plus, Trash2, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

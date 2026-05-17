@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 const items = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Transações", icon: ArrowLeftRight, href: "/transactions" },
-  { label: "Planejamento", icon: Target, href: "#" },
+  { label: "Planejamento", icon: Target, href: "/planning" },
   { label: "Personalização", icon: Palette, href: "/personalization" },
 ];
 
