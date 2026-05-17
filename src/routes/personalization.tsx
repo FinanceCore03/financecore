@@ -115,44 +115,40 @@ function PersonalizationPage() {
     if (!categoryName || !usuarioId) return;
     setIsSubmitting(true);
 
+    const payload = {
+      acao: "adicionar",
+      tipo: "categoria",
+      nome: categoryName,
+      uso: categoryUsage,
+      id_usuario: usuarioId
+    };
+
+    console.log("Iniciando adição de categoria. Payload:", payload);
+
     try {
-      const newOption = {
-        id_usuario: usuarioId,
-        Tipo: "categoria",
-        Nome: categoryName,
-        // The instruction mentioned "uso" column, but it's not in the current types.ts.
-        // I will attempt to include it as a dynamic property if it exists in DB but not in types.
-      };
-
-      const { data, error } = await supabase
-        .from("Opcoes")
-        .insert([{ ...newOption, uso: categoryUsage } as any])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Webhook call
-      await fetch(WEBHOOK_URL, {
+      const response = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          acao: "adicionar",
-          tipo: "categoria",
-          nome: categoryName,
-          uso: categoryUsage,
-          id_usuario: usuarioId
-        })
-      }).catch(err => console.error("Webhook error:", err));
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.text();
+      console.log("Resposta do webhook (categoria):", result);
+
+      if (!response.ok) {
+        throw new Error(`Erro no webhook: ${response.status} ${result}`);
+      }
 
       toast.success("Categoria adicionada com sucesso!");
-      setCategories([...categories, data]);
+      // Atualiza a lista para refletir a mudança feita pela automação
+      await fetchOptions(usuarioId);
+      
       setCategoryName("");
       setCategoryUsage("saida");
       setIsCategoryModalOpen(false);
     } catch (error) {
-      console.error("Erro ao salvar categoria:", error);
-      toast.error("Erro ao salvar categoria.");
+      console.error("Erro ao processar webhook de categoria:", error);
+      toast.error("Erro ao salvar categoria através da automação.");
     } finally {
       setIsSubmitting(false);
     }
@@ -162,41 +158,38 @@ function PersonalizationPage() {
     if (!methodName || !usuarioId) return;
     setIsSubmitting(true);
 
+    const payload = {
+      acao: "adicionar",
+      tipo: "metodo_pagamento",
+      nome: methodName,
+      id_usuario: usuarioId
+    };
+
+    console.log("Iniciando adição de método. Payload:", payload);
+
     try {
-      const newOption = {
-        id_usuario: usuarioId,
-        Tipo: "metodo_pagamento",
-        Nome: methodName,
-        uso: null
-      };
-
-      const { data, error } = await supabase
-        .from("Opcoes")
-        .insert([newOption as any])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Webhook call
-      await fetch(WEBHOOK_URL, {
+      const response = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          acao: "adicionar",
-          tipo: "metodo_pagamento",
-          nome: methodName,
-          id_usuario: usuarioId
-        })
-      }).catch(err => console.error("Webhook error:", err));
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.text();
+      console.log("Resposta do webhook (método):", result);
+
+      if (!response.ok) {
+        throw new Error(`Erro no webhook: ${response.status} ${result}`);
+      }
 
       toast.success("Método de pagamento adicionado!");
-      setPaymentMethods([...paymentMethods, data]);
+      // Atualiza a lista para refletir a mudança feita pela automação
+      await fetchOptions(usuarioId);
+      
       setMethodName("");
       setIsMethodModalOpen(false);
     } catch (error) {
-      console.error("Erro ao salvar método:", error);
-      toast.error("Erro ao salvar método.");
+      console.error("Erro ao processar webhook de método:", error);
+      toast.error("Erro ao salvar método através da automação.");
     } finally {
       setIsSubmitting(false);
     }
@@ -204,43 +197,42 @@ function PersonalizationPage() {
 
   const handleDeleteItem = async () => {
     if (!itemToDelete || !usuarioId) return;
+    setIsSubmitting(true);
+
+    const payload: any = {
+      acao: "remover",
+      tipo: itemToDelete.type,
+      nome: itemToDelete.name,
+      id_usuario: usuarioId
+    };
+    if (itemToDelete.type === "categoria") {
+      payload.uso = itemToDelete.usage;
+    }
+
+    console.log("Iniciando remoção de item. Payload:", payload);
 
     try {
-      const { error } = await supabase
-        .from("Opcoes")
-        .delete()
-        .eq("id", itemToDelete.id);
-
-      if (error) throw error;
-
-      // Webhook call
-      const webhookBody: any = {
-        acao: "remover",
-        tipo: itemToDelete.type,
-        nome: itemToDelete.name,
-        id_usuario: usuarioId
-      };
-      if (itemToDelete.type === "categoria") {
-        webhookBody.uso = itemToDelete.usage;
-      }
-
-      await fetch(WEBHOOK_URL, {
+      const response = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(webhookBody)
-      }).catch(err => console.error("Webhook error:", err));
+        body: JSON.stringify(payload)
+      });
 
-      if (itemToDelete.type === "categoria") {
-        setCategories(categories.filter(c => c.id !== itemToDelete.id));
-      } else {
-        setPaymentMethods(paymentMethods.filter(p => p.id !== itemToDelete.id));
+      const result = await response.text();
+      console.log("Resposta do webhook (remoção):", result);
+
+      if (!response.ok) {
+        throw new Error(`Erro no webhook: ${response.status} ${result}`);
       }
 
       toast.success("Item removido com sucesso!");
+      // Atualiza a lista para refletir a mudança feita pela automação
+      await fetchOptions(usuarioId);
     } catch (error) {
-      console.error("Erro ao remover item:", error);
-      toast.error("Erro ao remover item.");
+      console.error("Erro ao processar webhook de remoção:", error);
+      toast.error("Erro ao remover item através da automação.");
     } finally {
+      setIsSubmitting(false);
       setItemToDelete(null);
     }
   };
@@ -490,9 +482,10 @@ function PersonalizationPage() {
             <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleDeleteItem}
+              disabled={isSubmitting}
               className="rounded-xl bg-danger text-white hover:bg-danger/90"
             >
-              Excluir
+              {isSubmitting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
