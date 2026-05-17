@@ -12,6 +12,7 @@ import { Calendar as CalendarIcon, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface AddTransactionModalProps {
   onSuccess: () => void;
 }
 
-const categories = [
+const defaultCategories = [
   "Salário",
   "Alimentação",
   "Transporte",
@@ -30,7 +31,7 @@ const categories = [
   "Outros",
 ];
 
-const paymentMethods = [
+const defaultPaymentMethods = [
   "Pix",
   "Cartão de Crédito",
   "Cartão de Débito",
@@ -40,6 +41,7 @@ const paymentMethods = [
 ];
 
 export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransactionModalProps) {
+  const { user } = useAuth();
   const [tipo, setTipo] = useState<string>("saida");
   const [categoria, setCategoria] = useState<string>("");
   const [data, setData] = useState<Date>(new Date());
@@ -48,6 +50,38 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   const [descricao, setDescricao] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
+  const [categories, setCategories] = useState<string[]>(defaultCategories);
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(defaultPaymentMethods);
+
+  useEffect(() => {
+    async function fetchCustomData() {
+      if (!user) return;
+      
+      try {
+        const { data: usuario } = await supabase
+          .from("Usuarios")
+          .select("id")
+          .eq("id_auth", user.id)
+          .maybeSingle();
+
+        if (usuario) {
+          // Placeholder for future dynamic tables
+          // const { data: customCats } = await supabase.from('Categorias').select('nome').eq('id_usuario', usuario.id);
+          // if (customCats && customCats.length > 0) setCategories(customCats.map(c => c.nome));
+          
+          // const { data: customMethods } = await supabase.from('MetodosPagamento').select('nome').eq('id_usuario', usuario.id);
+          // if (customMethods && customMethods.length > 0) setPaymentMethods(customMethods.map(m => m.nome));
+        }
+      } catch (error) {
+        console.error("Error fetching custom data:", error);
+      }
+    }
+    
+    if (isOpen) {
+      fetchCustomData();
+    }
+  }, [isOpen, user]);
+
 
   const isFormValid = tipo !== "" && categoria !== "" && quantia !== "" && metodo !== "" && data !== null;
   const isFormDirty = tipo !== "saida" || categoria !== "" || quantia !== "" || metodo !== "" || descricao !== "";
