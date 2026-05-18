@@ -55,9 +55,39 @@ export function useDashboardData() {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
+    const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const lastMonth = lastMonthDate.getMonth();
+    const lastMonthYear = lastMonthDate.getFullYear();
+
     let totalBalance = 0;
     let monthIncome = 0;
     let monthExpenses = 0;
+    let prevMonthIncome = 0;
+    let prevMonthExpenses = 0;
+
+    // Sparklines data (last 6 months)
+    const last6Months = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(currentYear, currentMonth - (5 - i), 1);
+      return {
+        month: d.getMonth(),
+        year: d.getFullYear(),
+        income: 0,
+        expenses: 0,
+        balance: 0,
+        label: d.toLocaleString('default', { month: 'short' })
+      };
+    });
+
+    // Helper for sparklines
+    const updateSparkline = (date: Date, val: number, isEntrada: boolean) => {
+      const m = date.getMonth();
+      const y = date.getFullYear();
+      const idx = last6Months.findIndex(item => item.month === m && item.year === y);
+      if (idx !== -1) {
+        if (isEntrada) last6Months[idx].income += val;
+        else last6Months[idx].expenses += val;
+      }
+    };
 
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
@@ -67,21 +97,64 @@ export function useDashboardData() {
       else totalBalance -= val;
 
       if (tx.data) {
-        const txDate = new Date(tx.data);
-        if (txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+        // Safe date parsing to avoid timezone shifts for comparison
+        const [year, month, day] = tx.data.split('-').map(Number);
+        const txDate = new Date(year, month - 1, day);
+        const txMonth = txDate.getMonth();
+        const txYear = txDate.getFullYear();
+
+        updateSparkline(txDate, val, isEntrada);
+
+        if (txMonth === currentMonth && txYear === currentYear) {
           if (isEntrada) monthIncome += val;
           else monthExpenses += val;
+        } else if (txMonth === lastMonth && txYear === lastMonthYear) {
+          if (isEntrada) prevMonthIncome += val;
+          else prevMonthExpenses += val;
         }
       }
     });
+
+    // Calculate cumulative balance for sparkline
+    let runningBalance = totalBalance;
+    // This is tricky because sparkline is last 6 months but total balance is all time.
+    // Let's just use monthly net for the balance sparkline to show trend.
+    last6Months.forEach(m => {
+      m.balance = m.income - m.expenses;
+    });
+
+    const calculateChange = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return ((current - previous) / previous) * 100;
+    };
+
+    const incomeChange = calculateChange(monthIncome, prevMonthIncome);
+    const expensesChange = calculateChange(monthExpenses, prevMonthExpenses);
+
+    console.log("Usuário logado:", user);
+    console.log("Transações carregadas:", transactions);
+    console.log("Saldo geral:", totalBalance);
+    console.log("Entradas do mês:", monthIncome);
+    console.log("Gastos do mês:", monthExpenses);
+    console.log("Disponível do mês:", monthIncome - monthExpenses);
 
     return {
       totalBalance,
       monthIncome,
       monthExpenses,
-      availableToSpend: monthIncome - monthExpenses
+      availableToSpend: monthIncome - monthExpenses,
+      prevMonthIncome,
+      prevMonthExpenses,
+      incomeChange,
+      expensesChange,
+      sparklines: {
+        balance: last6Months.map(m => ({ value: m.balance })),
+        income: last6Months.map(m => ({ value: m.income })),
+        expenses: last6Months.map(m => ({ value: m.expenses })),
+        available: last6Months.map(m => ({ value: m.income - m.expenses }))
+      }
     };
-  }, [transactions]);
+  }, [transactions, user]);
 
   const chartData = useMemo(() => {
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
