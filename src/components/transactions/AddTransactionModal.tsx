@@ -304,9 +304,15 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
                     <SelectValue placeholder="Selecione a categoria" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.Nome}>{cat.Nome}</SelectItem>
-                    ))}
+                    {categories
+                      .filter(cat => {
+                        const usage = (cat.Uso || "").toLowerCase();
+                        if (usage === "entrada/saída" || usage === "entrada/saida") return true;
+                        return usage === tipo.toLowerCase();
+                      })
+                      .map((cat) => (
+                        <SelectItem key={cat.id} value={cat.Nome}>{cat.Nome}</SelectItem>
+                      ))}
                     <SelectItem value="ADD_NEW_CAT" className="text-primary font-bold border-t border-border mt-1 pt-2">
                       + Adicionar Categoria
                     </SelectItem>
