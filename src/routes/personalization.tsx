@@ -354,7 +354,8 @@ function PersonalizationPage() {
                               variant="ghost" 
                               size="icon" 
                               className="size-8 text-muted-foreground hover:text-danger"
-                              onClick={() => setItemToDelete({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
+                              onClick={() => handleTrashClick({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
+                              disabled={isCheckingDelete}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
