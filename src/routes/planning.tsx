@@ -392,7 +392,7 @@ function PlanningPage() {
                                   value={[cat.budget]} 
                                   max={10000} 
                                   step={100}
-                                  onValueChange={(val) => handleBudgetChange(cat.name, val[0])}
+                                  onValueChange={(val) => handleBudgetChange(cat.id, val[0])}
                                   className="py-2 cursor-pointer"
                                 />
                                 <p className="text-[10px] text-center text-muted-foreground mt-2 italic">Deslize para ajustar sua meta</p>
