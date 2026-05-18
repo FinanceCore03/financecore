@@ -73,13 +73,13 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
 
           if (customOptions) {
             const customCats = customOptions
-              .filter(opt => opt.Tipo === "categoria")
-              .map(opt => opt.Nome);
+              .filter(opt => opt.Tipo === "categoria" && opt.Nome !== null)
+              .map(opt => opt.Nome as string);
             if (customCats.length > 0) setCategories(customCats);
 
             const customMethods = customOptions
-              .filter(opt => opt.Tipo === "metodo_pagamento")
-              .map(opt => opt.Nome);
+              .filter(opt => opt.Tipo === "metodo_pagamento" && opt.Nome !== null)
+              .map(opt => opt.Nome as string);
             if (customMethods.length > 0) setPaymentMethods(customMethods);
           }
         }
