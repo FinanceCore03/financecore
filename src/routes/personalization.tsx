@@ -569,6 +569,25 @@ function PersonalizationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* Alerta de Categoria Bloqueada */}
+      <AlertDialog open={isBlockedModalOpen} onOpenChange={setIsBlockedModalOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-semibold">Não é possível excluir esta categoria.</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Essa categoria já está sendo usada em uma ou mais transações. Para manter seu histórico financeiro correto, ela não pode ser removida.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction 
+              onClick={() => setIsBlockedModalOpen(false)}
+              className="rounded-xl bg-primary text-white hover:bg-primary/90"
+            >
+              Entendi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
