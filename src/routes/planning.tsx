@@ -304,55 +304,63 @@ function PlanningPage() {
                 </TabsContent>
 
                 <TabsContent value="categories" className="m-0">
-                  <Card className="border-none shadow-sm rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-semibold">Ajustar Metas</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-8 p-6">
-                      {planningData.categories.map((cat, index) => (
-                        <div key={cat.name} className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="size-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>
-                                <cat.icon className="size-4" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {planningData.categories.map((cat) => (
+                      <motion.div
+                        key={cat.name}
+                        whileHover={{ 
+                          scale: 1.02,
+                          transition: { duration: 0.2 }
+                        }}
+                        className="group"
+                      >
+                        <Card className="border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl bg-white overflow-hidden">
+                          <CardContent className="p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div 
+                                  className="size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" 
+                                  style={{ backgroundColor: `${cat.color}10`, color: cat.color }}
+                                >
+                                  <cat.icon className="size-6" />
+                                </div>
+                                <div>
+                                  <h3 className="font-bold text-[#1A1A1A] text-lg">{cat.name}</h3>
+                                  <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${cat.isOver ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                    {cat.isOver ? 'Acima do limite' : 'Dentro do limite'}
+                                  </span>
+                                </div>
                               </div>
-                              <span className="font-medium">{cat.name}</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="text-xs text-muted-foreground">Meta planejada</p>
-                                <p className="font-bold">{formatCurrency(cat.budget)}</p>
+                            
+                            <div className="space-y-4">
+                              <div className="flex justify-between items-end">
+                                <div className="space-y-1">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Meta Planejada</p>
+                                  <p className="text-xl font-black text-[#1A1A1A]">{formatCurrency(cat.budget)}</p>
+                                </div>
+                                <div className="text-right space-y-1">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Gasto Atual</p>
+                                  <p className="text-sm font-bold text-slate-600">{formatCurrency(cat.spent)}</p>
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs text-muted-foreground">Gasto atual</p>
-                                <p className="font-medium">{formatCurrency(cat.spent)}</p>
+                              
+                              <div className="pt-2">
+                                <Slider 
+                                  value={[cat.budget]} 
+                                  max={10000} 
+                                  step={100}
+                                  onValueChange={(val) => handleBudgetChange(cat.name, val[0])}
+                                  className="py-2 cursor-pointer"
+                                />
+                                <p className="text-[10px] text-center text-muted-foreground mt-2 italic">Deslize para ajustar sua meta</p>
                               </div>
                             </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Slider 
-                              defaultValue={[cat.budget]} 
-                              max={5000} 
-                              step={50}
-                              onValueChange={(val) => {
-                                const newBudgets = [...budgets];
-                                newBudgets[index].budget = val[0];
-                                setBudgets(newBudgets);
-                              }}
-                              className="py-2"
-                            />
-                            <div className="flex justify-between items-center">
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${cat.isOver ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                {cat.isOver ? 'Acima do limite' : 'Dentro do limite'}
-                              </span>
-                              <span className="text-xs text-muted-foreground">Arraste para ajustar o planejamento</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="analytics" className="m-0">
