@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ import { AddTransactionModal } from "@/components/transactions/AddTransactionMod
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -26,6 +28,11 @@ function TransactionsPage() {
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const [categoriaFilter, setCategoriaFilter] = useState<string>("Todas");
+  const [metodoFilter, setMetodoFilter] = useState<string>("Todos");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -75,96 +82,96 @@ function TransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
-    
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isPeriodOpen && !target.closest('.period-filter-container')) {
-        setIsPeriodOpen(false);
-      }
+  }, []);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || !usuarioId || isDeleting) return;
+    setIsDeleting(true);
+
+    const payload: any = {
+      acao: "deletar",
+      id_transacao: deleteTarget.id,
+      id_usuario: usuarioId,
+      categoria: deleteTarget.categoria || "",
+      descricao: deleteTarget.descricao || "",
+      valor: deleteTarget.valor || "",
+      metodo_pagamento: deleteTarget.metodo_pagamento || "",
+      data_inicio: deleteTarget.data_inicio || "",
+      data_fim: deleteTarget.data_fim || "",
+      tipo: deleteTarget.tipo || "",
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isPeriodOpen]);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  const deleteTransaction = async (id: number) => {
-    if (!usuarioId) return;
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
 
-    const confirmed = window.confirm("Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.");
-    if (!confirmed) return;
-    
-    // Encontrar os dados da transação antes de deletar para enviar ao webhook
-    const txToDelete = transactions.find(tx => tx.id === id);
-    
-    const { error } = await supabase
-      .from("Transacoes")
-      .delete()
-      .eq("id", id)
-      .eq("id_usuario", usuarioId);
+      clearTimeout(timeoutId);
 
-    if (!error) {
+      if (!response.ok) throw new Error(`Webhook respondeu com ${response.status}`);
+
       toast.success("Transação excluída.");
-      setTransactions(prev => prev.filter(tx => tx.id !== id));
-
-      // Disparar o webhook com os dados da transação e a ação de deletar
-      if (txToDelete) {
-        try {
-          await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...txToDelete,
-              acao: "deletar"
-            }),
-          });
-          console.log("Webhook de deleção enviado com sucesso.");
-        } catch (webhookError) {
-          console.error("Erro ao enviar webhook de deleção:", webhookError);
-        }
-      }
-    } else {
-      toast.error("Erro ao excluir transação.");
+      setTransactions(prev => prev.filter(tx => tx.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err: any) {
+      console.error("Erro ao excluir transação via webhook:", err);
+      toast.error("Não foi possível excluir agora. Tente novamente.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
+  const matchPeriod = (tx: any) => {
+    if (periodFilter === "Todas") return true;
+    if (!tx.data_inicio) return true;
+    const txDate = new Date(tx.data_inicio);
+    const now = new Date();
+    if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
+    if (periodFilter === "Esta semana") {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      return txDate >= startOfWeek;
+    }
+    if (periodFilter === "Este mês") {
+      return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+    }
+    if (periodFilter === "Últimos 3 meses") {
+      const threeMonthsAgo = new Date(now);
+      threeMonthsAgo.setMonth(now.getMonth() - 3);
+      threeMonthsAgo.setHours(0, 0, 0, 0);
+      return txDate >= threeMonthsAgo;
+    }
+    return true;
+  };
+
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach(tx => tx.categoria && set.add(tx.categoria));
+    return Array.from(set).sort();
+  }, [transactions]);
+
+  const availableMethods = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach(tx => tx.metodo_pagamento && set.add(tx.metodo_pagamento));
+    return Array.from(set).sort();
+  }, [transactions]);
+
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
-    const now = new Date();
-    
-    // As per user request, table activity can show all by default or respect filter if applied.
-    // The request said: "Os cards ... devem respeitar o período selecionado. A tabela ... pode continuar mostrando todas ... a menos que o filtro seja aplicado diretamente"
-    // However, typical behavior is to filter the table too. Let's filter it.
-    
     return transactions.filter(tx => {
-      if (periodFilter === "Todas") return true;
-      if (!tx.data_inicio) return true;
-      const txDate = new Date(tx.data_inicio);
-      
-      if (periodFilter === "Hoje") {
-        return txDate.toDateString() === now.toDateString();
-      }
-      
-      if (periodFilter === "Esta semana") {
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        startOfWeek.setHours(0, 0, 0, 0);
-        return txDate >= startOfWeek;
-      }
-      
-      if (periodFilter === "Este mês") {
-        return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
-      }
-      
-      if (periodFilter === "Últimos 3 meses") {
-        const threeMonthsAgo = new Date(now);
-        threeMonthsAgo.setMonth(now.getMonth() - 3);
-        threeMonthsAgo.setHours(0, 0, 0, 0);
-        return txDate >= threeMonthsAgo;
-      }
-      
+      if (!matchPeriod(tx)) return false;
+      if (categoriaFilter !== "Todas" && tx.categoria !== categoriaFilter) return false;
+      if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
       return true;
     });
-  }, [transactions, periodFilter]);
+  }, [transactions, periodFilter, categoriaFilter, metodoFilter]);
 
   const totals = useMemo(() => {
     const now = new Date();
@@ -316,32 +323,31 @@ function TransactionsPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="relative period-filter-container">
-                <button 
-                  onClick={() => setIsPeriodOpen(!isPeriodOpen)}
-                  className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
-                >
-                  <span>{periodFilter}</span>
-                  <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isPeriodOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-                    {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => {
-                          setPeriodFilter(option);
-                          setIsPeriodOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
+                <PopoverTrigger asChild>
+                  <button 
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
+                  >
+                    <span>{periodFilter}</span>
+                    <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-48 p-1 rounded-xl border-border shadow-lg">
+                  {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setPeriodFilter(option);
+                        setIsPeriodOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
               
               <button 
                 onClick={() => setIsAddModalOpen(true)}
@@ -395,6 +401,75 @@ function TransactionsPage() {
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <h3 className="font-semibold text-lg tracking-tight">Atividade de Transações</h3>
+                  <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
+                        <Filter className="size-4 text-muted-foreground" />
+                        <span>Filtrar</span>
+                        {(categoriaFilter !== "Todas" || metodoFilter !== "Todos") && (
+                          <span className="ml-1 size-2 rounded-full bg-primary" />
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-72 rounded-xl p-4 shadow-lg border-border">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold tracking-tight">Filtros</h4>
+                          <button
+                            onClick={() => {
+                              setCategoriaFilter("Todas");
+                              setMetodoFilter("Todos");
+                              setPeriodFilter("Todas");
+                            }}
+                            className="text-xs text-primary font-medium hover:underline"
+                          >
+                            Limpar filtros
+                          </button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Categoria</label>
+                          <select
+                            value={categoriaFilter}
+                            onChange={(e) => setCategoriaFilter(e.target.value)}
+                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="Todas">Todas</option>
+                            {availableCategories.map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Período</label>
+                          <select
+                            value={periodFilter}
+                            onChange={(e) => setPeriodFilter(e.target.value)}
+                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Método de Pagamento</label>
+                          <select
+                            value={metodoFilter}
+                            onChange={(e) => setMetodoFilter(e.target.value)}
+                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="Todos">Todos</option>
+                            {availableMethods.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -445,7 +520,7 @@ function TransactionsPage() {
                             </td>
                             <td className="py-4 px-2 text-right">
                               <button 
-                                onClick={() => deleteTransaction(tx.id)}
+                                onClick={() => setDeleteTarget(tx)}
                                 className="p-1 text-muted-foreground hover:text-danger transition-colors"
                                 title="Excluir transação"
                               >
@@ -519,6 +594,27 @@ function TransactionsPage() {
         onClose={() => setIsAddModalOpen(false)} 
         onSuccess={fetchTransactions}
       />
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !isDeleting) setDeleteTarget(null); }}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir transação?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta transação? Essa ação não poderá ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={isDeleting}
+              className="rounded-xl bg-danger text-danger-foreground hover:bg-danger/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
