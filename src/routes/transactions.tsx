@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 import { toast } from "sonner";
@@ -33,6 +33,8 @@ function TransactionsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -192,6 +194,26 @@ function TransactionsPage() {
       return true;
     });
   }, [transactions, periodFilter, categoriaFilter, metodoFilter]);
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredTransactions, currentPage]);
+
+  const goToNextPage = useCallback(() => {
+    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+  }, [currentPage, totalPages]);
+
+  const goToPreviousPage = useCallback(() => {
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  }, [currentPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [periodFilter, categoriaFilter, metodoFilter]);
 
   const totals = useMemo(() => {
     const now = new Date();
@@ -509,9 +531,9 @@ function TransactionsPage() {
                     <tbody className="divide-y divide-border">
                       {loading ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Carregando...</td></tr>
-                      ) : filteredTransactions.length === 0 ? (
+                      ) : paginatedTransactions.length === 0 ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
-                      ) : filteredTransactions.map((tx) => {
+                      ) : paginatedTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
                         return (
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
