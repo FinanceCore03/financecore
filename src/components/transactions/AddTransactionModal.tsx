@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, X } from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -252,16 +252,10 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-none shadow-2xl animate-in fade-in zoom-in duration-200">
+        <DialogContent hideClose className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-none shadow-2xl animate-in fade-in zoom-in duration-200">
           <div className="p-8 space-y-8">
             <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar Transação</DialogTitle>
-              <button 
-                onClick={handleClose}
-                className="rounded-full p-2 hover:bg-muted transition-colors"
-              >
-                <X className="size-5 text-muted-foreground" />
-              </button>
             </DialogHeader>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
@@ -458,7 +452,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       <Dialog open={isCategoryModalOpen} onOpenChange={(open) => {
         if (!isSubmittingQuick) setIsCategoryModalOpen(open);
       }}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
+        <DialogContent hideClose className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Adicionar Categoria</DialogTitle>
           </DialogHeader>
@@ -515,7 +509,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       <Dialog open={isMethodModalOpen} onOpenChange={(open) => {
         if (!isSubmittingQuick) setIsMethodModalOpen(open);
       }}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
+        <DialogContent hideClose className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Adicionar Método de Pagamento</DialogTitle>
           </DialogHeader>
