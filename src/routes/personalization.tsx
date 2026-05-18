@@ -140,6 +140,25 @@ function PersonalizationPage() {
       }
 
       toast.success("Categoria adicionada com sucesso!");
+      
+      // Criar linha na tabela Planejamento se for Saída ou Entrada/Saída
+      const normalizedUso = categoryUsage.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (normalizedUso === "saida" || normalizedUso === "entrada/saida") {
+        console.log("Criando planejamento automático para categoria:", categoryName);
+        const { error: planningError } = await supabase
+          .from("Planejamento")
+          .insert({
+            id_usuario: usuarioId,
+            Categoria: categoryName,
+            Valor: "0",
+            "Período": new Date().toISOString().split('T')[0]
+          });
+        
+        if (planningError) {
+          console.error("Erro ao criar planejamento automático:", planningError);
+        }
+      }
+
       // Atualiza a lista para refletir a mudança feita pela automação
       await fetchOptions(usuarioId);
       

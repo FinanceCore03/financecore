@@ -49,6 +49,41 @@ export type Database = {
           },
         ]
       }
+      Planejamento: {
+        Row: {
+          Categoria: string | null
+          created_at: string
+          id: number
+          id_usuario: number | null
+          Período: string | null
+          Valor: string | null
+        }
+        Insert: {
+          Categoria?: string | null
+          created_at?: string
+          id?: number
+          id_usuario?: number | null
+          Período?: string | null
+          Valor?: string | null
+        }
+        Update: {
+          Categoria?: string | null
+          created_at?: string
+          id?: number
+          id_usuario?: number | null
+          Período?: string | null
+          Valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Planejamento_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "Usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Transacoes: {
         Row: {
           categoria: string | null
