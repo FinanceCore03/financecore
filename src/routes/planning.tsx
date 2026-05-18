@@ -219,7 +219,9 @@ function PlanningPage() {
                             <Progress 
                               value={cat.percentage} 
                               className="h-2 bg-slate-100"
-                              indicatorClassName={cat.isOver ? "bg-red-500" : "bg-primary"}
+                              style={{ 
+                                "--progress-background": cat.isOver ? "#EF4444" : "oklch(0.62 0.18 290)" 
+                              } as React.CSSProperties}
                             />
                           </div>
 
@@ -319,7 +321,7 @@ function PlanningPage() {
                             <Tooltip 
                               cursor={{ fill: '#F8FAFC' }}
                               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-                              formatter={(value: number) => [formatCurrency(value), ""]}
+                              formatter={(value: any) => [formatCurrency(Number(value)), ""]}
                             />
                             <Legend 
                               verticalAlign="bottom" 
