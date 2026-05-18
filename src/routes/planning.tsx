@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { createFileRoute } from "@tanstack/react-router";
@@ -15,7 +15,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Legend 
+  Legend,
+  Cell
 } from "recharts";
 import { 
   Target, 
@@ -27,7 +28,14 @@ import {
   Car, 
   Gamepad2, 
   PiggyBank,
-  Wallet
+  Wallet,
+  Settings,
+  ShoppingBag,
+  HeartPulse,
+  BookOpen,
+  Coffee,
+  Plane,
+  Gift
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -40,18 +48,38 @@ export const Route = createFileRoute("/planning")({
   component: () => <PlanningPage />,
 });
 
-const DEFAULT_PLANNING = [
-  { name: "Moradia", budget: 2500, icon: Home, color: "#8B5CF6" },
-  { name: "Alimentação", budget: 800, icon: Utensils, color: "#EC4899" },
-  { name: "Transporte", budget: 500, icon: Car, color: "#3B82F6" },
-  { name: "Lazer", budget: 300, icon: Gamepad2, color: "#F59E0B" },
-  { name: "Economia", budget: 1200, icon: PiggyBank, color: "#10B981" },
-];
+const categoryIcons: Record<string, any> = {
+  "Moradia": Home,
+  "Alimentação": Utensils,
+  "Transporte": Car,
+  "Lazer": Gamepad2,
+  "Economia": PiggyBank,
+  "Saúde": HeartPulse,
+  "Educação": BookOpen,
+  "Compras": ShoppingBag,
+  "Viagem": Plane,
+  "Presentes": Gift,
+  "Café": Coffee,
+};
+
+const categoryColors: Record<string, string> = {
+  "Moradia": "#8B5CF6",
+  "Alimentação": "#EC4899",
+  "Transporte": "#3B82F6",
+  "Lazer": "#F59E0B",
+  "Economia": "#10B981",
+  "Saúde": "#EF4444",
+  "Educação": "#6366F1",
+  "Compras": "#F43F5E",
+  "Viagem": "#0EA5E9",
+  "Presentes": "#D946EF",
+  "Café": "#92400E",
+};
 
 function PlanningPage() {
   const { transactions, loading } = useDashboardData();
   const [activeTab, setActiveTab] = useState("overview");
-  const [budgets, setBudgets] = useState(DEFAULT_PLANNING);
+  const [budgets, setBudgets] = useState<Record<string, number>>({});
 
   const planningData = useMemo(() => {
     const now = new Date();
@@ -59,37 +87,48 @@ function PlanningPage() {
     const currentYear = now.getFullYear();
 
     const spendingByCategory: Record<string, number> = {};
+    const userCategoriesSet = new Set<string>();
     
     transactions.forEach(tx => {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
+      const cat = tx.categoria || "Outros";
+      userCategoriesSet.add(cat);
+
       if (normalizedTipo === "saida" && tx.data_inicio) {
         const [year, month] = tx.data_inicio.split('-').map(Number);
         if (month - 1 === currentMonth && year === currentYear) {
-          const cat = tx.categoria || "Outros";
           const val = parseFloat(tx.valor || "0");
           spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
         }
       }
     });
 
-    const categories = budgets.map(b => {
-      const spent = spendingByCategory[b.name] || 0;
-      const remaining = b.budget - spent;
-      const percentage = Math.min((spent / b.budget) * 100, 150);
-      const isOver = spent > b.budget;
+    const userCategories = Array.from(userCategoriesSet).sort();
+
+    const categories = userCategories.map(name => {
+      const budget = budgets[name] || 1000;
+      const spent = spendingByCategory[name] || 0;
+      const remaining = budget - spent;
+      const percentage = Math.min((spent / budget) * 100, 150);
+      const isOver = spent > budget;
+      const Icon = categoryIcons[name] || Wallet;
+      const color = categoryColors[name] || "#94A3B8";
 
       return {
-        ...b,
+        name,
+        budget,
         spent,
         remaining: Math.abs(remaining),
         percentage,
-        isOver
+        isOver,
+        icon: Icon,
+        color
       };
     });
 
-    const totalPlanned = budgets.reduce((acc, curr) => acc + curr.budget, 0);
+    const totalPlanned = categories.reduce((acc, curr) => acc + curr.budget, 0);
     const totalSpent = categories.reduce((acc, curr) => acc + curr.spent, 0);
     const difference = totalPlanned - totalSpent;
 
@@ -100,6 +139,31 @@ function PlanningPage() {
       difference
     };
   }, [transactions, budgets]);
+
+  useEffect(() => {
+    if (!loading && transactions.length > 0) {
+      const saved = localStorage.getItem('planning_budgets');
+      if (saved) {
+        setBudgets(JSON.parse(saved));
+      } else {
+        const initialBudgets: Record<string, number> = {};
+        const categories = new Set<string>();
+        transactions.forEach(tx => {
+          if (tx.categoria) categories.add(tx.categoria);
+        });
+        categories.forEach(cat => {
+          initialBudgets[cat] = 1000;
+        });
+        setBudgets(initialBudgets);
+      }
+    }
+  }, [loading, transactions.length]);
+
+  const handleBudgetChange = (name: string, value: number) => {
+    const newBudgets = { ...budgets, [name]: value };
+    setBudgets(newBudgets);
+    localStorage.setItem('planning_budgets', JSON.stringify(newBudgets));
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -119,29 +183,29 @@ function PlanningPage() {
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
         <TopBar />
-        <main className="flex-1 px-8 py-6 space-y-6">
+        <main className="flex-1 px-8 py-6 space-y-8">
           <header className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Planejamento</h1>
             <p className="text-sm text-muted-foreground">Gerencie suas metas mensais e acompanhe seus gastos por categoria.</p>
           </header>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-            <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 gap-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
+            <TabsList className="bg-[#F1F3F5] p-1 h-11 rounded-xl w-fit inline-flex">
               <TabsTrigger 
                 value="overview" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 py-2 text-sm font-medium transition-all"
+                className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm px-6 py-2 text-sm font-medium transition-all duration-200"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger 
                 value="categories" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 py-2 text-sm font-medium transition-all"
+                className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm px-6 py-2 text-sm font-medium transition-all duration-200"
               >
                 Categories
               </TabsTrigger>
               <TabsTrigger 
                 value="analytics" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 py-2 text-sm font-medium transition-all"
+                className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm px-6 py-2 text-sm font-medium transition-all duration-200"
               >
                 Analytics
               </TabsTrigger>
@@ -156,82 +220,102 @@ function PlanningPage() {
                 variants={pageVariants}
                 transition={{ duration: 0.25, ease: "easeOut" }}
               >
-                <TabsContent value="overview" className="m-0 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="border-none shadow-sm rounded-2xl">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <Target className="size-4" />
+                <TabsContent value="overview" className="m-0 space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                            <Target className="size-4" />
+                          </div>
                           Orçamento Planejado
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(planningData.totalPlanned)}</div>
+                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrency(planningData.totalPlanned)}</div>
                       </CardContent>
                     </Card>
-                    <Card className="border-none shadow-sm rounded-2xl">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <TrendingDown className="size-4" />
+                    <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-orange-100 text-orange-600">
+                            <TrendingDown className="size-4" />
+                          </div>
                           Gasto Atual
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(planningData.totalSpent)}</div>
+                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrency(planningData.totalSpent)}</div>
                       </CardContent>
                     </Card>
-                    <Card className="border-none shadow-sm rounded-2xl">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <DollarSign className="size-4" />
+                    <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <div className={`p-1.5 rounded-lg ${planningData.difference >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                            <DollarSign className="size-4" />
+                          </div>
                           Diferença
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className={`text-2xl font-bold ${planningData.difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`text-2xl font-black ${planningData.difference >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                           {formatCurrency(planningData.difference)}
                         </div>
                       </CardContent>
                     </Card>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {planningData.categories.map((cat) => (
-                      <Card key={cat.name} className="border-none shadow-sm rounded-2xl overflow-hidden group">
-                        <CardContent className="p-6 space-y-4">
+                      <Card key={cat.name} className="border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden group hover:shadow-md transition-all duration-300">
+                        <CardContent className="p-6 space-y-6">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="size-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>
-                                <cat.icon className="size-5" />
+                            <div className="flex items-center gap-4">
+                              <div className="size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" style={{ backgroundColor: `${cat.color}10`, color: cat.color }}>
+                                <cat.icon className="size-6" />
                               </div>
-                              <span className="font-semibold text-[#1A1A1A]">{cat.name}</span>
+                              <div>
+                                <h3 className="font-bold text-[#1A1A1A]">{cat.name}</h3>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">Categoria</p>
+                              </div>
                             </div>
-                            <span className="text-xs font-medium px-2 py-1 rounded-lg" style={{ backgroundColor: cat.isOver ? '#FEE2E2' : '#DCFCE7', color: cat.isOver ? '#EF4444' : '#22C55E' }}>
+                            <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: cat.isOver ? '#FEF2F2' : '#F0FDF4', color: cat.isOver ? '#EF4444' : '#22C55E' }}>
                               {cat.percentage.toFixed(0)}%
                             </span>
                           </div>
                           
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Gasto: {formatCurrency(cat.spent)}</span>
-                              <span className="font-medium">Meta: {formatCurrency(cat.budget)}</span>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-end">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Gasto</p>
+                                <p className="text-lg font-bold text-slate-700">{formatCurrency(cat.spent)}</p>
+                              </div>
+                              <div className="text-right space-y-0.5">
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Meta</p>
+                                <p className="text-sm font-semibold text-slate-500">{formatCurrency(cat.budget)}</p>
+                              </div>
                             </div>
                             <Progress 
                               value={cat.percentage} 
-                              className="h-2 bg-slate-100"
+                              className="h-2.5 bg-slate-100 rounded-full"
                               style={{ 
                                 "--progress-background": cat.isOver ? "#EF4444" : "oklch(0.62 0.18 290)" 
                               } as React.CSSProperties}
                             />
                           </div>
 
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-50 mt-4">
-                            <span className="text-xs text-muted-foreground">
-                              {cat.isOver ? "Excedido" : "Restante"}
-                            </span>
-                            <span className={`text-sm font-bold ${cat.isOver ? 'text-red-500' : 'text-green-500'}`}>
-                              {formatCurrency(cat.remaining)}
-                            </span>
+                          <div className="pt-4 flex items-center justify-between border-t border-slate-50">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                                {cat.isOver ? "Excedido" : "Disponível"}
+                              </span>
+                              <span className={`text-sm font-black ${cat.isOver ? 'text-red-500' : 'text-emerald-500'}`}>
+                                {formatCurrency(cat.remaining)}
+                              </span>
+                            </div>
+                            <div className={`size-8 rounded-full flex items-center justify-center ${cat.isOver ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                              {cat.isOver ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -240,77 +324,100 @@ function PlanningPage() {
                 </TabsContent>
 
                 <TabsContent value="categories" className="m-0">
-                  <Card className="border-none shadow-sm rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-semibold">Ajustar Metas</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-8 p-6">
-                      {planningData.categories.map((cat, index) => (
-                        <div key={cat.name} className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="size-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>
-                                <cat.icon className="size-4" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {planningData.categories.map((cat) => (
+                      <motion.div
+                        key={cat.name}
+                        whileHover={{ 
+                          scale: 1.02,
+                          transition: { duration: 0.2 }
+                        }}
+                        className="group"
+                      >
+                        <Card className="border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl bg-white overflow-hidden">
+                          <CardContent className="p-6 space-y-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div 
+                                  className="size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" 
+                                  style={{ backgroundColor: `${cat.color}10`, color: cat.color }}
+                                >
+                                  <cat.icon className="size-6" />
+                                </div>
+                                <div>
+                                  <h3 className="font-bold text-[#1A1A1A] text-lg">{cat.name}</h3>
+                                  <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${cat.isOver ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                    {cat.isOver ? 'Acima do limite' : 'Dentro do limite'}
+                                  </span>
+                                </div>
                               </div>
-                              <span className="font-medium">{cat.name}</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <p className="text-xs text-muted-foreground">Meta planejada</p>
-                                <p className="font-bold">{formatCurrency(cat.budget)}</p>
+                            
+                            <div className="space-y-4">
+                              <div className="flex justify-between items-end">
+                                <div className="space-y-1">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Meta Planejada</p>
+                                  <p className="text-xl font-black text-[#1A1A1A]">{formatCurrency(cat.budget)}</p>
+                                </div>
+                                <div className="text-right space-y-1">
+                                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Gasto Atual</p>
+                                  <p className="text-sm font-bold text-slate-600">{formatCurrency(cat.spent)}</p>
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <p className="text-xs text-muted-foreground">Gasto atual</p>
-                                <p className="font-medium">{formatCurrency(cat.spent)}</p>
+                              
+                              <div className="pt-2">
+                                <Slider 
+                                  value={[cat.budget]} 
+                                  max={10000} 
+                                  step={100}
+                                  onValueChange={(val) => handleBudgetChange(cat.name, val[0])}
+                                  className="py-2 cursor-pointer"
+                                />
+                                <p className="text-[10px] text-center text-muted-foreground mt-2 italic">Deslize para ajustar sua meta</p>
                               </div>
                             </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Slider 
-                              defaultValue={[cat.budget]} 
-                              max={5000} 
-                              step={50}
-                              onValueChange={(val) => {
-                                const newBudgets = [...budgets];
-                                newBudgets[index].budget = val[0];
-                                setBudgets(newBudgets);
-                              }}
-                              className="py-2"
-                            />
-                            <div className="flex justify-between items-center">
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${cat.isOver ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                {cat.isOver ? 'Acima do limite' : 'Dentro do limite'}
-                              </span>
-                              <span className="text-xs text-muted-foreground">Arraste para ajustar o planejamento</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="analytics" className="m-0">
-                  <Card className="border-none shadow-sm rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-semibold">Análise do Planejamento</CardTitle>
+                  <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden">
+                    <CardHeader className="border-b border-slate-50 px-8 py-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-xl font-bold text-[#1A1A1A]">Análise do Planejamento</CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">Comparativo entre o orçamento planejado e seus gastos reais por categoria.</p>
+                        </div>
+                        <div className="flex items-center gap-6 text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="size-3 rounded-full bg-slate-200" />
+                            <span className="font-medium text-slate-600">Planejado</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="size-3 rounded-full bg-primary" />
+                            <span className="font-medium text-slate-600">Gasto Real</span>
+                          </div>
+                        </div>
+                      </div>
                     </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="h-[400px] w-full mt-4">
+                    <CardContent className="px-8 py-10">
+                      <div className="h-[500px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
                             data={planningData.categories}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                            barGap={8}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                            barGap={12}
                           >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                             <XAxis 
                               dataKey="name" 
                               axisLine={false} 
                               tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 12 }}
-                              dy={10}
+                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }}
+                              dy={15}
                             />
                             <YAxis 
                               axisLine={false} 
@@ -319,30 +426,34 @@ function PlanningPage() {
                               tickFormatter={(value) => `R$ ${value}`}
                             />
                             <Tooltip 
-                              cursor={{ fill: '#F8FAFC' }}
-                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                              cursor={{ fill: '#F8FAFC', radius: 8 }}
+                              contentStyle={{ 
+                                borderRadius: '16px', 
+                                border: 'none', 
+                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                                padding: '12px 16px'
+                              }}
+                              itemStyle={{ padding: '4px 0', fontWeight: 600 }}
+                              labelStyle={{ marginBottom: '8px', fontWeight: 700, color: '#1A1A1A' }}
                               formatter={(value: any) => [formatCurrency(Number(value)), ""]}
-                            />
-                            <Legend 
-                              verticalAlign="bottom" 
-                              height={36} 
-                              iconType="circle"
-                              wrapperStyle={{ paddingTop: '20px' }}
                             />
                             <Bar 
                               name="Planejado" 
                               dataKey="budget" 
                               fill="#E2E8F0" 
-                              radius={[4, 4, 0, 0]} 
-                              barSize={32}
+                              radius={[6, 6, 0, 0]} 
+                              barSize={40}
                             />
                             <Bar 
-                              name="Gasto atual" 
+                              name="Gasto Real" 
                               dataKey="spent" 
-                              fill="oklch(0.62 0.18 290)" 
-                              radius={[4, 4, 0, 0]} 
-                              barSize={32}
-                            />
+                              radius={[6, 6, 0, 0]} 
+                              barSize={40}
+                            >
+                              {planningData.categories.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.isOver ? '#EF4444' : 'oklch(0.62 0.18 290)'} />
+                              ))}
+                            </Bar>
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
