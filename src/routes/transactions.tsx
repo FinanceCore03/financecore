@@ -82,55 +82,48 @@ function TransactionsPage() {
 
   useEffect(() => {
     fetchTransactions();
-    
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (isPeriodOpen && !target.closest('.period-filter-container')) {
-        setIsPeriodOpen(false);
-      }
+  }, []);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || !usuarioId || isDeleting) return;
+    setIsDeleting(true);
+
+    const payload: any = {
+      acao: "deletar",
+      id_transacao: deleteTarget.id,
+      id_usuario: usuarioId,
+      categoria: deleteTarget.categoria || "",
+      descricao: deleteTarget.descricao || "",
+      valor: deleteTarget.valor || "",
+      metodo_pagamento: deleteTarget.metodo_pagamento || "",
+      data_inicio: deleteTarget.data_inicio || "",
+      data_fim: deleteTarget.data_fim || "",
+      tipo: deleteTarget.tipo || "",
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isPeriodOpen]);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-  const deleteTransaction = async (id: number) => {
-    if (!usuarioId) return;
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
 
-    const confirmed = window.confirm("Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.");
-    if (!confirmed) return;
-    
-    // Encontrar os dados da transação antes de deletar para enviar ao webhook
-    const txToDelete = transactions.find(tx => tx.id === id);
-    
-    const { error } = await supabase
-      .from("Transacoes")
-      .delete()
-      .eq("id", id)
-      .eq("id_usuario", usuarioId);
+      clearTimeout(timeoutId);
 
-    if (!error) {
+      if (!response.ok) throw new Error(`Webhook respondeu com ${response.status}`);
+
       toast.success("Transação excluída.");
-      setTransactions(prev => prev.filter(tx => tx.id !== id));
-
-      // Disparar o webhook com os dados da transação e a ação de deletar
-      if (txToDelete) {
-        try {
-          await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              ...txToDelete,
-              acao: "deletar"
-            }),
-          });
-          console.log("Webhook de deleção enviado com sucesso.");
-        } catch (webhookError) {
-          console.error("Erro ao enviar webhook de deleção:", webhookError);
-        }
-      }
-    } else {
-      toast.error("Erro ao excluir transação.");
+      setTransactions(prev => prev.filter(tx => tx.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err: any) {
+      console.error("Erro ao excluir transação via webhook:", err);
+      toast.error("Não foi possível excluir agora. Tente novamente.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
