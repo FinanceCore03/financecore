@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -372,7 +373,7 @@ function TransactionsPage() {
                     <thead>
                       <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
                         <th className="text-left font-medium py-3 px-2">Categoria</th>
-                        <th className="text-left font-medium py-3 px-2">Data</th>
+                        <th className="text-left font-medium py-3 px-2">Período</th>
                         <th className="text-left font-medium py-3 px-2">Descrição</th>
                         <th className="text-left font-medium py-3 px-2">Quantia</th>
                         <th className="text-left font-medium py-3 px-2">Método</th>
@@ -397,7 +398,15 @@ function TransactionsPage() {
                                 <span className="font-medium">{tx.categoria || "Geral"}</span>
                               </div>
                             </td>
-                            <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleDateString('pt-BR') || "-"}</td>
+                            <td className="py-4 px-2 text-muted-foreground">
+                              {tx.data_inicial && tx.data_final ? (
+                                <span>{format(new Date(tx.data_inicial), "dd/MM/yyyy")} até {format(new Date(tx.data_final), "dd/MM/yyyy")}</span>
+                              ) : tx.data ? (
+                                format(new Date(tx.data), "dd/MM/yyyy")
+                              ) : (
+                                "—"
+                              )}
+                            </td>
                             <td className="py-4 px-2 text-muted-foreground truncate max-w-[150px]">{tx.descricao || "-"}</td>
                             <td className={`py-4 px-2 font-semibold tabular-nums ${isEntrada ? 'text-success' : 'text-danger'}`}>
                               {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
