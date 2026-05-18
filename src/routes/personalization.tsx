@@ -206,7 +206,7 @@ function PersonalizationPage() {
       id_usuario: usuarioId
     };
     if (itemToDelete.type === "categoria") {
-      payload.uso = itemToDelete.usage;
+      payload.uso = itemToDelete.Uso;
     }
 
     console.log("Iniciando remoção de item. Payload:", payload);
