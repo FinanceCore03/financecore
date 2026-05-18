@@ -77,9 +77,35 @@ const categoryColors: Record<string, string> = {
 };
 
 function PlanningPage() {
-  const { transactions, loading } = useDashboardData();
+  const { transactions, loading: dashboardLoading, usuarioId } = useDashboardData();
   const [activeTab, setActiveTab] = useState("overview");
-  const [budgets, setBudgets] = useState<Record<string, number>>({});
+  const [dbBudgets, setDbBudgets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBudgets = async () => {
+    if (!usuarioId) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("Planejamento")
+        .select("*")
+        .eq("id_usuario", usuarioId);
+      
+      if (error) throw error;
+      setDbBudgets(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar planejamentos:", error);
+      toast.error("Erro ao carregar planejamentos.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (usuarioId) {
+      fetchBudgets();
+    }
+  }, [usuarioId]);
 
   const planningData = useMemo(() => {
     const now = new Date();
@@ -87,7 +113,6 @@ function PlanningPage() {
     const currentYear = now.getFullYear();
 
     const spendingByCategory: Record<string, number> = {};
-    const userCategoriesSet = new Set<string>();
     
     transactions.forEach(tx => {
       const rawTipo = (tx.tipo || "").toLowerCase();
@@ -96,7 +121,6 @@ function PlanningPage() {
       // Apenas transações de saída são consideradas no planejamento
       if (normalizedTipo === "saida") {
         const cat = tx.categoria || "Outros";
-        userCategoriesSet.add(cat);
 
         if (tx.data_inicio) {
           const [year, month] = tx.data_inicio.split('-').map(Number);
@@ -108,18 +132,18 @@ function PlanningPage() {
       }
     });
 
-    const userCategories = Array.from(userCategoriesSet).sort();
-
-    const categories = userCategories.map(name => {
-      const budget = budgets[name] || 1000;
+    const categories = dbBudgets.map(item => {
+      const name = item.Categoria || "Sem nome";
+      const budget = parseFloat(item.Valor || "0");
       const spent = spendingByCategory[name] || 0;
       const remaining = budget - spent;
-      const percentage = Math.min((spent / budget) * 100, 150);
+      const percentage = budget > 0 ? Math.min((spent / budget) * 100, 150) : (spent > 0 ? 150 : 0);
       const isOver = spent > budget;
       const Icon = categoryIcons[name] || Wallet;
       const color = categoryColors[name] || "#94A3B8";
 
       return {
+        id: item.id,
         name,
         budget,
         spent,
@@ -141,31 +165,23 @@ function PlanningPage() {
       totalSpent,
       difference
     };
-  }, [transactions, budgets]);
+  }, [transactions, dbBudgets]);
 
-  useEffect(() => {
-    if (!loading && transactions.length > 0) {
-      const saved = localStorage.getItem('planning_budgets');
-      if (saved) {
-        setBudgets(JSON.parse(saved));
-      } else {
-        const initialBudgets: Record<string, number> = {};
-        const categories = new Set<string>();
-        transactions.forEach(tx => {
-          if (tx.categoria) categories.add(tx.categoria);
-        });
-        categories.forEach(cat => {
-          initialBudgets[cat] = 1000;
-        });
-        setBudgets(initialBudgets);
-      }
+  const handleBudgetChange = async (id: number, value: number) => {
+    try {
+      const { error } = await supabase
+        .from("Planejamento")
+        .update({ Valor: value.toString() })
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      // Update local state for immediate feedback
+      setDbBudgets(prev => prev.map(item => item.id === id ? { ...item, Valor: value.toString() } : item));
+    } catch (error) {
+      console.error("Erro ao atualizar planejamento:", error);
+      toast.error("Erro ao salvar alteração.");
     }
-  }, [loading, transactions.length]);
-
-  const handleBudgetChange = (name: string, value: number) => {
-    const newBudgets = { ...budgets, [name]: value };
-    setBudgets(newBudgets);
-    localStorage.setItem('planning_budgets', JSON.stringify(newBudgets));
   };
 
   const formatCurrency = (value: number) => {
