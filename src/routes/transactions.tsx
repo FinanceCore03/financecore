@@ -59,8 +59,11 @@ function TransactionsPage() {
 
         if (transacoes) {
           setTransactions(transacoes);
+          if (transacoes.length === 0) {
+            console.log("Busca retornou vazia para Usuarios.id:", usuario.id);
+          }
         } else {
-          console.log("Nenhuma transação retornada para Usuarios.id:", usuario.id);
+          console.log("Erro ou nenhuma transação retornada para Usuarios.id:", usuario.id);
         }
       } else {
         console.error("Usuário não encontrado na tabela Usuarios");
