@@ -476,12 +476,12 @@ function TransactionsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
-                        <th className="text-left font-medium py-3 px-2">Categoria</th>
-                        <th className="text-left font-medium py-3 px-2">Período</th>
-                        <th className="text-left font-medium py-3 px-2">Descrição</th>
-                        <th className="text-left font-medium py-3 px-2">Quantia</th>
-                        <th className="text-left font-medium py-3 px-2">Método</th>
-                        <th className="text-right font-medium py-3 px-2">Ação</th>
+                        <th className="text-left font-medium py-3 px-4">Categoria</th>
+                        <th className="text-left font-medium py-3 px-4">Período</th>
+                        <th className="text-left font-medium py-3 px-4">Descrição</th>
+                        <th className="text-left font-medium py-3 px-4">Quantia</th>
+                        <th className="text-left font-medium py-3 px-4">Método</th>
+                        <th className="text-center font-medium py-3 px-4">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -494,34 +494,34 @@ function TransactionsPage() {
                         const dateObj = tx.data_inicio ? new Date(tx.data_inicio) : null;
                         return (
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
-                            <td className="py-4 px-2">
+                            <td className="py-4 px-4">
                               <div className="flex items-center gap-3">
                                 <div className={`size-8 rounded-full flex items-center justify-center ${isEntrada ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
                                   <Wallet className="size-4" />
                                 </div>
-                                <span className="font-medium">{tx.categoria || "Geral"}</span>
+                                <span className="font-medium whitespace-nowrap">{tx.categoria || "Geral"}</span>
                               </div>
                             </td>
-                            <td className="py-4 px-2 text-muted-foreground">
-                              {tx.data_inicio && tx.data_fim ? (
-                                <span>{format(new Date(tx.data_inicio), "dd/MM/yyyy")} até {format(new Date(tx.data_fim), "dd/MM/yyyy")}</span>
-                              ) : tx.data_inicio ? (
-                                format(new Date(tx.data_inicio), "dd/MM/yyyy")
-                              ) : (
-                                "—"
-                              )}
+                            <td className="py-4 px-4 text-muted-foreground whitespace-nowrap">
+                              {(() => {
+                                if (!tx.data_inicio) return "—";
+                                const startStr = format(new Date(tx.data_inicio), "dd/MM/yyyy");
+                                if (!tx.data_fim || tx.data_inicio === tx.data_fim) return startStr;
+                                const endStr = format(new Date(tx.data_fim), "dd/MM/yyyy");
+                                return `${startStr} até ${endStr}`;
+                              })()}
                             </td>
-                            <td className="py-4 px-2 text-muted-foreground truncate max-w-[150px]">{tx.descricao || "-"}</td>
-                            <td className={`py-4 px-2 font-semibold tabular-nums ${isEntrada ? 'text-success' : 'text-danger'}`}>
+                            <td className="py-4 px-4 text-muted-foreground truncate max-w-[200px]">{tx.descricao || "-"}</td>
+                            <td className={`py-4 px-4 font-semibold tabular-nums whitespace-nowrap ${isEntrada ? 'text-success' : 'text-danger'}`}>
                               {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </td>
-                            <td className="py-4 px-2">
-                              <span className="px-2 py-1 bg-muted rounded-md text-[11px] font-medium">{tx.metodo_pagamento || "N/A"}</span>
+                            <td className="py-4 px-4">
+                              <span className="px-2 py-1 bg-muted rounded-md text-[11px] font-medium whitespace-nowrap">{tx.metodo_pagamento || "N/A"}</span>
                             </td>
-                            <td className="py-4 px-2 text-right">
+                            <td className="py-4 px-4 text-center">
                               <button 
                                 onClick={() => setDeleteTarget(tx)}
-                                className="p-1 text-muted-foreground hover:text-danger transition-colors"
+                                className="p-1 text-muted-foreground hover:text-danger transition-colors inline-flex items-center justify-center"
                                 title="Excluir transação"
                               >
                                 <Trash2 className="size-4" />
