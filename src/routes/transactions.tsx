@@ -402,6 +402,75 @@ function TransactionsPage() {
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <h3 className="font-semibold text-lg tracking-tight">Atividade de Transações</h3>
+                  <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
+                        <Filter className="size-4 text-muted-foreground" />
+                        <span>Filtrar</span>
+                        {(categoriaFilter !== "Todas" || metodoFilter !== "Todos") && (
+                          <span className="ml-1 size-2 rounded-full bg-primary" />
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-72 rounded-xl p-4 shadow-lg border-border">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold tracking-tight">Filtros</h4>
+                          <button
+                            onClick={() => {
+                              setCategoriaFilter("Todas");
+                              setMetodoFilter("Todos");
+                              setPeriodFilter("Todas");
+                            }}
+                            className="text-xs text-primary font-medium hover:underline"
+                          >
+                            Limpar filtros
+                          </button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Categoria</label>
+                          <select
+                            value={categoriaFilter}
+                            onChange={(e) => setCategoriaFilter(e.target.value)}
+                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="Todas">Todas</option>
+                            {availableCategories.map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Período</label>
+                          <select
+                            value={periodFilter}
+                            onChange={(e) => setPeriodFilter(e.target.value)}
+                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Método de Pagamento</label>
+                          <select
+                            value={metodoFilter}
+                            onChange={(e) => setMetodoFilter(e.target.value)}
+                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value="Todos">Todos</option>
+                            {availableMethods.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -452,7 +521,7 @@ function TransactionsPage() {
                             </td>
                             <td className="py-4 px-2 text-right">
                               <button 
-                                onClick={() => deleteTransaction(tx.id)}
+                                onClick={() => setDeleteTarget(tx)}
                                 className="p-1 text-muted-foreground hover:text-danger transition-colors"
                                 title="Excluir transação"
                               >
