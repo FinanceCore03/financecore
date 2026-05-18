@@ -364,25 +364,40 @@ function PlanningPage() {
                 </TabsContent>
 
                 <TabsContent value="analytics" className="m-0">
-                  <Card className="border-none shadow-sm rounded-2xl">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-semibold">Análise do Planejamento</CardTitle>
+                  <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden">
+                    <CardHeader className="border-b border-slate-50 px-8 py-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-xl font-bold text-[#1A1A1A]">Análise do Planejamento</CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">Comparativo entre o orçamento planejado e seus gastos reais por categoria.</p>
+                        </div>
+                        <div className="flex items-center gap-6 text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="size-3 rounded-full bg-slate-200" />
+                            <span className="font-medium text-slate-600">Planejado</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="size-3 rounded-full bg-primary" />
+                            <span className="font-medium text-slate-600">Gasto Real</span>
+                          </div>
+                        </div>
+                      </div>
                     </CardHeader>
-                    <CardContent className="p-6">
-                      <div className="h-[400px] w-full mt-4">
+                    <CardContent className="px-8 py-10">
+                      <div className="h-[500px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
                             data={planningData.categories}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                            barGap={8}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                            barGap={12}
                           >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                             <XAxis 
                               dataKey="name" 
                               axisLine={false} 
                               tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 12 }}
-                              dy={10}
+                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }}
+                              dy={15}
                             />
                             <YAxis 
                               axisLine={false} 
@@ -391,30 +406,34 @@ function PlanningPage() {
                               tickFormatter={(value) => `R$ ${value}`}
                             />
                             <Tooltip 
-                              cursor={{ fill: '#F8FAFC' }}
-                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                              cursor={{ fill: '#F8FAFC', radius: 8 }}
+                              contentStyle={{ 
+                                borderRadius: '16px', 
+                                border: 'none', 
+                                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                                padding: '12px 16px'
+                              }}
+                              itemStyle={{ padding: '4px 0', fontWeight: 600 }}
+                              labelStyle={{ marginBottom: '8px', fontWeight: 700, color: '#1A1A1A' }}
                               formatter={(value: any) => [formatCurrency(Number(value)), ""]}
-                            />
-                            <Legend 
-                              verticalAlign="bottom" 
-                              height={36} 
-                              iconType="circle"
-                              wrapperStyle={{ paddingTop: '20px' }}
                             />
                             <Bar 
                               name="Planejado" 
                               dataKey="budget" 
                               fill="#E2E8F0" 
-                              radius={[4, 4, 0, 0]} 
-                              barSize={32}
+                              radius={[6, 6, 0, 0]} 
+                              barSize={40}
                             />
                             <Bar 
-                              name="Gasto atual" 
+                              name="Gasto Real" 
                               dataKey="spent" 
-                              fill="oklch(0.62 0.18 290)" 
-                              radius={[4, 4, 0, 0]} 
-                              barSize={32}
-                            />
+                              radius={[6, 6, 0, 0]} 
+                              barSize={40}
+                            >
+                              {planningData.categories.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.isOver ? '#EF4444' : 'oklch(0.62 0.18 290)'} />
+                              ))}
+                            </Bar>
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
