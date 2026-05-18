@@ -178,16 +178,24 @@ function PlanningPage() {
   }, [transactions, dbBudgets]);
 
   const handleBudgetChange = async (id: number, value: number) => {
+    // Ensure minimum value is 0
+    const finalValue = Math.max(0, value);
+    
+    console.log("Atualizando valor planejado:", id, finalValue);
+    
     try {
       const { error } = await supabase
         .from("Planejamento")
-        .update({ Valor: value.toString() })
+        .update({ Valor: finalValue.toString() })
         .eq("id", id);
       
-      if (error) throw error;
+      if (error) {
+        console.log("Erro ao atualizar Planejamento:", error);
+        throw error;
+      }
       
       // Update local state for immediate feedback
-      setDbBudgets(prev => prev.map(item => item.id === id ? { ...item, Valor: value.toString() } : item));
+      setDbBudgets(prev => prev.map(item => item.id === id ? { ...item, Valor: finalValue.toString() } : item));
     } catch (error) {
       console.error("Erro ao atualizar planejamento:", error);
       toast.error("Erro ao salvar alteração.");
