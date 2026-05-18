@@ -399,7 +399,7 @@ function PersonalizationPage() {
                 <SelectContent>
                   <SelectItem value="entrada">Entrada</SelectItem>
                   <SelectItem value="saida">Saída</SelectItem>
-                  <SelectItem value="entrada_saida">Entrada/Saída</SelectItem>
+                  <SelectItem value="entrada/saida">Entrada/Saída</SelectItem>
                 </SelectContent>
               </Select>
             </div>
