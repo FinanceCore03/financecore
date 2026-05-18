@@ -20,24 +20,12 @@ interface AddTransactionModalProps {
   onSuccess: () => void;
 }
 
-const defaultCategories = [
-  "Salário",
-  "Alimentação",
-  "Transporte",
-  "Moradia",
-  "Lazer",
-  "Assinaturas",
-  "Saúde",
-  "Outros",
-];
-
-const defaultPaymentMethods = [
+const standardPaymentMethods = [
+  "Crédito",
+  "Débito",
   "Pix",
-  "Cartão de Crédito",
-  "Cartão de Débito",
+  "Parcelado",
   "Dinheiro",
-  "Transferência",
-  "Boleto",
 ];
 
 export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransactionModalProps) {
@@ -51,47 +39,123 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   const [descricao, setDescricao] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
-  const [categories, setCategories] = useState<string[]>(defaultCategories);
-  const [paymentMethods, setPaymentMethods] = useState<string[]>(defaultPaymentMethods);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+
+  // Sub-modal states
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isMethodModalOpen, setIsMethodModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryUsage, setNewCategoryUsage] = useState("saida");
+  const [newMethodName, setNewMethodName] = useState("");
+  const [isSubmittingQuick, setIsSubmittingQuick] = useState(false);
+  const [internalUsuarioId, setInternalUsuarioId] = useState<number | null>(null);
+
+  const fetchCustomData = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: usuario } = await supabase
+        .from("Usuarios")
+        .select("id")
+        .eq("id_auth", user.id)
+        .maybeSingle();
+
+      if (usuario) {
+        setInternalUsuarioId(usuario.id);
+        const { data: customOptions } = await supabase
+          .from("Opcoes")
+          .select("*")
+          .or(`id_usuario.eq.${usuario.id},id_usuario.is.null`);
+
+        if (customOptions) {
+          const cats = customOptions
+            .filter(opt => (opt.Tipo || "").toLowerCase() === "categoria" && opt.id_usuario !== null);
+          setCategories(cats);
+
+          const standardMethods = customOptions
+            .filter(opt => (opt.Tipo || "").toLowerCase() === "metodo_pagamento" && opt.id_usuario === null);
+          const customMethods = customOptions
+            .filter(opt => (opt.Tipo || "").toLowerCase() === "metodo_pagamento" && opt.id_usuario !== null);
+          
+          setPaymentMethods([...standardMethods, ...customMethods]);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching custom data:", error);
+    }
+  };
 
   useEffect(() => {
-    async function fetchCustomData() {
-      if (!user) return;
-      
-      try {
-        const { data: usuario } = await supabase
-          .from("Usuarios")
-          .select("id")
-          .eq("id_auth", user.id)
-          .maybeSingle();
-
-        if (usuario) {
-          const { data: customOptions } = await supabase
-            .from("Opcoes")
-            .select("Nome, Tipo, Uso")
-            .eq("id_usuario", usuario.id);
-
-          if (customOptions) {
-            const customCats = customOptions
-              .filter(opt => opt.Tipo === "categoria" && opt.Nome !== null)
-              .map(opt => opt.Nome as string);
-            if (customCats.length > 0) setCategories(customCats);
-
-            const customMethods = customOptions
-              .filter(opt => opt.Tipo === "metodo_pagamento" && opt.Nome !== null)
-              .map(opt => opt.Nome as string);
-            if (customMethods.length > 0) setPaymentMethods(customMethods);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching custom data:", error);
-      }
-    }
-    
     if (isOpen) {
       fetchCustomData();
     }
   }, [isOpen, user]);
+
+  const handleQuickAddCategory = async () => {
+    if (!newCategoryName || !internalUsuarioId) return;
+    setIsSubmittingQuick(true);
+
+    const payload = {
+      acao: "adicionar",
+      tipo: "categoria",
+      nome: newCategoryName,
+      uso: newCategoryUsage,
+      id_usuario: internalUsuarioId
+    };
+
+    try {
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Erro no webhook");
+
+      toast.success("Categoria adicionada!");
+      await fetchCustomData();
+      setCategoria(newCategoryName);
+      setIsCategoryModalOpen(false);
+      setNewCategoryName("");
+    } catch (error) {
+      toast.error("Erro ao adicionar categoria.");
+    } finally {
+      setIsSubmittingQuick(false);
+    }
+  };
+
+  const handleQuickAddMethod = async () => {
+    if (!newMethodName || !internalUsuarioId) return;
+    setIsSubmittingQuick(true);
+
+    const payload = {
+      acao: "adicionar",
+      tipo: "metodo_pagamento",
+      nome: newMethodName,
+      id_usuario: internalUsuarioId
+    };
+
+    try {
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Erro no webhook");
+
+      toast.success("Método adicionado!");
+      await fetchCustomData();
+      setMetodo(newMethodName);
+      setIsMethodModalOpen(false);
+      setNewMethodName("");
+    } catch (error) {
+      toast.error("Erro ao adicionar método.");
+    } finally {
+      setIsSubmittingQuick(false);
+    }
+  };
 
   const isPeriodMethod = metodo === "Crédito" || metodo === "Parcelado";
 
@@ -229,28 +293,46 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
 
               <div className="grid gap-2">
                 <Label htmlFor="categoria" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Categoria</Label>
-                <Select value={categoria} onValueChange={setCategoria}>
+                <Select value={categoria} onValueChange={(val) => {
+                  if (val === "ADD_NEW_CAT") {
+                    setIsCategoryModalOpen(true);
+                  } else {
+                    setCategoria(val);
+                  }
+                }}>
                   <SelectTrigger id="categoria" className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20">
                     <SelectValue placeholder="Selecione a categoria" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      <SelectItem key={cat.id} value={cat.Nome}>{cat.Nome}</SelectItem>
                     ))}
+                    <SelectItem value="ADD_NEW_CAT" className="text-primary font-bold border-t border-border mt-1 pt-2">
+                      + Adicionar Categoria
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="metodo" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Método de Pagamento</Label>
-                <Select value={metodo} onValueChange={setMetodo}>
+                <Select value={metodo} onValueChange={(val) => {
+                  if (val === "ADD_NEW_METHOD") {
+                    setIsMethodModalOpen(true);
+                  } else {
+                    setMetodo(val);
+                  }
+                }}>
                   <SelectTrigger id="metodo" className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20">
                     <SelectValue placeholder="Selecione o método" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {paymentMethods.map((m) => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                      <SelectItem key={m.id} value={m.Nome}>{m.Nome}</SelectItem>
                     ))}
+                    <SelectItem value="ADD_NEW_METHOD" className="text-primary font-bold border-t border-border mt-1 pt-2">
+                      + Adicionar Método
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -364,6 +446,107 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Mini Modal Adicionar Categoria */}
+      <Dialog open={isCategoryModalOpen} onOpenChange={(open) => {
+        if (!isSubmittingQuick) setIsCategoryModalOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Adicionar Categoria</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="new-cat-name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nome da Categoria</Label>
+              <Input
+                id="new-cat-name"
+                placeholder="Ex: Alimentação"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                className="h-11 rounded-xl border-border bg-muted/30"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-cat-usage" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo de uso</Label>
+              <Select value={newCategoryUsage} onValueChange={setNewCategoryUsage}>
+                <SelectTrigger id="new-cat-usage" className="h-11 rounded-xl border-border bg-muted/30">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="entrada">Entrada</SelectItem>
+                  <SelectItem value="saida">Saída</SelectItem>
+                  <SelectItem value="entrada/saida">Entrada/Saída</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 pt-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsCategoryModalOpen(false)}
+              className="flex-1 h-12 rounded-xl border-border text-muted-foreground hover:bg-muted font-bold transition-all"
+              disabled={isSubmittingQuick}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleQuickAddCategory}
+              disabled={!newCategoryName || isSubmittingQuick}
+              className={`flex-1 h-12 rounded-xl font-bold transition-all ${
+                !newCategoryName 
+                  ? "bg-white border border-border text-muted-foreground/50 cursor-not-allowed" 
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
+            >
+              {isSubmittingQuick ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mini Modal Adicionar Método */}
+      <Dialog open={isMethodModalOpen} onOpenChange={(open) => {
+        if (!isSubmittingQuick) setIsMethodModalOpen(open);
+      }}>
+        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Adicionar Método de Pagamento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="new-method-name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nome do Método</Label>
+              <Input
+                id="new-method-name"
+                placeholder="Ex: Pix Personalizado"
+                value={newMethodName}
+                onChange={(e) => setNewMethodName(e.target.value)}
+                className="h-11 rounded-xl border-border bg-muted/30"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-4 pt-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsMethodModalOpen(false)}
+              className="flex-1 h-12 rounded-xl border-border text-muted-foreground hover:bg-muted font-bold transition-all"
+              disabled={isSubmittingQuick}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleQuickAddMethod}
+              disabled={!newMethodName || isSubmittingQuick}
+              className={`flex-1 h-12 rounded-xl font-bold transition-all ${
+                !newMethodName 
+                  ? "bg-white border border-border text-muted-foreground/50 cursor-not-allowed" 
+                  : "bg-primary text-primary-foreground hover:bg-primary/90"
+              }`}
+            >
+              {isSubmittingQuick ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

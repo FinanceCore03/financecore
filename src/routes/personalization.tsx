@@ -93,7 +93,7 @@ function PersonalizationPage() {
     const { data, error } = await supabase
       .from("Opcoes")
       .select("*")
-      .eq("id_usuario", uid);
+      .or(`id_usuario.eq.${uid},id_usuario.is.null`);
 
     if (error) {
       console.error("Erro ao buscar opções:", error);
@@ -332,18 +332,25 @@ function PersonalizationPage() {
                           <div className="size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
                             <CreditCard className="size-4" />
                           </div>
-                          <span className="font-medium text-sm text-[#1A1A1A]">{method.Nome}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm text-[#1A1A1A]">{method.Nome}</span>
+                            {method.id_usuario === null && (
+                              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Padrão</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="size-8 text-muted-foreground hover:text-danger"
-                            onClick={() => setItemToDelete({ id: method.id, name: method.Nome, type: "metodo_pagamento" })}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
+                        {method.id_usuario !== null && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="size-8 text-muted-foreground hover:text-danger"
+                              onClick={() => setItemToDelete({ id: method.id, name: method.Nome, type: "metodo_pagamento" })}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
