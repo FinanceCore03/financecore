@@ -93,6 +93,9 @@ function TransactionsPage() {
     const confirmed = window.confirm("Tem certeza que deseja excluir esta transação? Esta ação não pode ser desfeita.");
     if (!confirmed) return;
     
+    // Encontrar os dados da transação antes de deletar para enviar ao webhook
+    const txToDelete = transactions.find(tx => tx.id === id);
+    
     const { error } = await supabase
       .from("Transacoes")
       .delete()
@@ -102,6 +105,23 @@ function TransactionsPage() {
     if (!error) {
       toast.success("Transação excluída.");
       setTransactions(prev => prev.filter(tx => tx.id !== id));
+
+      // Disparar o webhook com os dados da transação e a ação de deletar
+      if (txToDelete) {
+        try {
+          await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              ...txToDelete,
+              acao: "deletar"
+            }),
+          });
+          console.log("Webhook de deleção enviado com sucesso.");
+        } catch (webhookError) {
+          console.error("Erro ao enviar webhook de deleção:", webhookError);
+        }
+      }
     } else {
       toast.error("Erro ao excluir transação.");
     }
