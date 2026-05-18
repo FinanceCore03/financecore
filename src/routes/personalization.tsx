@@ -216,6 +216,46 @@ function PersonalizationPage() {
     }
   };
 
+  const handleTrashClick = async (item: { id: number; name: string; type: string; Uso?: string }) => {
+    if (item.type !== "categoria") {
+      setItemToDelete(item);
+      return;
+    }
+
+    if (!usuarioId) {
+      toast.error("Erro: Usuário não identificado.");
+      return;
+    }
+
+    console.log("Categoria tentando excluir:", item.name);
+    setIsCheckingDelete(true);
+    
+    try {
+      const { data: transacoesRelacionadas, error } = await supabase
+        .from("Transacoes")
+        .select("id")
+        .eq("id_usuario", usuarioId)
+        .eq("categoria", item.name)
+        .limit(1);
+
+      if (error) throw error;
+
+      console.log("Transações encontradas com essa categoria:", transacoesRelacionadas);
+
+      if (transacoesRelacionadas && transacoesRelacionadas.length > 0) {
+        console.log("Exclusão bloqueada porque a categoria já possui transações");
+        setIsBlockedModalOpen(true);
+      } else {
+        setItemToDelete(item);
+      }
+    } catch (error) {
+      console.error("Erro ao verificar transações:", error);
+      toast.error("Erro ao verificar categoria.");
+    } finally {
+      setIsCheckingDelete(false);
+    }
+  };
+
   const handleDeleteItem = async () => {
     if (!itemToDelete || !usuarioId) return;
     setIsSubmitting(true);
