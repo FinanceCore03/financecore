@@ -275,21 +275,30 @@ function PersonalizationPage() {
                       <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-muted/30 transition-colors group">
                         <div className="flex items-center gap-3">
                           <div className={`size-2 rounded-full ${cat.Uso === 'entrada' ? 'bg-success' : cat.Uso === 'saida' ? 'bg-danger' : 'bg-primary'}`} />
-                          <span className="font-medium text-sm text-[#1A1A1A]">{cat.Nome}</span>
-                          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
-                            {(cat.Uso === 'entrada_saida' || cat.Uso === 'entrada/saida') ? 'Entrada/Saída' : cat.Uso === 'entrada' ? 'Entrada' : 'Saída'}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm text-[#1A1A1A]">{cat.Nome}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
+                                {(cat.Uso === 'entrada_saida' || cat.Uso === 'entrada/saida') ? 'Entrada/Saída' : cat.Uso === 'entrada' ? 'Entrada' : 'Saída'}
+                              </span>
+                              {cat.id_usuario === null && (
+                                <span className="text-[10px] text-muted-foreground uppercase font-semibold">Padrão</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="size-8 text-muted-foreground hover:text-danger"
-                            onClick={() => setItemToDelete({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
+                        {cat.id_usuario !== null && (
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="size-8 text-muted-foreground hover:text-danger"
+                              onClick={() => setItemToDelete({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
