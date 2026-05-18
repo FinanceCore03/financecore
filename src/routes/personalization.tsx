@@ -60,9 +60,11 @@ function PersonalizationPage() {
   const [categoryUsage, setCategoryUsage] = useState("saida");
   const [methodName, setMethodName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingDelete, setIsCheckingDelete] = useState(false);
 
   // Delete confirmation state
   const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; type: string; Uso?: string } | null>(null);
+  const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -214,6 +216,46 @@ function PersonalizationPage() {
     }
   };
 
+  const handleTrashClick = async (item: { id: number; name: string; type: string; Uso?: string }) => {
+    if (item.type !== "categoria") {
+      setItemToDelete(item);
+      return;
+    }
+
+    if (!usuarioId) {
+      toast.error("Erro: Usuário não identificado.");
+      return;
+    }
+
+    console.log("Categoria tentando excluir:", item.name);
+    setIsCheckingDelete(true);
+    
+    try {
+      const { data: transacoesRelacionadas, error } = await supabase
+        .from("Transacoes")
+        .select("id")
+        .eq("id_usuario", usuarioId)
+        .eq("categoria", item.name)
+        .limit(1);
+
+      if (error) throw error;
+
+      console.log("Transações encontradas com essa categoria:", transacoesRelacionadas);
+
+      if (transacoesRelacionadas && transacoesRelacionadas.length > 0) {
+        console.log("Exclusão bloqueada porque a categoria já possui transações");
+        setIsBlockedModalOpen(true);
+      } else {
+        setItemToDelete(item);
+      }
+    } catch (error) {
+      console.error("Erro ao verificar transações:", error);
+      toast.error("Erro ao verificar categoria.");
+    } finally {
+      setIsCheckingDelete(false);
+    }
+  };
+
   const handleDeleteItem = async () => {
     if (!itemToDelete || !usuarioId) return;
     setIsSubmitting(true);
@@ -312,7 +354,8 @@ function PersonalizationPage() {
                               variant="ghost" 
                               size="icon" 
                               className="size-8 text-muted-foreground hover:text-danger"
-                              onClick={() => setItemToDelete({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
+                              onClick={() => handleTrashClick({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
+                              disabled={isCheckingDelete}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -373,7 +416,8 @@ function PersonalizationPage() {
                               variant="ghost" 
                               size="icon" 
                               className="size-8 text-muted-foreground hover:text-danger"
-                              onClick={() => setItemToDelete({ id: method.id, name: method.Nome, type: "metodo_pagamento" })}
+                              onClick={() => handleTrashClick({ id: method.id, name: method.Nome, type: "metodo_pagamento" })}
+                              disabled={isCheckingDelete}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -521,6 +565,25 @@ function PersonalizationPage() {
               className="rounded-xl bg-danger text-white hover:bg-danger/90"
             >
               {isSubmitting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Alerta de Categoria Bloqueada */}
+      <AlertDialog open={isBlockedModalOpen} onOpenChange={setIsBlockedModalOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-semibold">Não é possível excluir esta categoria.</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">
+              Essa categoria já está sendo usada em uma ou mais transações. Para manter seu histórico financeiro correto, ela não pode ser removida.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction 
+              onClick={() => setIsBlockedModalOpen(false)}
+              className="rounded-xl bg-primary text-white hover:bg-primary/90"
+            >
+              Entendi
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
