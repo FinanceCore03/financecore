@@ -80,7 +80,7 @@ const categoryColors: Record<string, string> = {
 };
 
 function PlanningPage() {
-  const { transactions, loading: dashboardLoading, usuarioId } = useDashboardData();
+  const { transactions, loading: dashboardLoading, usuarioId, user } = useDashboardData();
   const [activeTab, setActiveTab] = useState("overview");
   const [dbBudgets, setDbBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,12 +89,17 @@ function PlanningPage() {
     if (!usuarioId) return;
     setLoading(true);
     try {
+      console.log("Usuário auth:", user);
+      console.log("Usuário interno:", usuarioId);
+      
       const { data, error } = await supabase
         .from("Planejamento")
         .select("*")
         .eq("id_usuario", usuarioId);
       
       if (error) throw error;
+      
+      console.log("Planejamentos encontrados:", data);
       setDbBudgets(data || []);
     } catch (error) {
       console.error("Erro ao buscar planejamentos:", error);
