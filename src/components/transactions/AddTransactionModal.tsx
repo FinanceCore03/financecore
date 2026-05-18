@@ -214,7 +214,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       
       let payload: any = {
         tipo,
-        quantia: quantia.replace(/\./g, "").replace(",", "."),
+        valor: quantia.replace(/\./g, "").replace(",", "."),
         categoria,
         metodo_pagamento: metodo,
         descricao: descricao || "",
@@ -222,10 +222,10 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       };
 
       if (isPeriodMethod) {
-        payload.data_inicial = format(data, "yyyy-MM-dd");
-        payload.data_final = format(dataFinal, "yyyy-MM-dd");
+        payload.data_inicio = format(data, "yyyy-MM-dd");
+        payload.data_fim = format(dataFinal, "yyyy-MM-dd");
       } else {
-        payload.data = format(data, "yyyy-MM-dd");
+        payload.data_inicio = format(data, "yyyy-MM-dd");
       }
 
       const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
