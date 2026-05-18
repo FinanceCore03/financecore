@@ -323,32 +323,31 @@ function TransactionsPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="relative period-filter-container">
-                <button 
-                  onClick={() => setIsPeriodOpen(!isPeriodOpen)}
-                  className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
-                >
-                  <span>{periodFilter}</span>
-                  <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {isPeriodOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg z-50 py-1 overflow-hidden">
-                    {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
-                      <button
-                        key={option}
-                        onClick={() => {
-                          setPeriodFilter(option);
-                          setIsPeriodOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
+                <PopoverTrigger asChild>
+                  <button 
+                    type="button"
+                    className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
+                  >
+                    <span>{periodFilter}</span>
+                    <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-48 p-1 rounded-xl border-border shadow-lg">
+                  {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setPeriodFilter(option);
+                        setIsPeriodOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
               
               <button 
                 onClick={() => setIsAddModalOpen(true)}
