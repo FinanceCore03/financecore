@@ -30,8 +30,10 @@ function TransactionsPage() {
   const fetchTransactions = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-
-    console.log("Usuário autenticado atual (auth.user.id):", user?.id);
+    
+    console.log("Auth user:", user);
+    console.log("Auth user id:", user?.id);
+    console.log("Auth user email:", user?.email);
 
     if (user) {
       const { data: usuario, error: usuarioError } = await supabase
@@ -40,21 +42,25 @@ function TransactionsPage() {
         .eq("id_auth", user.id)
         .maybeSingle();
 
-      console.log("Resultado encontrado na tabela Usuarios:", usuario || "Não encontrado");
+      console.log("Usuário interno encontrado:", usuario);
+      console.log("ID usado para buscar transações:", usuario?.id);
 
       if (usuario) {
         setUsuarioId(usuario.id);
-        console.log("ID do usuário interno:", usuario.id);
         
-        const { data, error: transacoesError } = await supabase
+        const { data: transacoes, error } = await supabase
           .from("Transacoes")
           .select("*")
           .eq("id_usuario", usuario.id)
-          .order("data", { ascending: false });
+          .order("data_inicio", { ascending: false });
         
-        if (data) {
-          setTransactions(data);
-          console.log("Quantidade de transações encontradas:", data.length);
+        console.log("Transações encontradas:", transacoes);
+        console.log("Erro ao buscar transações:", error);
+
+        if (transacoes) {
+          setTransactions(transacoes);
+        } else {
+          console.log("Nenhuma transação retornada para Usuarios.id:", usuario.id);
         }
       } else {
         console.error("Usuário não encontrado na tabela Usuarios");
