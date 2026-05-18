@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
