@@ -393,7 +393,7 @@ function TransactionsPage() {
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
                       ) : filteredTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
-                        const dateObj = tx.data ? new Date(tx.data) : null;
+                        const dateObj = tx.data_inicio ? new Date(tx.data_inicio) : null;
                         return (
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
                             <td className="py-4 px-2">
