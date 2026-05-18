@@ -80,7 +80,7 @@ const categoryColors: Record<string, string> = {
 };
 
 function PlanningPage() {
-  const { transactions, loading: dashboardLoading, usuarioId } = useDashboardData();
+  const { transactions, loading: dashboardLoading, usuarioId, user } = useDashboardData();
   const [activeTab, setActiveTab] = useState("overview");
   const [dbBudgets, setDbBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,12 +89,17 @@ function PlanningPage() {
     if (!usuarioId) return;
     setLoading(true);
     try {
+      console.log("Usuário auth:", user);
+      console.log("Usuário interno:", usuarioId);
+      
       const { data, error } = await supabase
         .from("Planejamento")
         .select("*")
         .eq("id_usuario", usuarioId);
       
       if (error) throw error;
+      
+      console.log("Planejamentos encontrados:", data);
       setDbBudgets(data || []);
     } catch (error) {
       console.error("Erro ao buscar planejamentos:", error);
@@ -121,7 +126,6 @@ function PlanningPage() {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
-      // Apenas transações de saída são consideradas no planejamento
       if (normalizedTipo === "saida") {
         const cat = tx.categoria || "Outros";
 
@@ -140,8 +144,16 @@ function PlanningPage() {
       const budget = parseFloat(item.Valor || "0");
       const spent = spendingByCategory[name] || 0;
       const remaining = budget - spent;
-      const percentage = budget > 0 ? Math.min((spent / budget) * 100, 150) : (spent > 0 ? 150 : 0);
-      const isOver = spent > budget;
+      
+      // Calculate percentage avoiding division by zero
+      let percentage = 0;
+      if (budget > 0) {
+        percentage = Math.min((spent / budget) * 100, 150);
+      } else if (spent > 0) {
+        percentage = 150; // Visual indicator that it's over budget (since budget is 0)
+      }
+      
+      const isOver = budget > 0 ? spent > budget : spent > 0;
       const Icon = categoryIcons[name] || Wallet;
       const color = categoryColors[name] || "#94A3B8";
 
@@ -171,16 +183,24 @@ function PlanningPage() {
   }, [transactions, dbBudgets]);
 
   const handleBudgetChange = async (id: number, value: number) => {
+    // Ensure minimum value is 0
+    const finalValue = Math.max(0, value);
+    
+    console.log("Atualizando valor planejado:", id, finalValue);
+    
     try {
       const { error } = await supabase
         .from("Planejamento")
-        .update({ Valor: value.toString() })
+        .update({ Valor: finalValue.toString() })
         .eq("id", id);
       
-      if (error) throw error;
+      if (error) {
+        console.log("Erro ao atualizar Planejamento:", error);
+        throw error;
+      }
       
       // Update local state for immediate feedback
-      setDbBudgets(prev => prev.map(item => item.id === id ? { ...item, Valor: value.toString() } : item));
+      setDbBudgets(prev => prev.map(item => item.id === id ? { ...item, Valor: finalValue.toString() } : item));
     } catch (error) {
       console.error("Erro ao atualizar planejamento:", error);
       toast.error("Erro ao salvar alteração.");
@@ -390,9 +410,14 @@ function PlanningPage() {
                               <div className="pt-2">
                                 <Slider 
                                   value={[cat.budget]} 
+                                  min={0}
                                   max={10000} 
                                   step={100}
-                                  onValueChange={(val) => handleBudgetChange(cat.id, val[0])}
+                                  onValueChange={(val) => {
+                                    // Update local state immediately for visual feedback
+                                    setDbBudgets(prev => prev.map(item => item.id === cat.id ? { ...item, Valor: val[0].toString() } : item));
+                                  }}
+                                  onValueCommit={(val) => handleBudgetChange(cat.id, val[0])}
                                   className="py-2 cursor-pointer"
                                 />
                                 <p className="text-[10px] text-center text-muted-foreground mt-2 italic">Deslize para ajustar sua meta</p>

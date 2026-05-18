@@ -253,6 +253,7 @@ export function useDashboardData() {
     stats,
     chartData,
     categoriesData,
-    usuarioId
+    usuarioId,
+    user
   };
 }
