@@ -127,44 +127,51 @@ function TransactionsPage() {
     }
   };
 
+  const matchPeriod = (tx: any) => {
+    if (periodFilter === "Todas") return true;
+    if (!tx.data_inicio) return true;
+    const txDate = new Date(tx.data_inicio);
+    const now = new Date();
+    if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
+    if (periodFilter === "Esta semana") {
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      return txDate >= startOfWeek;
+    }
+    if (periodFilter === "Este mês") {
+      return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+    }
+    if (periodFilter === "Últimos 3 meses") {
+      const threeMonthsAgo = new Date(now);
+      threeMonthsAgo.setMonth(now.getMonth() - 3);
+      threeMonthsAgo.setHours(0, 0, 0, 0);
+      return txDate >= threeMonthsAgo;
+    }
+    return true;
+  };
+
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach(tx => tx.categoria && set.add(tx.categoria));
+    return Array.from(set).sort();
+  }, [transactions]);
+
+  const availableMethods = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach(tx => tx.metodo_pagamento && set.add(tx.metodo_pagamento));
+    return Array.from(set).sort();
+  }, [transactions]);
+
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
-    const now = new Date();
-    
-    // As per user request, table activity can show all by default or respect filter if applied.
-    // The request said: "Os cards ... devem respeitar o período selecionado. A tabela ... pode continuar mostrando todas ... a menos que o filtro seja aplicado diretamente"
-    // However, typical behavior is to filter the table too. Let's filter it.
-    
     return transactions.filter(tx => {
-      if (periodFilter === "Todas") return true;
-      if (!tx.data_inicio) return true;
-      const txDate = new Date(tx.data_inicio);
-      
-      if (periodFilter === "Hoje") {
-        return txDate.toDateString() === now.toDateString();
-      }
-      
-      if (periodFilter === "Esta semana") {
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        startOfWeek.setHours(0, 0, 0, 0);
-        return txDate >= startOfWeek;
-      }
-      
-      if (periodFilter === "Este mês") {
-        return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
-      }
-      
-      if (periodFilter === "Últimos 3 meses") {
-        const threeMonthsAgo = new Date(now);
-        threeMonthsAgo.setMonth(now.getMonth() - 3);
-        threeMonthsAgo.setHours(0, 0, 0, 0);
-        return txDate >= threeMonthsAgo;
-      }
-      
+      if (!matchPeriod(tx)) return false;
+      if (categoriaFilter !== "Todas" && tx.categoria !== categoriaFilter) return false;
+      if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
       return true;
     });
-  }, [transactions, periodFilter]);
+  }, [transactions, periodFilter, categoriaFilter, metodoFilter]);
 
   const totals = useMemo(() => {
     const now = new Date();
