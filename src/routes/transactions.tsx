@@ -22,7 +22,7 @@ export const Route = createFileRoute("/transactions")({
 function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [periodFilter, setPeriodFilter] = useState("Este mês");
+  const [periodFilter, setPeriodFilter] = useState("Todas");
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
@@ -30,8 +30,10 @@ function TransactionsPage() {
   const fetchTransactions = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-
-    console.log("Usuário autenticado atual (auth.user.id):", user?.id);
+    
+    console.log("Auth user:", user);
+    console.log("Auth user id:", user?.id);
+    console.log("Auth user email:", user?.email);
 
     if (user) {
       const { data: usuario, error: usuarioError } = await supabase
@@ -40,21 +42,28 @@ function TransactionsPage() {
         .eq("id_auth", user.id)
         .maybeSingle();
 
-      console.log("Resultado encontrado na tabela Usuarios:", usuario || "Não encontrado");
+      console.log("Usuário interno encontrado:", usuario);
+      console.log("ID usado para buscar transações:", usuario?.id);
 
       if (usuario) {
         setUsuarioId(usuario.id);
-        console.log("ID do usuário interno:", usuario.id);
         
-        const { data, error: transacoesError } = await supabase
+        const { data: transacoes, error } = await supabase
           .from("Transacoes")
           .select("*")
           .eq("id_usuario", usuario.id)
-          .order("data", { ascending: false });
+          .order("data_inicio", { ascending: false });
         
-        if (data) {
-          setTransactions(data);
-          console.log("Quantidade de transações encontradas:", data.length);
+        console.log("Transações encontradas:", transacoes);
+        console.log("Erro ao buscar transações:", error);
+
+        if (transacoes) {
+          setTransactions(transacoes);
+          if (transacoes.length === 0) {
+            console.log("Busca retornou vazia para Usuarios.id:", usuario.id);
+          }
+        } else {
+          console.log("Erro ou nenhuma transação retornada para Usuarios.id:", usuario.id);
         }
       } else {
         console.error("Usuário não encontrado na tabela Usuarios");
@@ -108,8 +117,8 @@ function TransactionsPage() {
     
     return transactions.filter(tx => {
       if (periodFilter === "Todas") return true;
-      if (!tx.data) return true;
-      const txDate = new Date(tx.data);
+      if (!tx.data_inicio) return true;
+      const txDate = new Date(tx.data_inicio);
       
       if (periodFilter === "Hoje") {
         return txDate.toDateString() === now.toDateString();
@@ -154,8 +163,8 @@ function TransactionsPage() {
 
       // Filter for period-based cards
       let inPeriod = true;
-      if (periodFilter !== "Todas" && tx.data) {
-        const txDate = new Date(tx.data);
+      if (periodFilter !== "Todas" && tx.data_inicio) {
+        const txDate = new Date(tx.data_inicio);
         if (periodFilter === "Hoje") {
           inPeriod = txDate.toDateString() === now.toDateString();
         } else if (periodFilter === "Esta semana") {
@@ -199,8 +208,8 @@ function TransactionsPage() {
       .filter(tx => {
         if (tx.tipo !== "saida") return false;
         if (periodFilter === "Todas") return true;
-        if (!tx.data) return true;
-        const txDate = new Date(tx.data);
+        if (!tx.data_inicio) return true;
+        const txDate = new Date(tx.data_inicio);
         if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
         if (periodFilter === "Esta semana") {
           const startOfWeek = new Date(now);
@@ -387,7 +396,7 @@ function TransactionsPage() {
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
                       ) : filteredTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
-                        const dateObj = tx.data ? new Date(tx.data) : null;
+                        const dateObj = tx.data_inicio ? new Date(tx.data_inicio) : null;
                         return (
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
                             <td className="py-4 px-2">
@@ -399,10 +408,10 @@ function TransactionsPage() {
                               </div>
                             </td>
                             <td className="py-4 px-2 text-muted-foreground">
-                              {tx.data_inicial && tx.data_final ? (
-                                <span>{format(new Date(tx.data_inicial), "dd/MM/yyyy")} até {format(new Date(tx.data_final), "dd/MM/yyyy")}</span>
-                              ) : tx.data ? (
-                                format(new Date(tx.data), "dd/MM/yyyy")
+                              {tx.data_inicio && tx.data_fim ? (
+                                <span>{format(new Date(tx.data_inicio), "dd/MM/yyyy")} até {format(new Date(tx.data_fim), "dd/MM/yyyy")}</span>
+                              ) : tx.data_inicio ? (
+                                format(new Date(tx.data_inicio), "dd/MM/yyyy")
                               ) : (
                                 "—"
                               )}
