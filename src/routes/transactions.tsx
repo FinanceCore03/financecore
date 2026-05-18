@@ -498,12 +498,12 @@ function TransactionsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
-                        <th className="text-left font-medium py-3 px-4 w-[20%]">Categoria</th>
-                        <th className="text-left font-medium py-3 px-4 w-[15%]">Período</th>
-                        <th className="text-left font-medium py-3 px-4 w-[25%]">Descrição</th>
-                        <th className="text-right font-medium py-3 px-4 w-[15%]">Quantia</th>
-                        <th className="text-center font-medium py-3 px-4 w-[15%]">Método</th>
-                        <th className="text-center font-medium py-3 px-4 w-[10%]">Ação</th>
+                        <th className="text-left font-medium py-3 px-4">Categoria</th>
+                        <th className="text-left font-medium py-3 px-4">Período</th>
+                        <th className="text-left font-medium py-3 px-4">Descrição</th>
+                        <th className="text-left font-medium py-3 px-4">Quantia</th>
+                        <th className="text-left font-medium py-3 px-4">Método</th>
+                        <th className="text-center font-medium py-3 px-4">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -533,11 +533,11 @@ function TransactionsPage() {
                               })()}
                             </td>
                             <td className="py-4 px-4 text-muted-foreground truncate max-w-[200px]">{tx.descricao || "-"}</td>
-                             <td className={`py-4 px-4 font-semibold tabular-nums whitespace-nowrap text-right ${isEntrada ? 'text-success' : 'text-danger'}`}>
-                               {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                             </td>
-                             <td className="py-4 px-4 text-center">
-                               <span className="px-2 py-1 bg-muted rounded-md text-[11px] font-medium whitespace-nowrap inline-block">{tx.metodo_pagamento || "N/A"}</span>
+                            <td className={`py-4 px-4 font-semibold tabular-nums whitespace-nowrap ${isEntrada ? 'text-success' : 'text-danger'}`}>
+                              {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="px-2 py-1 bg-muted rounded-md text-[11px] font-medium whitespace-nowrap">{tx.metodo_pagamento || "N/A"}</span>
                             </td>
                             <td className="py-4 px-4 text-center">
                               <button 
