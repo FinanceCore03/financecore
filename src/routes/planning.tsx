@@ -93,14 +93,17 @@ function PlanningPage() {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
-      const cat = tx.categoria || "Outros";
-      userCategoriesSet.add(cat);
+      // Apenas transações de saída são consideradas no planejamento
+      if (normalizedTipo === "saida") {
+        const cat = tx.categoria || "Outros";
+        userCategoriesSet.add(cat);
 
-      if (normalizedTipo === "saida" && tx.data_inicio) {
-        const [year, month] = tx.data_inicio.split('-').map(Number);
-        if (month - 1 === currentMonth && year === currentYear) {
-          const val = parseFloat(tx.valor || "0");
-          spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
+        if (tx.data_inicio) {
+          const [year, month] = tx.data_inicio.split('-').map(Number);
+          if (month - 1 === currentMonth && year === currentYear) {
+            const val = parseFloat(tx.valor || "0");
+            spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
+          }
         }
       }
     });
