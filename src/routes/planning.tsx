@@ -410,9 +410,14 @@ function PlanningPage() {
                               <div className="pt-2">
                                 <Slider 
                                   value={[cat.budget]} 
+                                  min={0}
                                   max={10000} 
                                   step={100}
-                                  onValueChange={(val) => handleBudgetChange(cat.id, val[0])}
+                                  onValueChange={(val) => {
+                                    // Update local state immediately for visual feedback
+                                    setDbBudgets(prev => prev.map(item => item.id === cat.id ? { ...item, Valor: val[0].toString() } : item));
+                                  }}
+                                  onValueCommit={(val) => handleBudgetChange(cat.id, val[0])}
                                   className="py-2 cursor-pointer"
                                 />
                                 <p className="text-[10px] text-center text-muted-foreground mt-2 italic">Deslize para ajustar sua meta</p>
