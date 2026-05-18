@@ -114,6 +114,21 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       if (!response.ok) throw new Error("Erro no webhook");
 
       toast.success("Categoria adicionada!");
+      
+      // Criar linha na tabela Planejamento se for Saída ou Entrada/Saída
+      const normalizedUso = newCategoryUsage.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (normalizedUso === "saida" || normalizedUso === "entrada/saida") {
+        console.log("Criando planejamento automático para categoria:", newCategoryName);
+        await supabase
+          .from("Planejamento")
+          .insert({
+            id_usuario: internalUsuarioId,
+            Categoria: newCategoryName,
+            Valor: "0",
+            "Período": new Date().toISOString().split('T')[0]
+          });
+      }
+
       await fetchCustomData();
       setCategoria(newCategoryName);
       setIsCategoryModalOpen(false);
