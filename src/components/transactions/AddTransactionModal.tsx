@@ -162,18 +162,18 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   const isFormValid = 
     tipo !== "" && 
     categoria !== "" && 
-    quantia !== "" && 
+    valor !== "" && 
     metodo !== "" && 
     (isPeriodMethod ? (data !== null && dataFinal !== null) : data !== null);
 
-  const isFormDirty = tipo !== "saida" || categoria !== "" || quantia !== "" || metodo !== "" || descricao !== "";
+  const isFormDirty = tipo !== "saida" || categoria !== "" || valor !== "" || metodo !== "" || descricao !== "";
 
   const resetForm = () => {
     setTipo("saida");
     setCategoria("");
     setData(new Date());
     setDataFinal(new Date());
-    setQuantia("");
+    setValor("");
     setMetodo("");
     setDescricao("");
   };
@@ -214,7 +214,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       
       let payload: any = {
         tipo,
-        valor: quantia.replace(/\./g, "").replace(",", "."),
+        valor: valor.replace(/\./g, "").replace(",", "."),
         categoria,
         metodo_pagamento: metodo,
         descricao: descricao || "",
@@ -278,14 +278,14 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="quantia" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Quantia</Label>
+                <Label htmlFor="valor" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">R$</span>
                   <Input
-                    id="quantia"
+                    id="valor"
                     placeholder="0,00"
-                    value={quantia}
-                    onChange={(e) => setQuantia(e.target.value)}
+                    value={valor}
+                    onChange={(e) => setValor(e.target.value)}
                     className="h-11 pl-9 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
                   />
                 </div>
