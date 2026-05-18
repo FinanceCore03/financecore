@@ -213,6 +213,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       if (erroUsuario || !usuario) throw new Error("Seu usuário não foi encontrado.");
       
       let payload: any = {
+        acao: "adicionar",
         tipo,
         valor: valor.replace(/\./g, "").replace(",", "."),
         categoria,
