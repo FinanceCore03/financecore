@@ -62,7 +62,7 @@ function PersonalizationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Delete confirmation state
-  const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; type: string; usage?: string } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; type: string; Uso?: string } | null>(null);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -206,7 +206,7 @@ function PersonalizationPage() {
       id_usuario: usuarioId
     };
     if (itemToDelete.type === "categoria") {
-      payload.uso = itemToDelete.usage;
+      payload.uso = itemToDelete.Uso;
     }
 
     console.log("Iniciando remoção de item. Payload:", payload);
@@ -274,10 +274,10 @@ function PersonalizationPage() {
                     categories.map((cat) => (
                       <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-muted/30 transition-colors group">
                         <div className="flex items-center gap-3">
-                          <div className={`size-2 rounded-full ${cat.uso === 'entrada' ? 'bg-success' : cat.uso === 'saida' ? 'bg-danger' : 'bg-primary'}`} />
+                          <div className={`size-2 rounded-full ${cat.Uso === 'entrada' ? 'bg-success' : cat.Uso === 'saida' ? 'bg-danger' : 'bg-primary'}`} />
                           <span className="font-medium text-sm text-[#1A1A1A]">{cat.Nome}</span>
                           <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
-                            {cat.uso === 'entrada_saida' ? 'Entrada/Saída' : cat.uso === 'entrada' ? 'Entrada' : 'Saída'}
+                            {(cat.Uso === 'entrada_saida' || cat.Uso === 'entrada/saida') ? 'Entrada/Saída' : cat.Uso === 'entrada' ? 'Entrada' : 'Saída'}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -285,7 +285,7 @@ function PersonalizationPage() {
                             variant="ghost" 
                             size="icon" 
                             className="size-8 text-muted-foreground hover:text-danger"
-                            onClick={() => setItemToDelete({ id: cat.id, name: cat.Nome, type: "categoria", usage: cat.uso })}
+                            onClick={() => setItemToDelete({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
                           >
                             <Trash2 className="size-3.5" />
                           </Button>
@@ -399,7 +399,7 @@ function PersonalizationPage() {
                 <SelectContent>
                   <SelectItem value="entrada">Entrada</SelectItem>
                   <SelectItem value="saida">Saída</SelectItem>
-                  <SelectItem value="entrada_saida">Entrada/Saída</SelectItem>
+                  <SelectItem value="entrada/saida">Entrada/Saída</SelectItem>
                 </SelectContent>
               </Select>
             </div>
