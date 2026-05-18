@@ -452,64 +452,13 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       <Dialog open={isCategoryModalOpen} onOpenChange={(open) => {
         if (!isSubmittingQuick) setIsCategoryModalOpen(open);
       }}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
+        <DialogContent hideClose className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Adicionar Categoria</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="new-cat-name" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Nome da Categoria</Label>
-              <Input
-                id="new-cat-name"
-                placeholder="Ex: Alimentação"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="h-11 rounded-xl border-border bg-muted/30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-cat-usage" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo de uso</Label>
-              <Select value={newCategoryUsage} onValueChange={setNewCategoryUsage}>
-                <SelectTrigger id="new-cat-usage" className="h-11 rounded-xl border-border bg-muted/30">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl">
-                  <SelectItem value="entrada">Entrada</SelectItem>
-                  <SelectItem value="saida">Saída</SelectItem>
-                  <SelectItem value="entrada/saida">Entrada/Saída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 pt-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsCategoryModalOpen(false)}
-              className="flex-1 h-12 rounded-xl border-border text-muted-foreground hover:bg-muted font-bold transition-all"
-              disabled={isSubmittingQuick}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleQuickAddCategory}
-              disabled={!newCategoryName || isSubmittingQuick}
-              className={`flex-1 h-12 rounded-xl font-bold transition-all ${
-                !newCategoryName 
-                  ? "bg-white border border-border text-muted-foreground/50 cursor-not-allowed" 
-                  : "bg-primary text-primary-foreground hover:bg-primary/90"
-              }`}
-            >
-              {isSubmittingQuick ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Mini Modal Adicionar Método */}
+...
       <Dialog open={isMethodModalOpen} onOpenChange={(open) => {
         if (!isSubmittingQuick) setIsMethodModalOpen(open);
       }}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
+        <DialogContent hideClose className="sm:max-w-[425px] rounded-2xl p-6 gap-6 shadow-2xl border-none bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">Adicionar Método de Pagamento</DialogTitle>
           </DialogHeader>
