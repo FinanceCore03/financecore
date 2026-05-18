@@ -127,25 +127,45 @@ function TransactionsPage() {
     }
   };
 
+  const parseISOAsLocal = (dateStr: string) => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length !== 3) return null;
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  };
+
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return "—";
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length !== 3) return dateStr;
+    const [year, month, day] = parts;
+    const formatted = `${day}/${month}/${year}`;
+    console.log("Data original recebida:", dateStr);
+    console.log("Data formatada exibida:", formatted);
+    return formatted;
+  };
+
   const matchPeriod = (tx: any) => {
     if (periodFilter === "Todas") return true;
     if (!tx.data_inicio) return true;
-    const txDate = new Date(tx.data_inicio);
+    const txDate = parseISOAsLocal(tx.data_inicio);
+    if (!txDate) return true;
+    
     const now = new Date();
-    if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    if (periodFilter === "Hoje") return txDate.getTime() === today.getTime();
     if (periodFilter === "Esta semana") {
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() - now.getDay());
-      startOfWeek.setHours(0, 0, 0, 0);
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
       return txDate >= startOfWeek;
     }
     if (periodFilter === "Este mês") {
-      return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+      return txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear();
     }
     if (periodFilter === "Últimos 3 meses") {
-      const threeMonthsAgo = new Date(now);
-      threeMonthsAgo.setMonth(now.getMonth() - 3);
-      threeMonthsAgo.setHours(0, 0, 0, 0);
+      const threeMonthsAgo = new Date(today);
+      threeMonthsAgo.setMonth(today.getMonth() - 3);
       return txDate >= threeMonthsAgo;
     }
     return true;
@@ -175,6 +195,7 @@ function TransactionsPage() {
 
   const totals = useMemo(() => {
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
     let totalAccount = 0;
     let periodEntradas = 0;
@@ -191,21 +212,21 @@ function TransactionsPage() {
       // Filter for period-based cards
       let inPeriod = true;
       if (periodFilter !== "Todas" && tx.data_inicio) {
-        const txDate = new Date(tx.data_inicio);
-        if (periodFilter === "Hoje") {
-          inPeriod = txDate.toDateString() === now.toDateString();
-        } else if (periodFilter === "Esta semana") {
-          const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - now.getDay());
-          startOfWeek.setHours(0, 0, 0, 0);
-          inPeriod = txDate >= startOfWeek;
-        } else if (periodFilter === "Este mês") {
-          inPeriod = txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
-        } else if (periodFilter === "Últimos 3 meses") {
-          const threeMonthsAgo = new Date(now);
-          threeMonthsAgo.setMonth(now.getMonth() - 3);
-          threeMonthsAgo.setHours(0, 0, 0, 0);
-          inPeriod = txDate >= threeMonthsAgo;
+        const txDate = parseISOAsLocal(tx.data_inicio);
+        if (txDate) {
+          if (periodFilter === "Hoje") {
+            inPeriod = txDate.getTime() === today.getTime();
+          } else if (periodFilter === "Esta semana") {
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            inPeriod = txDate >= startOfWeek;
+          } else if (periodFilter === "Este mês") {
+            inPeriod = txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear();
+          } else if (periodFilter === "Últimos 3 meses") {
+            const threeMonthsAgo = new Date(today);
+            threeMonthsAgo.setMonth(today.getMonth() - 3);
+            inPeriod = txDate >= threeMonthsAgo;
+          }
         }
       }
 
@@ -231,24 +252,25 @@ function TransactionsPage() {
 
     // "Distribuição dos Gastos deve considerar apenas as transações de saída do usuário logado ... no período selecionado"
     const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     transactions
       .filter(tx => {
         if (tx.tipo !== "saida") return false;
         if (periodFilter === "Todas") return true;
         if (!tx.data_inicio) return true;
-        const txDate = new Date(tx.data_inicio);
-        if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
+        const txDate = parseISOAsLocal(tx.data_inicio);
+        if (!txDate) return true;
+        if (periodFilter === "Hoje") return txDate.getTime() === today.getTime();
         if (periodFilter === "Esta semana") {
-          const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - now.getDay());
-          startOfWeek.setHours(0, 0, 0, 0);
+          const startOfWeek = new Date(today);
+          startOfWeek.setDate(today.getDate() - today.getDay());
           return txDate >= startOfWeek;
         }
-        if (periodFilter === "Este mês") return txDate.getMonth() === now.getMonth() && txDate.getFullYear() === now.getFullYear();
+        if (periodFilter === "Este mês") return txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear();
         if (periodFilter === "Últimos 3 meses") {
-          const threeMonthsAgo = new Date(now);
-          threeMonthsAgo.setMonth(now.getMonth() - 3);
-          threeMonthsAgo.setHours(0, 0, 0, 0);
+          const threeMonthsAgo = new Date(today);
+          threeMonthsAgo.setMonth(today.getMonth() - 3);
           return txDate >= threeMonthsAgo;
         }
         return true;
@@ -491,7 +513,6 @@ function TransactionsPage() {
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
                       ) : filteredTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
-                        const dateObj = tx.data_inicio ? new Date(tx.data_inicio) : null;
                         return (
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
                             <td className="py-4 px-4">
@@ -505,9 +526,9 @@ function TransactionsPage() {
                             <td className="py-4 px-4 text-muted-foreground whitespace-nowrap">
                               {(() => {
                                 if (!tx.data_inicio) return "—";
-                                const startStr = format(new Date(tx.data_inicio), "dd/MM/yyyy");
+                                const startStr = formatDisplayDate(tx.data_inicio);
                                 if (!tx.data_fim || tx.data_inicio === tx.data_fim) return startStr;
-                                const endStr = format(new Date(tx.data_fim), "dd/MM/yyyy");
+                                const endStr = formatDisplayDate(tx.data_fim);
                                 return `${startStr} até ${endStr}`;
                               })()}
                             </td>
