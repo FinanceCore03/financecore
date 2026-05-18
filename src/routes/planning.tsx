@@ -265,43 +265,57 @@ function PlanningPage() {
                     </Card>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {planningData.categories.map((cat) => (
-                      <Card key={cat.name} className="border-none shadow-sm rounded-2xl overflow-hidden group">
-                        <CardContent className="p-6 space-y-4">
+                      <Card key={cat.name} className="border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden group hover:shadow-md transition-all duration-300">
+                        <CardContent className="p-6 space-y-6">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="size-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${cat.color}15`, color: cat.color }}>
-                                <cat.icon className="size-5" />
+                            <div className="flex items-center gap-4">
+                              <div className="size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" style={{ backgroundColor: `${cat.color}10`, color: cat.color }}>
+                                <cat.icon className="size-6" />
                               </div>
-                              <span className="font-semibold text-[#1A1A1A]">{cat.name}</span>
+                              <div>
+                                <h3 className="font-bold text-[#1A1A1A]">{cat.name}</h3>
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">Categoria</p>
+                              </div>
                             </div>
-                            <span className="text-xs font-medium px-2 py-1 rounded-lg" style={{ backgroundColor: cat.isOver ? '#FEE2E2' : '#DCFCE7', color: cat.isOver ? '#EF4444' : '#22C55E' }}>
+                            <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: cat.isOver ? '#FEF2F2' : '#F0FDF4', color: cat.isOver ? '#EF4444' : '#22C55E' }}>
                               {cat.percentage.toFixed(0)}%
                             </span>
                           </div>
                           
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Gasto: {formatCurrency(cat.spent)}</span>
-                              <span className="font-medium">Meta: {formatCurrency(cat.budget)}</span>
+                          <div className="space-y-3">
+                            <div className="flex justify-between items-end">
+                              <div className="space-y-0.5">
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Gasto</p>
+                                <p className="text-lg font-bold text-slate-700">{formatCurrency(cat.spent)}</p>
+                              </div>
+                              <div className="text-right space-y-0.5">
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Meta</p>
+                                <p className="text-sm font-semibold text-slate-500">{formatCurrency(cat.budget)}</p>
+                              </div>
                             </div>
                             <Progress 
                               value={cat.percentage} 
-                              className="h-2 bg-slate-100"
+                              className="h-2.5 bg-slate-100 rounded-full"
                               style={{ 
                                 "--progress-background": cat.isOver ? "#EF4444" : "oklch(0.62 0.18 290)" 
                               } as React.CSSProperties}
                             />
                           </div>
 
-                          <div className="pt-2 flex items-center justify-between border-t border-slate-50 mt-4">
-                            <span className="text-xs text-muted-foreground">
-                              {cat.isOver ? "Excedido" : "Restante"}
-                            </span>
-                            <span className={`text-sm font-bold ${cat.isOver ? 'text-red-500' : 'text-green-500'}`}>
-                              {formatCurrency(cat.remaining)}
-                            </span>
+                          <div className="pt-4 flex items-center justify-between border-t border-slate-50">
+                            <div className="flex flex-col">
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                                {cat.isOver ? "Excedido" : "Disponível"}
+                              </span>
+                              <span className={`text-sm font-black ${cat.isOver ? 'text-red-500' : 'text-emerald-500'}`}>
+                                {formatCurrency(cat.remaining)}
+                              </span>
+                            </div>
+                            <div className={`size-8 rounded-full flex items-center justify-center ${cat.isOver ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                              {cat.isOver ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
