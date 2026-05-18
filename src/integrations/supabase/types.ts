@@ -19,6 +19,7 @@ export type Database = {
           id: number
           id_usuario: number | null
           Nome: string | null
+          Padrao: boolean | null
           Tipo: string | null
           Uso: string | null
         }
@@ -26,6 +27,7 @@ export type Database = {
           id?: number
           id_usuario?: number | null
           Nome?: string | null
+          Padrao?: boolean | null
           Tipo?: string | null
           Uso?: string | null
         }
@@ -33,6 +35,7 @@ export type Database = {
           id?: number
           id_usuario?: number | null
           Nome?: string | null
+          Padrao?: boolean | null
           Tipo?: string | null
           Uso?: string | null
         }
@@ -50,7 +53,8 @@ export type Database = {
         Row: {
           categoria: string | null
           created_at: string
-          data: string | null
+          data_fim: string | null
+          data_inicio: string | null
           descricao: string | null
           id: number
           id_usuario: number | null
@@ -61,7 +65,8 @@ export type Database = {
         Insert: {
           categoria?: string | null
           created_at?: string
-          data?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
           descricao?: string | null
           id?: number
           id_usuario?: number | null
@@ -72,7 +77,8 @@ export type Database = {
         Update: {
           categoria?: string | null
           created_at?: string
-          data?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
           descricao?: string | null
           id?: number
           id_usuario?: number | null
