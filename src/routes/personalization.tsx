@@ -60,9 +60,11 @@ function PersonalizationPage() {
   const [categoryUsage, setCategoryUsage] = useState("saida");
   const [methodName, setMethodName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingDelete, setIsCheckingDelete] = useState(false);
 
   // Delete confirmation state
   const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; type: string; Uso?: string } | null>(null);
+  const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
