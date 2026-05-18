@@ -160,8 +160,8 @@ function TransactionsPage() {
 
       // Filter for period-based cards
       let inPeriod = true;
-      if (periodFilter !== "Todas" && tx.data) {
-        const txDate = new Date(tx.data);
+      if (periodFilter !== "Todas" && tx.data_inicio) {
+        const txDate = new Date(tx.data_inicio);
         if (periodFilter === "Hoje") {
           inPeriod = txDate.toDateString() === now.toDateString();
         } else if (periodFilter === "Esta semana") {
