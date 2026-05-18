@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { createFileRoute } from "@tanstack/react-router";
@@ -15,7 +15,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer, 
-  Legend 
+  Legend,
+  Cell
 } from "recharts";
 import { 
   Target, 
@@ -27,7 +28,14 @@ import {
   Car, 
   Gamepad2, 
   PiggyBank,
-  Wallet
+  Wallet,
+  Settings,
+  ShoppingBag,
+  HeartPulse,
+  BookOpen,
+  Coffee,
+  Plane,
+  Gift
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
