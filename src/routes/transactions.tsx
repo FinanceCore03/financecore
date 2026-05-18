@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 import { toast } from "sonner";
@@ -33,6 +33,8 @@ function TransactionsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -192,6 +194,26 @@ function TransactionsPage() {
       return true;
     });
   }, [transactions, periodFilter, categoriaFilter, metodoFilter]);
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredTransactions, currentPage]);
+
+  const goToNextPage = useCallback(() => {
+    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+  }, [currentPage, totalPages]);
+
+  const goToPreviousPage = useCallback(() => {
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  }, [currentPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [periodFilter, categoriaFilter, metodoFilter]);
 
   const totals = useMemo(() => {
     const now = new Date();
@@ -423,75 +445,106 @@ function TransactionsPage() {
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                   <h3 className="font-semibold text-lg tracking-tight">Atividade de Transações</h3>
-                  <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                    <PopoverTrigger asChild>
-                      <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
-                        <Filter className="size-4 text-muted-foreground" />
-                        <span>Filtrar</span>
-                        {(categoriaFilter !== "Todas" || metodoFilter !== "Todos") && (
-                          <span className="ml-1 size-2 rounded-full bg-primary" />
-                        )}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center bg-card border border-border rounded-xl p-1 shadow-sm">
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                        title="Página anterior"
+                      >
+                        <ChevronLeft className="size-4" />
                       </button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-72 rounded-xl p-4 shadow-lg border-border">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-semibold tracking-tight">Filtros</h4>
-                          <button
-                            onClick={() => {
-                              setCategoriaFilter("Todas");
-                              setMetodoFilter("Todos");
-                              setPeriodFilter("Todas");
-                            }}
-                            className="text-xs text-primary font-medium hover:underline"
-                          >
-                            Limpar filtros
-                          </button>
-                        </div>
+                      <div className="w-px h-4 bg-border mx-1" />
+                      <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className="p-1.5 rounded-lg hover:bg-muted disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                        title="Próxima página"
+                      >
+                        <ChevronRight className="size-4" />
+                      </button>
+                    </div>
 
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Categoria</label>
-                          <select
-                            value={categoriaFilter}
-                            onChange={(e) => setCategoriaFilter(e.target.value)}
-                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            <option value="Todas">Todas</option>
-                            {availableCategories.map((c) => (
-                              <option key={c} value={c}>{c}</option>
-                            ))}
-                          </select>
-                        </div>
+                    <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                      <PopoverTrigger asChild>
+                        <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
+                          <Filter className="size-4 text-muted-foreground" />
+                          <span>Filtrar</span>
+                          {(categoriaFilter !== "Todas" || metodoFilter !== "Todos" || periodFilter !== "Todas") && (
+                            <span className="ml-1 size-2 rounded-full bg-primary" />
+                          )}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-72 rounded-2xl p-5 shadow-xl border-border bg-white">
+                        <div className="space-y-5">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold tracking-tight text-[#1A1A1A]">Filtros</h4>
+                            <button
+                              onClick={() => {
+                                setCategoriaFilter("Todas");
+                                setMetodoFilter("Todos");
+                                setPeriodFilter("Todas");
+                              }}
+                              className="text-xs text-primary font-bold hover:opacity-80 transition-opacity"
+                            >
+                              Limpar filtros
+                            </button>
+                          </div>
 
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Período</label>
-                          <select
-                            value={periodFilter}
-                            onChange={(e) => setPeriodFilter(e.target.value)}
-                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((p) => (
-                              <option key={p} value={p}>{p}</option>
-                            ))}
-                          </select>
-                        </div>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Categoria</label>
+                            <div className="relative group">
+                              <select
+                                value={categoriaFilter}
+                                onChange={(e) => setCategoriaFilter(e.target.value)}
+                                className="w-full h-11 pl-4 pr-10 rounded-xl border border-border bg-[#F8F9FA] text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer"
+                              >
+                                <option value="Todas">Todas as categorias</option>
+                                {availableCategories.map((c) => (
+                                  <option key={c} value={c}>{c}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
+                            </div>
+                          </div>
 
-                        <div className="space-y-1.5">
-                          <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Método de Pagamento</label>
-                          <select
-                            value={metodoFilter}
-                            onChange={(e) => setMetodoFilter(e.target.value)}
-                            className="w-full h-10 px-3 rounded-lg border border-border bg-muted/30 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            <option value="Todos">Todos</option>
-                            {availableMethods.map((m) => (
-                              <option key={m} value={m}>{m}</option>
-                            ))}
-                          </select>
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Período</label>
+                            <div className="relative group">
+                              <select
+                                value={periodFilter}
+                                onChange={(e) => setPeriodFilter(e.target.value)}
+                                className="w-full h-11 pl-4 pr-10 rounded-xl border border-border bg-[#F8F9FA] text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer"
+                              >
+                                {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((p) => (
+                                  <option key={p} value={p}>{p === "Todas" ? "Todo o período" : p}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Método de Pagamento</label>
+                            <div className="relative group">
+                              <select
+                                value={metodoFilter}
+                                onChange={(e) => setMetodoFilter(e.target.value)}
+                                className="w-full h-11 pl-4 pr-10 rounded-xl border border-border bg-[#F8F9FA] text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer"
+                              >
+                                <option value="Todos">Todos os métodos</option>
+                                {availableMethods.map((m) => (
+                                  <option key={m} value={m}>{m}</option>
+                                ))}
+                              </select>
+                              <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none group-hover:text-foreground transition-colors" />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -509,9 +562,9 @@ function TransactionsPage() {
                     <tbody className="divide-y divide-border">
                       {loading ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Carregando...</td></tr>
-                      ) : filteredTransactions.length === 0 ? (
+                      ) : paginatedTransactions.length === 0 ? (
                         <tr><td colSpan={6} className="py-4 text-center text-muted-foreground">Nenhuma transação encontrada.</td></tr>
-                      ) : filteredTransactions.map((tx) => {
+                      ) : paginatedTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
                         return (
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">

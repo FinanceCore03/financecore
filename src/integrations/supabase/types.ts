@@ -57,6 +57,7 @@ export type Database = {
           id_usuario: number | null
           Período: string | null
           Valor: string | null
+          Visivel: boolean | null
         }
         Insert: {
           Categoria?: string | null
@@ -65,6 +66,7 @@ export type Database = {
           id_usuario?: number | null
           Período?: string | null
           Valor?: string | null
+          Visivel?: boolean | null
         }
         Update: {
           Categoria?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           id_usuario?: number | null
           Período?: string | null
           Valor?: string | null
+          Visivel?: boolean | null
         }
         Relationships: [
           {

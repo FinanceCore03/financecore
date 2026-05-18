@@ -38,7 +38,9 @@ import {
   BookOpen,
   Coffee,
   Plane,
-  Gift
+  Gift,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -144,6 +146,7 @@ function PlanningPage() {
       const budget = parseFloat(item.Valor || "0");
       const spent = spendingByCategory[name] || 0;
       const remaining = budget - spent;
+      const visible = item.Visivel !== false; // default true if null/undefined
       
       // Calculate percentage avoiding division by zero
       let percentage = 0;
@@ -166,12 +169,14 @@ function PlanningPage() {
         percentage,
         isOver,
         icon: Icon,
-        color
+        color,
+        visible
       };
     });
 
-    const totalPlanned = categories.reduce((acc, curr) => acc + curr.budget, 0);
-    const totalSpent = categories.reduce((acc, curr) => acc + curr.spent, 0);
+    const visibleCategories = categories.filter(c => c.visible);
+    const totalPlanned = visibleCategories.reduce((acc, curr) => acc + curr.budget, 0);
+    const totalSpent = visibleCategories.reduce((acc, curr) => acc + curr.spent, 0);
     const difference = totalPlanned - totalSpent;
 
     return {
@@ -203,6 +208,25 @@ function PlanningPage() {
       setDbBudgets(prev => prev.map(item => item.id === id ? { ...item, Valor: finalValue.toString() } : item));
     } catch (error) {
       console.error("Erro ao atualizar planejamento:", error);
+      toast.error("Erro ao salvar alteração.");
+    }
+  };
+
+  const toggleVisibility = async (id: number, currentVisible: boolean) => {
+    const newVisible = !currentVisible;
+    console.log("Alternando visibilidade:", id, newVisible);
+    
+    try {
+      const { error } = await supabase
+        .from("Planejamento")
+        .update({ Visivel: newVisible })
+        .eq("id", id);
+      
+      if (error) throw error;
+      
+      setDbBudgets(prev => prev.map(item => item.id === id ? { ...item, Visivel: newVisible } : item));
+    } catch (error) {
+      console.error("Erro ao alternar visibilidade:", error);
       toast.error("Erro ao salvar alteração.");
     }
   };
@@ -309,11 +333,14 @@ function PlanningPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {planningData.categories.map((cat) => (
-                      <Card key={cat.name} className="border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden group hover:shadow-md transition-all duration-300">
+                      <Card 
+                        key={cat.name} 
+                        className={`border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden group hover:shadow-md transition-all duration-300 ${!cat.visible ? 'opacity-60 bg-slate-50 grayscale-[0.3]' : ''}`}
+                      >
                         <CardContent className="p-6 space-y-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <div className="size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" style={{ backgroundColor: `${cat.color}10`, color: cat.color }}>
+                              <div className="size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" style={{ backgroundColor: cat.visible ? `${cat.color}10` : '#E2E8F0', color: cat.visible ? cat.color : '#94A3B8' }}>
                                 <cat.icon className="size-6" />
                               </div>
                               <div>
@@ -321,9 +348,18 @@ function PlanningPage() {
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mt-0.5">Categoria</p>
                               </div>
                             </div>
-                            <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: cat.isOver ? '#FEF2F2' : '#F0FDF4', color: cat.isOver ? '#EF4444' : '#22C55E' }}>
-                              {cat.percentage.toFixed(0)}%
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => toggleVisibility(cat.id, cat.visible)}
+                                className={`p-2 rounded-full transition-colors ${cat.visible ? 'text-slate-400 hover:text-primary hover:bg-primary/10' : 'text-primary bg-primary/10 hover:bg-primary/20'}`}
+                                title={cat.visible ? "Ocultar da contabilidade" : "Mostrar na contabilidade"}
+                              >
+                                {cat.visible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                              </button>
+                              <span className={`text-xs font-bold px-3 py-1 rounded-full ${cat.isOver ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                {cat.percentage.toFixed(0)}%
+                              </span>
+                            </div>
                           </div>
                           
                           <div className="space-y-3">
@@ -339,9 +375,9 @@ function PlanningPage() {
                             </div>
                             <Progress 
                               value={cat.percentage} 
-                              className="h-2.5 bg-slate-100 rounded-full"
+                              className={`h-2.5 rounded-full ${!cat.visible ? 'bg-slate-200' : 'bg-slate-100'}`}
                               style={{ 
-                                "--progress-background": cat.isOver ? "#EF4444" : "oklch(0.62 0.18 290)" 
+                                "--progress-background": !cat.visible ? "#CBD5E1" : (cat.isOver ? "#EF4444" : "oklch(0.62 0.18 290)") 
                               } as React.CSSProperties}
                             />
                           </div>
@@ -376,13 +412,13 @@ function PlanningPage() {
                         }}
                         className="group"
                       >
-                        <Card className="border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl bg-white overflow-hidden">
+                        <Card className={`border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl bg-white overflow-hidden ${!cat.visible ? 'opacity-60 bg-slate-50 grayscale-[0.3]' : ''}`}>
                           <CardContent className="p-6 space-y-6">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
                                 <div 
                                   className="size-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 duration-300" 
-                                  style={{ backgroundColor: `${cat.color}10`, color: cat.color }}
+                                  style={{ backgroundColor: cat.visible ? `${cat.color}10` : '#E2E8F0', color: cat.visible ? cat.color : '#94A3B8' }}
                                 >
                                   <cat.icon className="size-6" />
                                 </div>
@@ -393,6 +429,13 @@ function PlanningPage() {
                                   </span>
                                 </div>
                               </div>
+                              <button
+                                onClick={() => toggleVisibility(cat.id, cat.visible)}
+                                className={`p-2 rounded-full transition-colors ${cat.visible ? 'text-slate-400 hover:text-primary hover:bg-primary/10' : 'text-primary bg-primary/10 hover:bg-primary/20'}`}
+                                title={cat.visible ? "Ocultar da contabilidade" : "Mostrar na contabilidade"}
+                              >
+                                {cat.visible ? <Eye className="size-5" /> : <EyeOff className="size-5" />}
+                              </button>
                             </div>
                             
                             <div className="space-y-4">
@@ -454,7 +497,7 @@ function PlanningPage() {
                       <div className="h-[500px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
-                            data={planningData.categories}
+                            data={planningData.categories.filter(c => c.visible)}
                             margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                             barGap={12}
                           >
@@ -497,7 +540,7 @@ function PlanningPage() {
                               radius={[6, 6, 0, 0]} 
                               barSize={40}
                             >
-                              {planningData.categories.map((entry, index) => (
+                              {planningData.categories.filter(c => c.visible).map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.isOver ? '#EF4444' : 'oklch(0.62 0.18 290)'} />
                               ))}
                             </Bar>
