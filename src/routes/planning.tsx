@@ -48,18 +48,38 @@ export const Route = createFileRoute("/planning")({
   component: () => <PlanningPage />,
 });
 
-const DEFAULT_PLANNING = [
-  { name: "Moradia", budget: 2500, icon: Home, color: "#8B5CF6" },
-  { name: "Alimentação", budget: 800, icon: Utensils, color: "#EC4899" },
-  { name: "Transporte", budget: 500, icon: Car, color: "#3B82F6" },
-  { name: "Lazer", budget: 300, icon: Gamepad2, color: "#F59E0B" },
-  { name: "Economia", budget: 1200, icon: PiggyBank, color: "#10B981" },
-];
+const categoryIcons: Record<string, any> = {
+  "Moradia": Home,
+  "Alimentação": Utensils,
+  "Transporte": Car,
+  "Lazer": Gamepad2,
+  "Economia": PiggyBank,
+  "Saúde": HeartPulse,
+  "Educação": BookOpen,
+  "Compras": ShoppingBag,
+  "Viagem": Plane,
+  "Presentes": Gift,
+  "Café": Coffee,
+};
+
+const categoryColors: Record<string, string> = {
+  "Moradia": "#8B5CF6",
+  "Alimentação": "#EC4899",
+  "Transporte": "#3B82F6",
+  "Lazer": "#F59E0B",
+  "Economia": "#10B981",
+  "Saúde": "#EF4444",
+  "Educação": "#6366F1",
+  "Compras": "#F43F5E",
+  "Viagem": "#0EA5E9",
+  "Presentes": "#D946EF",
+  "Café": "#92400E",
+};
 
 function PlanningPage() {
   const { transactions, loading } = useDashboardData();
   const [activeTab, setActiveTab] = useState("overview");
-  const [budgets, setBudgets] = useState(DEFAULT_PLANNING);
+  const [budgets, setBudgets] = useState<Record<string, number>>({});
 
   const planningData = useMemo(() => {
     const now = new Date();
@@ -67,37 +87,48 @@ function PlanningPage() {
     const currentYear = now.getFullYear();
 
     const spendingByCategory: Record<string, number> = {};
+    const userCategoriesSet = new Set<string>();
     
     transactions.forEach(tx => {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
+      const cat = tx.categoria || "Outros";
+      userCategoriesSet.add(cat);
+
       if (normalizedTipo === "saida" && tx.data_inicio) {
         const [year, month] = tx.data_inicio.split('-').map(Number);
         if (month - 1 === currentMonth && year === currentYear) {
-          const cat = tx.categoria || "Outros";
           const val = parseFloat(tx.valor || "0");
           spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
         }
       }
     });
 
-    const categories = budgets.map(b => {
-      const spent = spendingByCategory[b.name] || 0;
-      const remaining = b.budget - spent;
-      const percentage = Math.min((spent / b.budget) * 100, 150);
-      const isOver = spent > b.budget;
+    const userCategories = Array.from(userCategoriesSet).sort();
+
+    const categories = userCategories.map(name => {
+      const budget = budgets[name] || 1000;
+      const spent = spendingByCategory[name] || 0;
+      const remaining = budget - spent;
+      const percentage = Math.min((spent / budget) * 100, 150);
+      const isOver = spent > budget;
+      const Icon = categoryIcons[name] || Wallet;
+      const color = categoryColors[name] || "#94A3B8";
 
       return {
-        ...b,
+        name,
+        budget,
         spent,
         remaining: Math.abs(remaining),
         percentage,
-        isOver
+        isOver,
+        icon: Icon,
+        color
       };
     });
 
-    const totalPlanned = budgets.reduce((acc, curr) => acc + curr.budget, 0);
+    const totalPlanned = categories.reduce((acc, curr) => acc + curr.budget, 0);
     const totalSpent = categories.reduce((acc, curr) => acc + curr.spent, 0);
     const difference = totalPlanned - totalSpent;
 
@@ -108,6 +139,31 @@ function PlanningPage() {
       difference
     };
   }, [transactions, budgets]);
+
+  useEffect(() => {
+    if (!loading && transactions.length > 0) {
+      const saved = localStorage.getItem('planning_budgets');
+      if (saved) {
+        setBudgets(JSON.parse(saved));
+      } else {
+        const initialBudgets: Record<string, number> = {};
+        const categories = new Set<string>();
+        transactions.forEach(tx => {
+          if (tx.categoria) categories.add(tx.categoria);
+        });
+        categories.forEach(cat => {
+          initialBudgets[cat] = 1000;
+        });
+        setBudgets(initialBudgets);
+      }
+    }
+  }, [loading, transactions.length]);
+
+  const handleBudgetChange = (name: string, value: number) => {
+    const newBudgets = { ...budgets, [name]: value };
+    setBudgets(newBudgets);
+    localStorage.setItem('planning_budgets', JSON.stringify(newBudgets));
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
