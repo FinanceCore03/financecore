@@ -48,7 +48,18 @@ export function useDashboardData() {
           }
           
           console.log("Transações do dashboard:", data);
-          setTransactions(data || []);
+          
+          // Map and normalize transactions
+          const normalized = (data || []).map(tx => {
+            const rawTipo = (tx.tipo || "").toLowerCase();
+            const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return {
+              ...tx,
+              tipo: normalizedTipo // Normalize to "entrada" or "saida"
+            };
+          });
+          
+          setTransactions(normalized);
         } else {
           console.warn("Usuário não encontrado na tabela Usuarios para id_auth:", user.id);
         }
