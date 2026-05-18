@@ -114,8 +114,8 @@ function TransactionsPage() {
     
     return transactions.filter(tx => {
       if (periodFilter === "Todas") return true;
-      if (!tx.data) return true;
-      const txDate = new Date(tx.data);
+      if (!tx.data_inicio) return true;
+      const txDate = new Date(tx.data_inicio);
       
       if (periodFilter === "Hoje") {
         return txDate.toDateString() === now.toDateString();
