@@ -405,10 +405,10 @@ function TransactionsPage() {
                               </div>
                             </td>
                             <td className="py-4 px-2 text-muted-foreground">
-                              {tx.data_inicial && tx.data_final ? (
-                                <span>{format(new Date(tx.data_inicial), "dd/MM/yyyy")} até {format(new Date(tx.data_final), "dd/MM/yyyy")}</span>
-                              ) : tx.data ? (
-                                format(new Date(tx.data), "dd/MM/yyyy")
+                              {tx.data_inicio && tx.data_fim ? (
+                                <span>{format(new Date(tx.data_inicio), "dd/MM/yyyy")} até {format(new Date(tx.data_fim), "dd/MM/yyyy")}</span>
+                              ) : tx.data_inicio ? (
+                                format(new Date(tx.data_inicio), "dd/MM/yyyy")
                               ) : (
                                 "—"
                               )}
