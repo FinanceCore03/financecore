@@ -252,16 +252,10 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-        <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-none shadow-2xl animate-in fade-in zoom-in duration-200">
+        <DialogContent hideClose className="sm:max-w-[600px] p-0 overflow-hidden bg-card border-none shadow-2xl animate-in fade-in zoom-in duration-200">
           <div className="p-8 space-y-8">
             <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <DialogTitle className="text-2xl font-bold tracking-tight">Adicionar Transação</DialogTitle>
-              <button 
-                onClick={handleClose}
-                className="rounded-full p-2 hover:bg-muted transition-colors"
-              >
-                <X className="size-5 text-muted-foreground" />
-              </button>
             </DialogHeader>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
