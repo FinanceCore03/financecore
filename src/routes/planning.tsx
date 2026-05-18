@@ -220,39 +220,45 @@ function PlanningPage() {
                 variants={pageVariants}
                 transition={{ duration: 0.25, ease: "easeOut" }}
               >
-                <TabsContent value="overview" className="m-0 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="border-none shadow-sm rounded-2xl">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <Target className="size-4" />
+                <TabsContent value="overview" className="m-0 space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                            <Target className="size-4" />
+                          </div>
                           Orçamento Planejado
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(planningData.totalPlanned)}</div>
+                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrency(planningData.totalPlanned)}</div>
                       </CardContent>
                     </Card>
-                    <Card className="border-none shadow-sm rounded-2xl">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <TrendingDown className="size-4" />
+                    <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-orange-100 text-orange-600">
+                            <TrendingDown className="size-4" />
+                          </div>
                           Gasto Atual
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{formatCurrency(planningData.totalSpent)}</div>
+                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrency(planningData.totalSpent)}</div>
                       </CardContent>
                     </Card>
-                    <Card className="border-none shadow-sm rounded-2xl">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                          <DollarSign className="size-4" />
+                    <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          <div className={`p-1.5 rounded-lg ${planningData.difference >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                            <DollarSign className="size-4" />
+                          </div>
                           Diferença
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className={`text-2xl font-bold ${planningData.difference >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`text-2xl font-black ${planningData.difference >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                           {formatCurrency(planningData.difference)}
                         </div>
                       </CardContent>
