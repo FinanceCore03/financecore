@@ -20,18 +20,21 @@ export type Database = {
           id_usuario: number | null
           Nome: string | null
           Tipo: string | null
+          Uso: string | null
         }
         Insert: {
           id?: number
           id_usuario?: number | null
           Nome?: string | null
           Tipo?: string | null
+          Uso?: string | null
         }
         Update: {
           id?: number
           id_usuario?: number | null
           Nome?: string | null
           Tipo?: string | null
+          Uso?: string | null
         }
         Relationships: [
           {
