@@ -183,29 +183,29 @@ function PlanningPage() {
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
         <TopBar />
-        <main className="flex-1 px-8 py-6 space-y-6">
+        <main className="flex-1 px-8 py-6 space-y-8">
           <header className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Planejamento</h1>
             <p className="text-sm text-muted-foreground">Gerencie suas metas mensais e acompanhe seus gastos por categoria.</p>
           </header>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-6">
-            <TabsList className="bg-transparent border-b rounded-none w-full justify-start h-auto p-0 gap-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
+            <TabsList className="bg-[#F1F3F5] p-1 h-11 rounded-xl w-fit inline-flex">
               <TabsTrigger 
                 value="overview" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 py-2 text-sm font-medium transition-all"
+                className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm px-6 py-2 text-sm font-medium transition-all duration-200"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger 
                 value="categories" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 py-2 text-sm font-medium transition-all"
+                className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm px-6 py-2 text-sm font-medium transition-all duration-200"
               >
                 Categories
               </TabsTrigger>
               <TabsTrigger 
                 value="analytics" 
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-0 py-2 text-sm font-medium transition-all"
+                className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm px-6 py-2 text-sm font-medium transition-all duration-200"
               >
                 Analytics
               </TabsTrigger>
