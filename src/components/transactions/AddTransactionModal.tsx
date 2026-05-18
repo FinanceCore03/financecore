@@ -34,7 +34,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   const [categoria, setCategoria] = useState<string>("");
   const [data, setData] = useState<Date>(new Date());
   const [dataFinal, setDataFinal] = useState<Date>(new Date());
-  const [quantia, setQuantia] = useState<string>("");
+  const [valor, setValor] = useState<string>("");
   const [metodo, setMetodo] = useState<string>("");
   const [descricao, setDescricao] = useState<string>("");
   const [loading, setLoading] = useState(false);
