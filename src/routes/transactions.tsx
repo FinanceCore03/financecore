@@ -514,7 +514,6 @@ function TransactionsPage() {
                       ) : filteredTransactions.map((tx) => {
                         const isEntrada = tx.tipo === "entrada";
                         return (
-                        return (
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
                             <td className="py-4 px-4">
                               <div className="flex items-center gap-3">
