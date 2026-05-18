@@ -62,7 +62,7 @@ function PersonalizationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Delete confirmation state
-  const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; type: string; usage?: string } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; type: string; Uso?: string } | null>(null);
 
   useEffect(() => {
     async function fetchUserData() {
