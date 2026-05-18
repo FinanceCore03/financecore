@@ -121,7 +121,6 @@ function PlanningPage() {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
-      // Apenas transações de saída são consideradas no planejamento
       if (normalizedTipo === "saida") {
         const cat = tx.categoria || "Outros";
 
@@ -140,8 +139,16 @@ function PlanningPage() {
       const budget = parseFloat(item.Valor || "0");
       const spent = spendingByCategory[name] || 0;
       const remaining = budget - spent;
-      const percentage = budget > 0 ? Math.min((spent / budget) * 100, 150) : (spent > 0 ? 150 : 0);
-      const isOver = spent > budget;
+      
+      // Calculate percentage avoiding division by zero
+      let percentage = 0;
+      if (budget > 0) {
+        percentage = Math.min((spent / budget) * 100, 150);
+      } else if (spent > 0) {
+        percentage = 150; // Visual indicator that it's over budget (since budget is 0)
+      }
+      
+      const isOver = budget > 0 ? spent > budget : spent > 0;
       const Icon = categoryIcons[name] || Wallet;
       const color = categoryColors[name] || "#94A3B8";
 
