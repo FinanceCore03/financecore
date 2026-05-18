@@ -17,6 +17,8 @@ export function useDashboardData() {
 
       setLoading(true);
       try {
+        console.log("Auth user:", user);
+        
         // 1. Get the internal ID from "Usuarios" table
         const { data: usuario, error: usuarioError } = await supabase
           .from("Usuarios")
@@ -24,7 +26,12 @@ export function useDashboardData() {
           .eq("id_auth", user.id)
           .maybeSingle();
 
-        if (usuarioError) throw usuarioError;
+        if (usuarioError) {
+          console.log("Erro ao buscar dados do dashboard:", usuarioError);
+          throw usuarioError;
+        }
+
+        console.log("Usuário interno:", usuario);
 
         if (usuario) {
           setUsuarioId(usuario.id);
@@ -33,10 +40,26 @@ export function useDashboardData() {
             .from("Transacoes")
             .select("*")
             .eq("id_usuario", usuario.id)
-            .order("data", { ascending: false });
+            .order("data_inicio", { ascending: false });
 
-          if (transacoesError) throw transacoesError;
-          setTransactions(data || []);
+          if (transacoesError) {
+            console.log("Erro ao buscar dados do dashboard:", transacoesError);
+            throw transacoesError;
+          }
+          
+          console.log("Transações do dashboard:", data);
+          
+          // Map and normalize transactions
+          const normalized = (data || []).map(tx => {
+            const rawTipo = (tx.tipo || "").toLowerCase();
+            const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return {
+              ...tx,
+              tipo: normalizedTipo // Normalize to "entrada" or "saida"
+            };
+          });
+          
+          setTransactions(normalized);
         } else {
           console.warn("Usuário não encontrado na tabela Usuarios para id_auth:", user.id);
         }
@@ -91,14 +114,21 @@ export function useDashboardData() {
 
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
-      const isEntrada = tx.tipo === "entrada";
+      
+      // Normalize tipo
+      const rawTipo = (tx.tipo || "").toLowerCase();
+      const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // "saída" -> "saida"
+      
+      const isEntrada = normalizedTipo === "entrada";
+      const isSaida = normalizedTipo === "saida";
       
       if (isEntrada) totalBalance += val;
-      else totalBalance -= val;
+      else if (isSaida) totalBalance -= val;
 
-      if (tx.data) {
+      const dateStr = tx.data_inicio;
+      if (dateStr) {
         // Safe date parsing to avoid timezone shifts for comparison
-        const [year, month, day] = tx.data.split('-').map(Number);
+        const [year, month, day] = dateStr.split('-').map(Number);
         const txDate = new Date(year, month - 1, day);
         const txMonth = txDate.getMonth();
         const txYear = txDate.getFullYear();
@@ -107,18 +137,15 @@ export function useDashboardData() {
 
         if (txMonth === currentMonth && txYear === currentYear) {
           if (isEntrada) monthIncome += val;
-          else monthExpenses += val;
+          else if (isSaida) monthExpenses += val;
         } else if (txMonth === lastMonth && txYear === lastMonthYear) {
           if (isEntrada) prevMonthIncome += val;
-          else prevMonthExpenses += val;
+          else if (isSaida) prevMonthExpenses += val;
         }
       }
     });
 
     // Calculate cumulative balance for sparkline
-    let runningBalance = totalBalance;
-    // This is tricky because sparkline is last 6 months but total balance is all time.
-    // Let's just use monthly net for the balance sparkline to show trend.
     last6Months.forEach(m => {
       m.balance = m.income - m.expenses;
     });
@@ -131,12 +158,10 @@ export function useDashboardData() {
     const incomeChange = calculateChange(monthIncome, prevMonthIncome);
     const expensesChange = calculateChange(monthExpenses, prevMonthExpenses);
 
-    console.log("Usuário logado:", user);
-    console.log("Transações carregadas:", transactions);
-    console.log("Saldo geral:", totalBalance);
-    console.log("Entradas do mês:", monthIncome);
-    console.log("Gastos do mês:", monthExpenses);
-    console.log("Disponível do mês:", monthIncome - monthExpenses);
+    console.log("Saldo geral calculado:", totalBalance);
+    console.log("Entradas calculadas:", monthIncome);
+    console.log("Gastos calculadas:", monthExpenses);
+    console.log("Disponível calculado:", monthIncome - monthExpenses);
 
     return {
       totalBalance,
@@ -164,9 +189,14 @@ export function useDashboardData() {
     const monthlyData = months.map((m, i) => {
       const monthExpenses = transactions
         .filter(tx => {
-          if (!tx.data || tx.tipo !== "saida") return false;
-          const d = new Date(tx.data);
-          return d.getMonth() === i && d.getFullYear() === currentYear;
+          if (!tx.data_inicio) return false;
+          
+          const rawTipo = (tx.tipo || "").toLowerCase();
+          const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          if (normalizedTipo !== "saida") return false;
+
+          const [year, month] = tx.data_inicio.split('-').map(Number);
+          return (month - 1) === i && year === currentYear;
         })
         .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
       
@@ -181,7 +211,11 @@ export function useDashboardData() {
     let totalExps = 0;
 
     transactions
-      .filter(tx => tx.tipo === "saida")
+      .filter(tx => {
+        const rawTipo = (tx.tipo || "").toLowerCase();
+        const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        return normalizedTipo === "saida";
+      })
       .forEach(tx => {
         const cat = tx.categoria || "Outros";
         const val = parseFloat(tx.valor || "0");
