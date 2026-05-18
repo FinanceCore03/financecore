@@ -397,7 +397,15 @@ function TransactionsPage() {
                                 <span className="font-medium">{tx.categoria || "Geral"}</span>
                               </div>
                             </td>
-                            <td className="py-4 px-2 text-muted-foreground">{dateObj?.toLocaleDateString('pt-BR') || "-"}</td>
+                            <td className="py-4 px-2 text-muted-foreground">
+                              {tx.data_inicial && tx.data_final ? (
+                                <span>{format(new Date(tx.data_inicial), "dd/MM/yyyy")} até {format(new Date(tx.data_final), "dd/MM/yyyy")}</span>
+                              ) : tx.data ? (
+                                format(new Date(tx.data), "dd/MM/yyyy")
+                              ) : (
+                                "—"
+                              )}
+                            </td>
                             <td className="py-4 px-2 text-muted-foreground truncate max-w-[150px]">{tx.descricao || "-"}</td>
                             <td className={`py-4 px-2 font-semibold tabular-nums ${isEntrada ? 'text-success' : 'text-danger'}`}>
                               {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
