@@ -205,8 +205,8 @@ function TransactionsPage() {
       .filter(tx => {
         if (tx.tipo !== "saida") return false;
         if (periodFilter === "Todas") return true;
-        if (!tx.data) return true;
-        const txDate = new Date(tx.data);
+        if (!tx.data_inicio) return true;
+        const txDate = new Date(tx.data_inicio);
         if (periodFilter === "Hoje") return txDate.toDateString() === now.toDateString();
         if (periodFilter === "Esta semana") {
           const startOfWeek = new Date(now);
