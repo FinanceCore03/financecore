@@ -416,7 +416,8 @@ function PersonalizationPage() {
                               variant="ghost" 
                               size="icon" 
                               className="size-8 text-muted-foreground hover:text-danger"
-                              onClick={() => setItemToDelete({ id: method.id, name: method.Nome, type: "metodo_pagamento" })}
+                              onClick={() => handleTrashClick({ id: method.id, name: method.Nome, type: "metodo_pagamento" })}
+                              disabled={isCheckingDelete}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
