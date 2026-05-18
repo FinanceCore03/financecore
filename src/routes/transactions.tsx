@@ -372,7 +372,7 @@ function TransactionsPage() {
                     <thead>
                       <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
                         <th className="text-left font-medium py-3 px-2">Categoria</th>
-                        <th className="text-left font-medium py-3 px-2">Data</th>
+                        <th className="text-left font-medium py-3 px-2">Período</th>
                         <th className="text-left font-medium py-3 px-2">Descrição</th>
                         <th className="text-left font-medium py-3 px-2">Quantia</th>
                         <th className="text-left font-medium py-3 px-2">Método</th>

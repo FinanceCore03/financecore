@@ -45,6 +45,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
   const [tipo, setTipo] = useState<string>("saida");
   const [categoria, setCategoria] = useState<string>("");
   const [data, setData] = useState<Date>(new Date());
+  const [dataFinal, setDataFinal] = useState<Date>(new Date());
   const [quantia, setQuantia] = useState<string>("");
   const [metodo, setMetodo] = useState<string>("");
   const [descricao, setDescricao] = useState<string>("");
@@ -65,12 +66,22 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
           .maybeSingle();
 
         if (usuario) {
-          // Placeholder for future dynamic tables
-          // const { data: customCats } = await supabase.from('Categorias').select('nome').eq('id_usuario', usuario.id);
-          // if (customCats && customCats.length > 0) setCategories(customCats.map(c => c.nome));
-          
-          // const { data: customMethods } = await supabase.from('MetodosPagamento').select('nome').eq('id_usuario', usuario.id);
-          // if (customMethods && customMethods.length > 0) setPaymentMethods(customMethods.map(m => m.nome));
+          const { data: customOptions } = await supabase
+            .from("Opcoes")
+            .select("Nome, Tipo, Uso")
+            .eq("id_usuario", usuario.id);
+
+          if (customOptions) {
+            const customCats = customOptions
+              .filter(opt => opt.Tipo === "categoria")
+              .map(opt => opt.Nome);
+            if (customCats.length > 0) setCategories(customCats);
+
+            const customMethods = customOptions
+              .filter(opt => opt.Tipo === "metodo_pagamento")
+              .map(opt => opt.Nome);
+            if (customMethods.length > 0) setPaymentMethods(customMethods);
+          }
         }
       } catch (error) {
         console.error("Error fetching custom data:", error);
@@ -82,14 +93,22 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
     }
   }, [isOpen, user]);
 
+  const isPeriodMethod = metodo === "Crédito" || metodo === "Parcelado";
 
-  const isFormValid = tipo !== "" && categoria !== "" && quantia !== "" && metodo !== "" && data !== null;
+  const isFormValid = 
+    tipo !== "" && 
+    categoria !== "" && 
+    quantia !== "" && 
+    metodo !== "" && 
+    (isPeriodMethod ? (data !== null && dataFinal !== null) : data !== null);
+
   const isFormDirty = tipo !== "saida" || categoria !== "" || quantia !== "" || metodo !== "" || descricao !== "";
 
   const resetForm = () => {
     setTipo("saida");
     setCategoria("");
     setData(new Date());
+    setDataFinal(new Date());
     setQuantia("");
     setMetodo("");
     setDescricao("");
@@ -115,115 +134,52 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
       return;
     }
 
-    console.log("Iniciando salvamento da transação...");
     setLoading(true);
 
     try {
-      // 1. Pegar o usuário autenticado atual
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      console.log("Auth user completo:", user);
-      console.log("Auth user id:", user?.id);
-      console.log("Auth user email:", user?.email);
-
       if (authError || !user) throw new Error("Usuário não autenticado no sistema.");
 
-      // 2. Buscar na tabela Usuarios com o nome exato da tabela
-      const { data: usuarioPorAuth, error: erroAuth } = await supabase
+      const { data: usuario, error: erroUsuario } = await supabase
         .from("Usuarios")
-        .select("id, id_auth, Email, Nome")
+        .select("id")
         .eq("id_auth", user.id)
         .maybeSingle();
 
-      console.log("Usuário encontrado por id_auth:", usuarioPorAuth);
-      console.log("Erro ao buscar por id_auth:", erroAuth);
-
-      // 3. Busca auxiliar pelo e-mail para diagnóstico
-      const { data: usuarioPorEmail, error: erroEmail } = await supabase
-        .from("Usuarios")
-        .select("id, id_auth, Email, Nome")
-        .eq("Email", user.email || "")
-        .maybeSingle();
-
-      console.log("Usuário encontrado por Email:", usuarioPorEmail);
-      console.log("Erro ao buscar por Email:", erroEmail);
-
-      // 4. Verificações de diagnóstico e correção automática de id_auth se necessário
-      if (usuarioPorEmail && !usuarioPorAuth) {
-        console.log("Diagnóstico: Email encontrado, mas id_auth não corresponde. Tentando associar automaticamente...");
-        
-        const { data: updatedUser, error: updateError } = await supabase
-          .from("Usuarios")
-          .update({ id_auth: user.id })
-          .eq("id", usuarioPorEmail.id)
-          .select()
-          .single();
-
-        if (updateError) {
-          console.error("Erro ao tentar associar id_auth automaticamente:", updateError);
-        } else {
-          console.log("Sucesso! Usuário associado ao id_auth do login atual:", updatedUser);
-          // Substitui usuarioPorAuth pelo usuário atualizado para prosseguir com o salvamento
-          (usuarioPorAuth as any) = updatedUser;
-        }
-      }
-
-      if (!usuarioPorAuth && !usuarioPorEmail) {
-        console.log("Não existe registro na tabela Usuarios para este usuário autenticado.");
-      }
-
-      if (erroAuth) throw new Error(`Erro ao consultar tabela Usuarios: ${erroAuth.message}`);
-      if (!usuarioPorAuth) throw new Error("Seu usuário não foi encontrado na tabela 'Usuarios'.");
+      if (erroUsuario || !usuario) throw new Error("Seu usuário não foi encontrado.");
       
-      const userData = usuarioPorAuth;
-      console.log("ID interno do usuário encontrado:", userData.id);
-
-      // 3. Preparar Payload
-      const payload = {
+      let payload: any = {
         tipo,
         quantia: quantia.replace(/\./g, "").replace(",", "."),
         categoria,
         metodo_pagamento: metodo,
-        data: format(data, "yyyy-MM-dd"),
         descricao: descricao || "",
-        id_usuario: userData.id,
+        id_usuario: usuario.id,
       };
 
-      console.log("Payload preparado para o webhook:", payload);
+      if (isPeriodMethod) {
+        payload.data_inicial = format(data, "yyyy-MM-dd");
+        payload.data_final = format(dataFinal, "yyyy-MM-dd");
+      } else {
+        payload.data = format(data, "yyyy-MM-dd");
+      }
 
-      // 4. Enviar Webhook
-      console.log("Chamando webhook...");
       const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      console.log("Resposta do webhook recebida. Status:", response.status);
+      if (!response.ok) throw new Error(`Erro no webhook: ${response.statusText}`);
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("Resposta de erro do servidor:", errorBody);
-        throw new Error(`O servidor do webhook retornou erro (${response.status}): ${response.statusText}`);
-      }
-
-      console.log("Webhook executado com sucesso!");
-      
-      // 5. Sucesso
       toast.success("Transação salva com sucesso!");
       resetForm();
       onSuccess();
       onClose();
 
     } catch (error: any) {
-      console.error("FALHA NO PROCESSO DE SALVAMENTO:", error);
-      const msg = error.message || "Erro desconhecido";
-      toast.error(`Falha ao salvar: ${msg}`);
-      alert(`Erro crítico: ${msg}\n\nVerifique o console para mais detalhes.`);
+      toast.error(`Falha ao salvar: ${error.message || "Erro desconhecido"}`);
     } finally {
-      console.log("Finalizando processo (loading: false)");
       setLoading(false);
     }
   };
@@ -244,7 +200,6 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
             </DialogHeader>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
-              {/* Linha 1 */}
               <div className="grid gap-2">
                 <Label htmlFor="tipo" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipo</Label>
                 <Select value={tipo} onValueChange={setTipo}>
@@ -272,7 +227,6 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
                 </div>
               </div>
 
-              {/* Linha 2 */}
               <div className="grid gap-2">
                 <Label htmlFor="categoria" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Categoria</Label>
                 <Select value={categoria} onValueChange={setCategoria}>
@@ -301,35 +255,62 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
                 </Select>
               </div>
 
-              {/* Linha 3 */}
-              <div className="grid gap-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    align="start" 
-                    side="left" 
-                    className="w-auto p-0 rounded-2xl border-border shadow-xl animate-in fade-in slide-in-from-right-2 duration-200"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={data}
-                      onSelect={(date) => date && setData(date)}
-                      initialFocus
-                      locale={ptBR}
-                      className="rounded-2xl"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {isPeriodMethod ? (
+                <>
+                  <div className="grid gap-2">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data Inicial</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" side="left" className="w-auto p-0 rounded-2xl border-border shadow-xl">
+                        <Calendar mode="single" selected={data} onSelect={(date) => date && setData(date)} locale={ptBR} initialFocus className="rounded-2xl" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data Final</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!dataFinal && "text-muted-foreground"}`}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dataFinal ? format(dataFinal, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" side="left" className="w-auto p-0 rounded-2xl border-border shadow-xl">
+                        <Calendar mode="single" selected={dataFinal} onSelect={(date) => date && setDataFinal(date)} locale={ptBR} initialFocus className="rounded-2xl" />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </>
+              ) : (
+                <div className="grid gap-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" side="left" className="w-auto p-0 rounded-2xl border-border shadow-xl">
+                      <Calendar mode="single" selected={data} onSelect={(date) => date && setData(date)} locale={ptBR} initialFocus className="rounded-2xl" />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
 
               <div className="grid gap-2">
                 <Label htmlFor="descricao" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Descrição</Label>
