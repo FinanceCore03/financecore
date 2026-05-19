@@ -19,7 +19,7 @@ interface AddSubscriptionModalProps {
   usuarioId: number | null;
 }
 
-const paymentMethods = ["Crédito", "Débito", "Pix", "Dinheiro", "Parcelado"];
+const paymentMethods = ["Crédito", "Débito", "Pix", "Dinheiro", "Parcelado", "Boleto", "Transferência"];
 
 export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: AddSubscriptionModalProps) {
   const [nome, setNome] = useState("");
@@ -31,7 +31,8 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isFormValid = nome && valor && metodo && diaCobranca && dataCompra;
+  const isPeriodMethod = metodo === "Crédito" || metodo === "Parcelado";
+  const isFormValid = nome && valor && metodo && diaCobranca && dataCompra && (isPeriodMethod ? !!dataFinal : true);
 
   const resetForm = () => {
     setNome("");
@@ -48,20 +49,22 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
 
     setLoading(true);
 
-    const payload = {
+    const payload: any = {
       acao: "adicionar",
-      tipo: "assinatura",
       nome,
       categoria: "Assinatura",
       valor: valor.replace(/\./g, "").replace(",", "."),
       metodo_pagamento: metodo,
       dia_cobranca: diaCobranca,
       data_compra: dataCompra ? format(dataCompra, "yyyy-MM-dd") : "",
-      data_final: metodo === "Crédito" && dataFinal ? format(dataFinal, "yyyy-MM-dd") : "",
       descricao,
       status: true,
       id_usuario: usuarioId,
     };
+
+    if (isPeriodMethod && dataFinal) {
+      payload.data_final = format(dataFinal, "yyyy-MM-dd");
+    }
 
     console.log("Payload assinatura:", payload);
 
@@ -162,9 +165,11 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
               </div>
             </div>
 
-            <div className={`grid gap-4 ${metodo === "Crédito" ? "grid-cols-2" : "grid-cols-1"}`}>
+            <div className={`grid gap-4 ${isPeriodMethod ? "grid-cols-2" : "grid-cols-1"}`}>
               <div className="grid gap-2">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data da compra</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Data da compra / Data inicial
+                </Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -181,7 +186,7 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
                 </Popover>
               </div>
 
-              {metodo === "Crédito" && (
+              {isPeriodMethod && (
                 <div className="grid gap-2">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data final</Label>
                   <Popover>
