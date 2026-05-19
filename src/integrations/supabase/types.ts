@@ -17,7 +17,8 @@ export type Database = {
       Assinaturas: {
         Row: {
           categoria: string | null
-          data_final: string | null
+          data_compra: string | null
+          data_expiracao: string | null
           descricao: string | null
           dia_cobranca: string | null
           id: number
@@ -29,7 +30,8 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
-          data_final?: string | null
+          data_compra?: string | null
+          data_expiracao?: string | null
           descricao?: string | null
           dia_cobranca?: string | null
           id?: number
@@ -41,7 +43,8 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
-          data_final?: string | null
+          data_compra?: string | null
+          data_expiracao?: string | null
           descricao?: string | null
           dia_cobranca?: string | null
           id?: number
