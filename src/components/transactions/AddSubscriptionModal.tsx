@@ -42,6 +42,7 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
     setDiaCobranca("");
     setDataPagamento(new Date());
     setDataExpiracao(undefined);
+    setExpiracaoIndefinida(false);
     setDescricao("");
   };
 
