@@ -11,6 +11,7 @@ import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AddSubscriptionModalProps {
   isOpen: boolean;
@@ -28,10 +29,11 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
   const [diaCobranca, setDiaCobranca] = useState("");
   const [dataPagamento, setDataPagamento] = useState<Date | undefined>(new Date());
   const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(undefined);
+  const [expiracaoIndefinida, setExpiracaoIndefinida] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isFormValid = !!(nome && valor && metodo && diaCobranca && dataPagamento && dataExpiracao);
+  const isFormValid = !!(nome && valor && metodo && diaCobranca && dataPagamento && (expiracaoIndefinida || dataExpiracao));
 
   const resetForm = () => {
     setNome("");
@@ -40,6 +42,7 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
     setDiaCobranca("");
     setDataPagamento(new Date());
     setDataExpiracao(undefined);
+    setExpiracaoIndefinida(false);
     setDescricao("");
   };
 
@@ -56,7 +59,8 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
       metodo_pagamento: metodo,
       dia_cobranca: diaCobranca,
       data_pagamento: dataPagamento ? format(dataPagamento, "yyyy-MM-dd") : "",
-      data_expiracao: dataExpiracao ? format(dataExpiracao, "yyyy-MM-dd") : "",
+      data_expiracao: expiracaoIndefinida ? null : (dataExpiracao ? format(dataExpiracao, "yyyy-MM-dd") : ""),
+      expiracao_indefinida: expiracaoIndefinida,
       descricao,
       status: true,
       id_usuario: usuarioId,
@@ -186,19 +190,38 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
               <div className="grid gap-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data de expiração</Label>
                 <Popover>
-                  <PopoverTrigger asChild>
+                  <PopoverTrigger asChild disabled={expiracaoIndefinida}>
                     <Button
                       variant="outline"
-                      className="h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20"
+                      disabled={expiracaoIndefinida}
+                      className="h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 disabled:opacity-50"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {dataExpiracao ? format(dataExpiracao, "dd/MM/yyyy") : <span>Selecione</span>}
+                      {expiracaoIndefinida ? (
+                        <span className="text-muted-foreground italic">Indefinido</span>
+                      ) : (
+                        dataExpiracao ? format(dataExpiracao, "dd/MM/yyyy") : <span>Selecione</span>
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0 rounded-2xl border-border shadow-xl">
                     <Calendar mode="single" selected={dataExpiracao} onSelect={setDataExpiracao} locale={ptBR} initialFocus />
                   </PopoverContent>
                 </Popover>
+                
+                <div className="flex items-center space-x-2 mt-1">
+                  <Checkbox 
+                    id="expiracao-indefinida" 
+                    checked={expiracaoIndefinida}
+                    onCheckedChange={(checked) => setExpiracaoIndefinida(checked === true)}
+                  />
+                  <Label 
+                    htmlFor="expiracao-indefinida"
+                    className="text-xs text-muted-foreground cursor-pointer select-none"
+                  >
+                    Sem data de expiração definida
+                  </Label>
+                </div>
               </div>
             </div>
 
