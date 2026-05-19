@@ -288,7 +288,9 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="valor" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor</Label>
+                <Label htmlFor="valor" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {metodo === "Crédito" ? "Valor da parcela" : "Valor"}
+                </Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">R$</span>
                   <Input
