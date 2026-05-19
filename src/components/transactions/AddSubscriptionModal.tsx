@@ -190,19 +190,38 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
               <div className="grid gap-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data de expiração</Label>
                 <Popover>
-                  <PopoverTrigger asChild>
+                  <PopoverTrigger asChild disabled={expiracaoIndefinida}>
                     <Button
                       variant="outline"
-                      className="h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20"
+                      disabled={expiracaoIndefinida}
+                      className="h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 disabled:opacity-50"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {dataExpiracao ? format(dataExpiracao, "dd/MM/yyyy") : <span>Selecione</span>}
+                      {expiracaoIndefinida ? (
+                        <span className="text-muted-foreground italic">Indefinido</span>
+                      ) : (
+                        dataExpiracao ? format(dataExpiracao, "dd/MM/yyyy") : <span>Selecione</span>
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0 rounded-2xl border-border shadow-xl">
                     <Calendar mode="single" selected={dataExpiracao} onSelect={setDataExpiracao} locale={ptBR} initialFocus />
                   </PopoverContent>
                 </Popover>
+                
+                <div className="flex items-center space-x-2 mt-1">
+                  <Checkbox 
+                    id="expiracao-indefinida" 
+                    checked={expiracaoIndefinida}
+                    onCheckedChange={(checked) => setExpiracaoIndefinida(checked === true)}
+                  />
+                  <Label 
+                    htmlFor="expiracao-indefinida"
+                    className="text-xs text-muted-foreground cursor-pointer select-none"
+                  >
+                    Sem data de expiração definida
+                  </Label>
+                </div>
               </div>
             </div>
 
