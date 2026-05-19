@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      Assinaturas: {
+        Row: {
+          categoria: string | null
+          data_final: string | null
+          descricao: string | null
+          dia_cobranca: string | null
+          id: number
+          id_usuario: number | null
+          metodo_pagamento: string | null
+          nome: string | null
+          status: boolean | null
+          valor: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          data_final?: string | null
+          descricao?: string | null
+          dia_cobranca?: string | null
+          id?: number
+          id_usuario?: number | null
+          metodo_pagamento?: string | null
+          nome?: string | null
+          status?: boolean | null
+          valor?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          data_final?: string | null
+          descricao?: string | null
+          dia_cobranca?: string | null
+          id?: number
+          id_usuario?: number | null
+          metodo_pagamento?: string | null
+          nome?: string | null
+          status?: boolean | null
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Assinaturas_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "Usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Opcoes: {
         Row: {
           id: number
