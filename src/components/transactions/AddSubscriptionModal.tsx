@@ -29,10 +29,11 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
   const [diaCobranca, setDiaCobranca] = useState("");
   const [dataPagamento, setDataPagamento] = useState<Date | undefined>(new Date());
   const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(undefined);
+  const [expiracaoIndefinida, setExpiracaoIndefinida] = useState(false);
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isFormValid = !!(nome && valor && metodo && diaCobranca && dataPagamento && dataExpiracao);
+  const isFormValid = !!(nome && valor && metodo && diaCobranca && dataPagamento && (expiracaoIndefinida || dataExpiracao));
 
   const resetForm = () => {
     setNome("");
