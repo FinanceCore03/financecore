@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Plus, ChevronRight, Tv, CreditCard, Calendar as CalendarIcon, Loader2, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { AddSubscriptionModal } from "./AddSubscriptionModal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
