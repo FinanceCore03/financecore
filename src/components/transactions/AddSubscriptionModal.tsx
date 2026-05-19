@@ -26,21 +26,20 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState("");
   const [diaCobranca, setDiaCobranca] = useState("");
-  const [dataCompra, setDataCompra] = useState<Date | undefined>(new Date());
-  const [dataFinal, setDataFinal] = useState<Date | undefined>(undefined);
+  const [dataPagamento, setDataPagamento] = useState<Date | undefined>(new Date());
+  const [dataExpiracao, setDataExpiracao] = useState<Date | undefined>(undefined);
   const [descricao, setDescricao] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isPeriodMethod = metodo === "Crédito" || metodo === "Parcelado";
-  const isFormValid = nome && valor && metodo && diaCobranca && dataCompra && (isPeriodMethod ? !!dataFinal : true);
+  const isFormValid = !!(nome && valor && metodo && diaCobranca && dataPagamento && dataExpiracao);
 
   const resetForm = () => {
     setNome("");
     setValor("");
     setMetodo("");
     setDiaCobranca("");
-    setDataCompra(new Date());
-    setDataFinal(undefined);
+    setDataPagamento(new Date());
+    setDataExpiracao(undefined);
     setDescricao("");
   };
 
@@ -56,15 +55,13 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
       valor: valor.replace(/\./g, "").replace(",", "."),
       metodo_pagamento: metodo,
       dia_cobranca: diaCobranca,
-      data_compra: dataCompra ? format(dataCompra, "yyyy-MM-dd") : "",
+      data_pagamento: dataPagamento ? format(dataPagamento, "yyyy-MM-dd") : "",
+      data_expiracao: dataExpiracao ? format(dataExpiracao, "yyyy-MM-dd") : "",
       descricao,
       status: true,
       id_usuario: usuarioId,
     };
 
-    if (isPeriodMethod && dataFinal) {
-      payload.data_final = format(dataFinal, "yyyy-MM-dd");
-    }
 
     console.log("Payload assinatura:", payload);
 
@@ -165,10 +162,10 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
               </div>
             </div>
 
-            <div className={`grid gap-4 ${isPeriodMethod ? "grid-cols-2" : "grid-cols-1"}`}>
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Data da compra / Data inicial
+                  Data de pagamento
                 </Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -177,34 +174,32 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
                       className="h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {dataCompra ? format(dataCompra, "dd/MM/yyyy") : <span>Selecione</span>}
+                      {dataPagamento ? format(dataPagamento, "dd/MM/yyyy") : <span>Selecione</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent align="start" className="w-auto p-0 rounded-2xl border-border shadow-xl">
-                    <Calendar mode="single" selected={dataCompra} onSelect={setDataCompra} locale={ptBR} initialFocus />
+                    <Calendar mode="single" selected={dataPagamento} onSelect={setDataPagamento} locale={ptBR} initialFocus />
                   </PopoverContent>
                 </Popover>
               </div>
 
-              {isPeriodMethod && (
-                <div className="grid gap-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data final</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {dataFinal ? format(dataFinal, "dd/MM/yyyy") : <span>Selecione</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-auto p-0 rounded-2xl border-border shadow-xl">
-                      <Calendar mode="single" selected={dataFinal} onSelect={setDataFinal} locale={ptBR} initialFocus />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
+              <div className="grid gap-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data de expiração</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                      {dataExpiracao ? format(dataExpiracao, "dd/MM/yyyy") : <span>Selecione</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0 rounded-2xl border-border shadow-xl">
+                    <Calendar mode="single" selected={dataExpiracao} onSelect={setDataExpiracao} locale={ptBR} initialFocus />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="grid gap-2">
