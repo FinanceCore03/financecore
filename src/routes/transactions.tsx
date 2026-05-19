@@ -6,11 +6,13 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
+import { SubscriptionsCard } from "@/components/transactions/SubscriptionsCard";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -659,6 +661,8 @@ function TransactionsPage() {
                   ))}
                 </div>
               </div>
+
+              <SubscriptionsCard usuarioId={usuarioId} />
             </div>
           </div>
         </main>
