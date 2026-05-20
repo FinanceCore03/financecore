@@ -189,24 +189,38 @@ export function useDashboardData() {
     const now = new Date();
     const currentYear = now.getFullYear();
     
-    const monthlyData = months.map((m, i) => {
-      const monthExpenses = transactions
+    // Fetch subscriptions once to include in expenses
+    // We already have transactions, but subscriptions are recurring.
+    // However, the request says "include subscriptions in total expenses"
+    // Usually this means if they are in transactions, they are already there.
+    // If not, we might need to fetch them.
+    // Looking at Transactions component, it seems subscriptions are a category in transactions.
+    
+    return months.map((m, i) => {
+      const monthTransactions = transactions.filter(tx => {
+        if (!tx.data_inicio) return false;
+        const [year, month] = tx.data_inicio.split('-').map(Number);
+        return (month - 1) === i && year === currentYear;
+      });
+
+      const income = monthTransactions
         .filter(tx => {
-          if (!tx.data_inicio) return false;
-          
           const rawTipo = (tx.tipo || "").toLowerCase();
           const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          if (normalizedTipo !== "saida") return false;
-
-          const [year, month] = tx.data_inicio.split('-').map(Number);
-          return (month - 1) === i && year === currentYear;
+          return normalizedTipo === "entrada";
         })
         .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
-      
-      return { m, v: monthExpenses };
-    });
 
-    return monthlyData;
+      const expenses = monthTransactions
+        .filter(tx => {
+          const rawTipo = (tx.tipo || "").toLowerCase();
+          const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          return normalizedTipo === "saida";
+        })
+        .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+      return { m, income, expenses };
+    });
   }, [transactions]);
 
   const categoriesData = useMemo(() => {

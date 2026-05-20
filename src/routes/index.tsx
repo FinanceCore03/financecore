@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { TopBar } from "@/components/dashboard/TopBar";
 import { Filters } from "@/components/dashboard/Filters";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { SpendingChart } from "@/components/dashboard/SpendingChart";
 import { TopExpenses } from "@/components/dashboard/TopExpenses";
-import { Transactions } from "@/components/dashboard/Transactions";
+import { PlanningCard } from "@/components/dashboard/PlanningCard";
 import { CategoryBars } from "@/components/dashboard/CategoryBars";
 import { DistributionDonut } from "@/components/dashboard/DistributionDonut";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -28,6 +27,7 @@ function Dashboard() {
     stats, 
     chartData, 
     categoriesData,
+    usuarioId,
     moeda
   } = useDashboardData();
 
@@ -84,7 +84,7 @@ function Dashboard() {
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
             <div className="xl:col-span-2">
-              <SpendingChart data={chartData} />
+              <SpendingChart data={chartData} moeda={moeda} />
             </div>
             <div>
               <TopExpenses categories={categoriesData.list} moeda={moeda} />
@@ -92,7 +92,7 @@ function Dashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <Transactions transactions={transactions.slice(0, 5)} moeda={moeda} />
+            <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} />
             <CategoryBars categories={categoriesData.list} total={categoriesData.total} moeda={moeda} />
             <DistributionDonut data={categoriesData.list} total={categoriesData.total} moeda={moeda} />
           </div>
