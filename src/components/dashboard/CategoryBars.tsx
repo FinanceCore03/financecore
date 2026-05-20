@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/currency";
+
 interface CategoryBarsProps {
   categories: {
     name: string;
@@ -7,9 +9,10 @@ interface CategoryBarsProps {
     bg: string;
   }[];
   total: number;
+  moeda: string;
 }
 
-export function CategoryBars({ categories, total }: CategoryBarsProps) {
+export function CategoryBars({ categories, total, moeda }: CategoryBarsProps) {
   const displayCategories = categories.slice(0, 5);
   const totalPercentage = displayCategories.reduce((s, c) => s + c.pct, 0);
 
@@ -43,7 +46,7 @@ export function CategoryBars({ categories, total }: CategoryBarsProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-semibold tabular-nums">
-                    R$ {c.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    {formatCurrency(c.value, moeda)}
                   </span>
                   <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">({c.pct}%)</span>
                 </div>

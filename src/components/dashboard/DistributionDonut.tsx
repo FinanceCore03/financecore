@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { formatCurrency } from "@/lib/currency";
 
 interface DistributionDonutProps {
   data: {
@@ -9,9 +10,10 @@ interface DistributionDonutProps {
     bg: string;
   }[];
   total: number;
+  moeda: string;
 }
 
-export function DistributionDonut({ data, total }: DistributionDonutProps) {
+export function DistributionDonut({ data, total, moeda }: DistributionDonutProps) {
   const displayData = data.slice(0, 5);
 
   return (
@@ -45,7 +47,7 @@ export function DistributionDonut({ data, total }: DistributionDonutProps) {
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <div className="text-[11px] text-muted-foreground">Total Gasto</div>
               <div className="text-lg font-semibold tracking-tight">
-                R$ {total.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
+                {formatCurrency(total, moeda)}
               </div>
             </div>
           </>

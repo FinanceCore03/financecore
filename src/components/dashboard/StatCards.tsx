@@ -1,5 +1,6 @@
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { formatCurrency } from "@/lib/currency";
 
 interface StatCardsProps {
   stats: {
@@ -16,6 +17,7 @@ interface StatCardsProps {
       available: { value: number }[];
     };
   };
+  moeda: string;
 }
 
 interface CardProps {
@@ -87,8 +89,8 @@ function StatCard({ title, value, change, icon, sparklineData, color, infoText }
   );
 }
 
-export function StatCards({ stats }: StatCardsProps) {
-  const formatBRL = (val: number) => `R$ ${val.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+export function StatCards({ stats, moeda }: StatCardsProps) {
+  const formatVal = (val: number) => formatCurrency(val, moeda);
 
   const incomePct = stats.monthIncome > 0 
     ? Math.round((stats.availableToSpend / stats.monthIncome) * 100) 
@@ -98,7 +100,7 @@ export function StatCards({ stats }: StatCardsProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <StatCard
         title="Saldo Geral"
-        value={formatBRL(stats.totalBalance)}
+        value={formatVal(stats.totalBalance)}
         icon={<Wallet className="size-4" />}
         sparklineData={stats.sparklines.balance}
         color="#7c3aed"
@@ -106,7 +108,7 @@ export function StatCards({ stats }: StatCardsProps) {
       />
       <StatCard
         title="Entradas do Mês"
-        value={formatBRL(stats.monthIncome)}
+        value={formatVal(stats.monthIncome)}
         change={{ value: stats.incomeChange, label: "vs mês passado" }}
         icon={<TrendingUp className="size-4" />}
         sparklineData={stats.sparklines.income}
@@ -114,7 +116,7 @@ export function StatCards({ stats }: StatCardsProps) {
       />
       <StatCard
         title="Gastos do Mês"
-        value={formatBRL(stats.monthExpenses)}
+        value={formatVal(stats.monthExpenses)}
         change={{ value: stats.expensesChange, label: "vs mês passado", inverse: true }}
         icon={<TrendingDown className="size-4" />}
         sparklineData={stats.sparklines.expenses}
@@ -122,7 +124,7 @@ export function StatCards({ stats }: StatCardsProps) {
       />
       <StatCard
         title="Disponível no Mês"
-        value={formatBRL(stats.availableToSpend)}
+        value={formatVal(stats.availableToSpend)}
         icon={<PiggyBank className="size-4" />}
         sparklineData={stats.sparklines.available}
         color="#0ea5e9"

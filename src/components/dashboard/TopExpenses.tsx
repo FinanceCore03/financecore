@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/currency";
+
 interface TopExpensesProps {
   categories: {
     name: string;
@@ -6,9 +8,10 @@ interface TopExpensesProps {
     color: string;
     bg: string;
   }[];
+  moeda: string;
 }
 
-export function TopExpenses({ categories }: TopExpensesProps) {
+export function TopExpenses({ categories, moeda }: TopExpensesProps) {
   const displayCategories = categories.slice(0, 5);
 
   return (
@@ -33,7 +36,7 @@ export function TopExpenses({ categories }: TopExpensesProps) {
                 <div className="text-[11px] text-muted-foreground mt-0.5">Gasto acumulado</div>
               </div>
               <div className="font-semibold tabular-nums">
-                R$ {r.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                {formatCurrency(r.value, moeda)}
               </div>
               <div className={`text-xs font-semibold`} style={{ color: r.color }}>{r.pct}%</div>
             </div>

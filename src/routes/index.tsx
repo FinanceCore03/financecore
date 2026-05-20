@@ -27,7 +27,8 @@ function Dashboard() {
     loading, 
     stats, 
     chartData, 
-    categoriesData 
+    categoriesData,
+    moeda
   } = useDashboardData();
 
   if (loading) {
@@ -79,21 +80,21 @@ function Dashboard() {
             <Filters />
           </header>
 
-          <StatCards stats={stats} />
+          <StatCards stats={stats} moeda={moeda} />
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
             <div className="xl:col-span-2">
               <SpendingChart data={chartData} />
             </div>
             <div>
-              <TopExpenses categories={categoriesData.list} />
+              <TopExpenses categories={categoriesData.list} moeda={moeda} />
             </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <Transactions transactions={transactions.slice(0, 5)} />
-            <CategoryBars categories={categoriesData.list} total={categoriesData.total} />
-            <DistributionDonut data={categoriesData.list} total={categoriesData.total} />
+            <Transactions transactions={transactions.slice(0, 5)} moeda={moeda} />
+            <CategoryBars categories={categoriesData.list} total={categoriesData.total} moeda={moeda} />
+            <DistributionDonut data={categoriesData.list} total={categoriesData.total} moeda={moeda} />
           </div>
 
           <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
