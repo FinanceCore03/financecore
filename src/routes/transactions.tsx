@@ -452,7 +452,7 @@ function TransactionsPage() {
               <AnimatedItem className="flex-1 min-w-0">
                 <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <h3 className="font-semibold text-lg tracking-tight">Atividade</h3>
+                    <h3 className="font-semibold text-lg tracking-tight">Atividade de Transações</h3>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1 border border-border rounded-xl p-1 bg-muted/20 mr-1">
                         <button 
