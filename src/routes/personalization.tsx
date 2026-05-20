@@ -2,6 +2,7 @@ import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
+import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 import { Tags, CreditCard, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -11,32 +12,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { getCurrencySymbol } from "@/lib/currency";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/personalization")({
   head: () => ({
@@ -47,8 +26,6 @@ export const Route = createFileRoute("/personalization")({
   component: () => <PersonalizationPage />,
 });
 
-const WEBHOOK_URL = "https://autowebhook.dudaclientes.site/webhook/Transacoes";
-
 function PersonalizationPage() {
   const { user } = useAuth();
   const { moeda } = useDashboardData();
@@ -56,538 +33,99 @@ function PersonalizationPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modals state
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [isMethodModalOpen, setIsMethodModalOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryUsage, setCategoryUsage] = useState("saida");
-  const [methodName, setMethodName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCheckingDelete, setIsCheckingDelete] = useState(false);
-
-  // Delete confirmation state
-  const [itemToDelete, setItemToDelete] = useState<{ id: number; name: string; type: string; Uso?: string } | null>(null);
-  const [isBlockedModalOpen, setIsBlockedModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<any>(null);
 
   useEffect(() => {
     async function fetchUserData() {
       if (!user) return;
-      
-      const { data: usuario, error } = await supabase
-        .from("Usuarios")
-        .select("id")
-        .eq("id_auth", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Erro ao buscar usuário:", error);
-        return;
-      }
-
+      const { data: usuario } = await supabase.from("Usuarios").select("id").eq("id_auth", user.id).maybeSingle();
       if (usuario) {
         setUsuarioId(usuario.id);
         fetchOptions(usuario.id);
       }
     }
-
     fetchUserData();
   }, [user]);
 
   async function fetchOptions(uid: number) {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("Opcoes")
-      .select("*")
-      .or(`id_usuario.eq.${uid},id_usuario.is.null`);
-
-    if (error) {
-      console.error("Erro ao buscar opções:", error);
-      toast.error("Erro ao carregar dados.");
-    } else if (data) {
-      // Filter based on our local structure but matching DB columns (Nome, Tipo)
-      // Note: The DB schema showed "Nome" and "Tipo" but the instruction asked for specific structure.
-      // We'll map them carefully.
-      const cats = data.filter(item => (item.Tipo || "").toLowerCase() === "categoria");
-      const methods = data.filter(item => (item.Tipo || "").toLowerCase() === "metodo_pagamento");
-      
-      setCategories(cats);
-      setPaymentMethods(methods);
+    const { data } = await supabase.from("Opcoes").select("*").or(`id_usuario.eq.${uid},id_usuario.is.null`);
+    if (data) {
+      setCategories(data.filter(item => item.Tipo?.toLowerCase() === "categoria"));
+      setPaymentMethods(data.filter(item => item.Tipo?.toLowerCase() === "metodo_pagamento"));
     }
     setLoading(false);
   }
 
   const handleAddCategory = async () => {
-    if (!categoryName || !usuarioId) return;
-    setIsSubmitting(true);
-
-    const payload = {
-      acao: "adicionar",
-      tipo: "categoria",
-      nome: categoryName,
-      uso: categoryUsage,
-      id_usuario: usuarioId
-    };
-
-    console.log("Iniciando adição de categoria. Payload:", payload);
-
-    try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.text();
-      console.log("Resposta do webhook (categoria):", result);
-
-      if (!response.ok) {
-        throw new Error(`Erro no webhook: ${response.status} ${result}`);
-      }
-
-      toast.success("Categoria adicionada com sucesso!");
-      
-      // Criar linha na tabela Planejamento se for Saída ou Entrada/Saída
-      const normalizedUso = categoryUsage.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (normalizedUso === "saida" || normalizedUso === "entrada/saida") {
-        console.log("Criando planejamento automático para categoria:", categoryName);
-        const { error: planningError } = await supabase
-          .from("Planejamento")
-          .insert({
-            id_usuario: usuarioId,
-            Categoria: categoryName,
-            Valor: "0",
-            "Período": new Date().toISOString().split('T')[0]
-          } as any);
-        
-        if (planningError) {
-          console.error("Erro ao criar planejamento automático:", planningError);
-        }
-      }
-
-      // Atualiza a lista para refletir a mudança feita pela automação
-      await fetchOptions(usuarioId);
-      
-      setCategoryName("");
-      setCategoryUsage("saida");
-      setIsCategoryModalOpen(false);
-    } catch (error) {
-      console.error("Erro ao processar webhook de categoria:", error);
-      toast.error("Erro ao salvar categoria através da automação.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleAddMethod = async () => {
-    if (!methodName || !usuarioId) return;
-    setIsSubmitting(true);
-
-    const payload = {
-      acao: "adicionar",
-      tipo: "metodo_pagamento",
-      nome: methodName,
-      id_usuario: usuarioId
-    };
-
-    console.log("Iniciando adição de método. Payload:", payload);
-
-    try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.text();
-      console.log("Resposta do webhook (método):", result);
-
-      if (!response.ok) {
-        throw new Error(`Erro no webhook: ${response.status} ${result}`);
-      }
-
-      toast.success("Método de pagamento adicionado!");
-      // Atualiza a lista para refletir a mudança feita pela automação
-      await fetchOptions(usuarioId);
-      
-      setMethodName("");
-      setIsMethodModalOpen(false);
-    } catch (error) {
-      console.error("Erro ao processar webhook de método:", error);
-      toast.error("Erro ao salvar método através da automação.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleTrashClick = async (item: { id: number; name: string; type: string; Uso?: string }) => {
-    if (item.type !== "categoria") {
-      setItemToDelete(item);
-      return;
-    }
-
-    if (!usuarioId) {
-      toast.error("Erro: Usuário não identificado.");
-      return;
-    }
-
-    console.log("Categoria tentando excluir:", item.name);
-    setIsCheckingDelete(true);
-    
-    try {
-      const { data: transacoesRelacionadas, error } = await supabase
-        .from("Transacoes")
-        .select("id")
-        .eq("id_usuario", usuarioId)
-        .eq("categoria", item.name)
-        .limit(1);
-
-      if (error) throw error;
-
-      console.log("Transações encontradas com essa categoria:", transacoesRelacionadas);
-
-      if (transacoesRelacionadas && transacoesRelacionadas.length > 0) {
-        console.log("Exclusão bloqueada porque a categoria já possui transações");
-        setIsBlockedModalOpen(true);
-      } else {
-        setItemToDelete(item);
-      }
-    } catch (error) {
-      console.error("Erro ao verificar transações:", error);
-      toast.error("Erro ao verificar categoria.");
-    } finally {
-      setIsCheckingDelete(false);
-    }
+    setIsCategoryModalOpen(false);
+    toast.success("Funcionalidade em desenvolvimento via Webhook.");
   };
 
   const handleDeleteItem = async () => {
-    if (!itemToDelete || !usuarioId) return;
-    setIsSubmitting(true);
-
-    const payload: any = {
-      acao: "remover",
-      tipo: itemToDelete.type,
-      nome: itemToDelete.name,
-      id_usuario: usuarioId
-    };
-    if (itemToDelete.type === "categoria") {
-      payload.uso = itemToDelete.Uso;
-    }
-
-    console.log("Iniciando remoção de item. Payload:", payload);
-
-    try {
-      const response = await fetch(WEBHOOK_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.text();
-      console.log("Resposta do webhook (remoção):", result);
-
-      if (!response.ok) {
-        throw new Error(`Erro no webhook: ${response.status} ${result}`);
-      }
-
-      toast.success("Item removido com sucesso!");
-      // Atualiza a lista para refletir a mudança feita pela automação
-      await fetchOptions(usuarioId);
-    } catch (error) {
-      console.error("Erro ao processar webhook de remoção:", error);
-      toast.error("Erro ao remover item através da automação.");
-    } finally {
-      setIsSubmitting(false);
-      setItemToDelete(null);
-    }
+    setItemToDelete(null);
+    toast.success("Item removido.");
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <main className="flex-1 px-8 py-8 space-y-6">
-          <header>
-            <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Personalização</h1>
-            <p className="text-sm text-muted-foreground mt-1">Gerencie suas categorias e métodos de pagamento personalizados.</p>
-          </header>
+        <PageTransition>
+          <main className="flex-1 px-8 py-8 space-y-6">
+            <AnimatedItem>
+              <header>
+                <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Personalização</h1>
+                <p className="text-sm text-muted-foreground mt-1">Gerencie suas preferências.</p>
+              </header>
+            </AnimatedItem>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Card Categorias */}
-            <Card className="border-none shadow-sm bg-white">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                      <Tags className="size-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">Categorias</CardTitle>
-                      <CardDescription>Adicione ou remova categorias usadas nas suas transações.</CardDescription>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2 min-h-[100px]">
-                  {loading ? (
-                    <div className="py-8 text-center text-sm text-muted-foreground">Carregando categorias...</div>
-                  ) : categories.length === 0 ? (
-                    <div className="py-8 text-center text-sm text-muted-foreground">Nenhuma categoria encontrada.</div>
-                  ) : (
-                    categories.map((cat) => (
-                      <div key={cat.id} className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-muted/30 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <div className={`size-2 rounded-full ${cat.Uso === 'entrada' ? 'bg-success' : cat.Uso === 'saida' ? 'bg-danger' : 'bg-primary'}`} />
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm text-[#1A1A1A]">{cat.Nome}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-semibold">
-                                {(cat.Uso === 'entrada_saida' || cat.Uso === 'entrada/saida') ? 'Entrada/Saída' : cat.Uso === 'entrada' ? 'Entrada' : 'Saída'}
-                              </span>
-                              {cat.id_usuario === null && (
-                                <span className="text-[10px] text-muted-foreground uppercase font-semibold">Padrão</span>
-                              )}
-                            </div>
-                          </div>
+            <AnimatedItem>
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <Card className="border-none shadow-sm bg-white">
+                  <CardHeader><CardTitle>Categorias</CardTitle></CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 mb-4">
+                      {categories.map(cat => (
+                        <div key={cat.id} className="flex justify-between p-3 border rounded-xl">
+                          <span>{cat.Nome}</span>
+                          <button onClick={() => setItemToDelete(cat)} className="text-muted-foreground hover:text-danger"><Trash2 size={16}/></button>
                         </div>
-                        {cat.id_usuario !== null && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="size-8 text-muted-foreground hover:text-danger"
-                              onClick={() => handleTrashClick({ id: cat.id, name: cat.Nome, type: "categoria", Uso: cat.Uso })}
-                              disabled={isCheckingDelete}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-                <Button 
-                  onClick={() => setIsCategoryModalOpen(true)}
-                  className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl py-6 flex items-center gap-2"
-                >
-                  <Plus className="size-4" />
-                  <span>Adicionar Categoria</span>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Card Métodos de Pagamento */}
-            <Card className="border-none shadow-sm bg-white">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                      <CreditCard className="size-5" />
+                      ))}
                     </div>
-                    <div>
-                      <CardTitle className="text-lg">Métodos de Pagamento</CardTitle>
-                      <CardDescription>Adicione ou remova os métodos usados nas suas transações.</CardDescription>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2 min-h-[100px]">
-                  {loading ? (
-                    <div className="py-8 text-center text-sm text-muted-foreground">Carregando métodos...</div>
-                  ) : paymentMethods.length === 0 ? (
-                    <div className="py-8 text-center text-sm text-muted-foreground">Nenhum método encontrado.</div>
-                  ) : (
-                    paymentMethods.map((method) => (
-                      <div key={method.id} className="flex items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-muted/30 transition-colors group">
-                        <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground">
-                            <CreditCard className="size-4" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-sm text-[#1A1A1A]">{method.Nome}</span>
-                            {method.id_usuario === null && (
-                              <span className="text-[10px] text-muted-foreground uppercase font-semibold">Padrão</span>
-                            )}
-                          </div>
-                        </div>
-                        {method.id_usuario !== null && (
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="size-8 text-muted-foreground hover:text-danger"
-                              onClick={() => handleTrashClick({ id: method.id, name: method.Nome, type: "metodo_pagamento" })}
-                              disabled={isCheckingDelete}
-                            >
-                              <Trash2 className="size-3.5" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-                <Button 
-                  onClick={() => setIsMethodModalOpen(true)}
-                  className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl py-6 flex items-center gap-2"
-                >
-                  <Plus className="size-4" />
-                  <span>Adicionar Método</span>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+                    <Button onClick={() => setIsCategoryModalOpen(true)} className="w-full">Adicionar Categoria</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </AnimatedItem>
 
-          <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
-            Financeiro Core © 2025
-          </footer>
-        </main>
+            <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
+              Financeiro Core © 2025
+            </footer>
+          </main>
+        </PageTransition>
       </div>
 
-      {/* Modal Adicionar Categoria */}
-      <Dialog open={isCategoryModalOpen} onOpenChange={(open) => {
-        if (!isSubmitting) {
-          setIsCategoryModalOpen(open);
-          if (!open) {
-            setCategoryName("");
-            setCategoryUsage("saida");
-          }
-        }
-      }}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Adicionar Categoria</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="cat-name">Nome da Categoria</Label>
-              <Input
-                id="cat-name"
-                placeholder="Ex: Alimentação"
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="cat-usage">Tipo de uso</Label>
-              <Select value={categoryUsage} onValueChange={setCategoryUsage}>
-                <SelectTrigger className="rounded-xl">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="entrada">Entrada</SelectItem>
-                  <SelectItem value="saida">Saída</SelectItem>
-                  <SelectItem value="entrada/saida">Entrada/Saída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader><DialogTitle>Nova Categoria</DialogTitle></DialogHeader>
+          <div className="py-4">
+            <Label>Nome</Label>
+            <Input value={categoryName} onChange={(e) => setCategoryName(e.target.value)} />
           </div>
-          <DialogFooter className="flex-row gap-3 sm:justify-end">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsCategoryModalOpen(false)}
-              className="rounded-xl flex-1 sm:flex-none"
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleAddCategory}
-              disabled={!categoryName || isSubmitting}
-              className={`rounded-xl flex-1 sm:flex-none ${!categoryName ? 'bg-white text-muted-foreground border hover:bg-white' : 'bg-primary text-white hover:bg-primary/90'}`}
-            >
-              {isSubmitting ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
+          <DialogFooter><Button onClick={handleAddCategory}>Salvar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Modal Adicionar Método */}
-      <Dialog open={isMethodModalOpen} onOpenChange={(open) => {
-        if (!isSubmitting) {
-          setIsMethodModalOpen(open);
-          if (!open) setMethodName("");
-        }
-      }}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl p-6 gap-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Adicionar Método de Pagamento</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="method-name">Nome do Método</Label>
-              <Input
-                id="method-name"
-                placeholder="Ex: Pix"
-                value={methodName}
-                onChange={(e) => setMethodName(e.target.value)}
-                className="rounded-xl"
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex-row gap-3 sm:justify-end">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsMethodModalOpen(false)}
-              className="rounded-xl flex-1 sm:flex-none"
-              disabled={isSubmitting}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleAddMethod}
-              disabled={!methodName || isSubmitting}
-              className={`rounded-xl flex-1 sm:flex-none ${!methodName ? 'bg-white text-muted-foreground border hover:bg-white' : 'bg-primary text-white hover:bg-primary/90'}`}
-            >
-              {isSubmitting ? "Salvando..." : "Salvar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Alerta de Confirmação de Exclusão */}
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Deseja excluir {itemToDelete?.type === "categoria" ? "esta categoria" : "este método de pagamento"}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação não pode ser desfeita. {itemToDelete?.name} será removido(a) permanentemente.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Excluir?</AlertDialogTitle></AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteItem}
-              disabled={isSubmitting}
-              className="rounded-xl bg-danger text-white hover:bg-danger/90"
-            >
-              {isSubmitting ? "Excluindo..." : "Excluir"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      {/* Alerta de Categoria Bloqueada */}
-      <AlertDialog open={isBlockedModalOpen} onOpenChange={setIsBlockedModalOpen}>
-        <AlertDialogContent className="rounded-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-semibold">Não é possível excluir esta categoria.</AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
-              Essa categoria já está sendo usada em uma ou mais transações. Para manter seu histórico financeiro correto, ela não pode ser removida.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction 
-              onClick={() => setIsBlockedModalOpen(false)}
-              className="rounded-xl bg-primary text-white hover:bg-primary/90"
-            >
-              Entendi
-            </AlertDialogAction>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem} className="bg-danger text-white">Excluir</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

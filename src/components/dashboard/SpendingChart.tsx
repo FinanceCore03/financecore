@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useMemo } from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { formatCurrency } from "@/lib/currency";
@@ -197,6 +198,8 @@ export function SpendingChart({ data: annualData, moeda, transactions }: Spendin
               fill="url(#gradIncome)" 
               dot={false}
               activeDot={{ r: 6, strokeWidth: 3, stroke: "white" }} 
+              animationDuration={1500}
+              animationEasing="ease-in-out"
             />
             <Area 
               type="monotone" 
@@ -207,6 +210,9 @@ export function SpendingChart({ data: annualData, moeda, transactions }: Spendin
               fill="url(#gradExpenses)" 
               dot={false}
               activeDot={{ r: 6, strokeWidth: 3, stroke: "white" }} 
+              animationDuration={1500}
+              animationEasing="ease-in-out"
+              animationBegin={200}
             />
           </AreaChart>
         </ResponsiveContainer>

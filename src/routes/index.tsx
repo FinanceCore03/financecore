@@ -9,6 +9,7 @@ import { CategoryBars } from "@/components/dashboard/CategoryBars";
 import { DistributionDonut } from "@/components/dashboard/DistributionDonut";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -71,36 +72,50 @@ function Dashboard() {
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <main className="flex-1 px-8 py-8 space-y-6">
-          <header className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
-              <p className="text-sm text-muted-foreground mt-1">Resumo financeiro do seu mês</p>
+        <PageTransition>
+          <main className="flex-1 px-8 py-8 space-y-6">
+            <AnimatedItem>
+              <header className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
+                  <p className="text-sm text-muted-foreground mt-1">Resumo financeiro do seu mês</p>
+                </div>
+                <Filters />
+              </header>
+            </AnimatedItem>
+
+            <AnimatedItem>
+              <StatCards stats={stats} moeda={moeda} />
+            </AnimatedItem>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+              <AnimatedItem className="xl:col-span-2">
+                <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
+              </AnimatedItem>
+              <AnimatedItem>
+                <TopExpenses categories={categoriesData.list} moeda={moeda} />
+              </AnimatedItem>
             </div>
-            <Filters />
-          </header>
 
-          <StatCards stats={stats} moeda={moeda} />
-
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-            <div className="xl:col-span-2">
-              <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <AnimatedItem>
+                <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} />
+              </AnimatedItem>
+              <AnimatedItem>
+                <CategoryBars categories={categoriesData.list} total={categoriesData.total} moeda={moeda} />
+              </AnimatedItem>
+              <AnimatedItem>
+                <DistributionDonut data={categoriesData.list} total={categoriesData.total} moeda={moeda} />
+              </AnimatedItem>
             </div>
-            <div>
-              <TopExpenses categories={categoriesData.list} moeda={moeda} />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} />
-            <CategoryBars categories={categoriesData.list} total={categoriesData.total} moeda={moeda} />
-            <DistributionDonut data={categoriesData.list} total={categoriesData.total} moeda={moeda} />
-          </div>
-
-          <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
-            Financeiro Core © 2025
-          </footer>
-        </main>
+            <AnimatedItem>
+              <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
+                Financeiro Core © 2025
+              </footer>
+            </AnimatedItem>
+          </main>
+        </PageTransition>
       </div>
     </div>
   );
