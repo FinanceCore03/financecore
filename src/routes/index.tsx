@@ -5,8 +5,6 @@ import { StatCards } from "@/components/dashboard/StatCards";
 import { SpendingChart } from "@/components/dashboard/SpendingChart";
 import { TopExpenses } from "@/components/dashboard/TopExpenses";
 import { PlanningCard } from "@/components/dashboard/PlanningCard";
-import { CategoryBars } from "@/components/dashboard/CategoryBars";
-import { DistributionDonut } from "@/components/dashboard/DistributionDonut";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { MonthlyAlerts } from "@/components/dashboard/MonthlyAlerts";
 import { UpcomingCommitments } from "@/components/dashboard/UpcomingCommitments";
@@ -120,15 +118,6 @@ function Dashboard() {
               <AnimatedItem>
                 <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} subscriptions={subscriptions} />
               </AnimatedItem>
-              <AnimatedItem>
-                <CategoryBars categories={categoriesData.list} total={categoriesData.total} moeda={moeda} />
-              </AnimatedItem>
-              <AnimatedItem>
-                <DistributionDonut data={categoriesData.list} total={categoriesData.total} moeda={moeda} />
-              </AnimatedItem>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <AnimatedItem>
                 <MonthlyAlerts 
                   transactions={transactions} 

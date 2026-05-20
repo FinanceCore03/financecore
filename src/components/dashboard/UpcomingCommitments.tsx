@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, ChevronRight, Clock, CreditCard, Tag } from "lucide-react";
+import { Calendar, ChevronRight, Clock, CreditCard, Tag, Info } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 
@@ -26,19 +26,36 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    // 1. Fatura do próximo mês
+    const normalize = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     const nextMonth = new Date(currentYear, currentMonth + 1, 1);
     const endOfNextMonth = new Date(currentYear, currentMonth + 2, 0);
     const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
     const nextMonthName = monthNames[nextMonth.getMonth()];
 
     const nextMonthTransactionsTotal = transactions.reduce((acc, tx) => {
-      if (tx.tipo !== "saida") return acc;
-      const start = tx.data_inicio ? new Date(tx.data_inicio) : null;
-      const end = tx.data_fim ? new Date(tx.data_fim) : null;
-      if (!start) return acc;
-      const isActiveNextMonth = start <= endOfNextMonth && (!end || end >= nextMonth);
-      return isActiveNextMonth ? acc + parseFloat(tx.valor || "0") : acc;
+      const isSaida = normalize(tx.tipo) === "saida";
+      if (!isSaida) return acc;
+
+      const startStr = tx.data_inicio;
+      if (!startStr) return acc;
+      const [y, m, d] = startStr.split('-').map(Number);
+      const start = new Date(y, m - 1, d);
+      
+      const endStr = tx.data_fim;
+      const end = endStr ? new Date(endStr.split('-')[0], parseInt(endStr.split('-')[1]) - 1, parseInt(endStr.split('-')[2])) : null;
+
+      const metodo = normalize(tx.metodo_pagamento || "");
+      const isCredito = metodo.includes("credito");
+
+      const isNextMonth = start >= nextMonth && start <= endOfNextMonth;
+      const isCurrentMonthCredito = isCredito && start.getMonth() === currentMonth && start.getFullYear() === currentYear;
+      const overlapsNextMonth = start <= endOfNextMonth && (end && end >= nextMonth);
+
+      if (isNextMonth || isCurrentMonthCredito || overlapsNextMonth) {
+        return acc + parseFloat(tx.valor || "0");
+      }
+      return acc;
     }, 0);
 
     const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
@@ -54,7 +71,6 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
       });
     }
 
-    // 2. Assinaturas próximas
     activeSubscriptions.forEach(sub => {
       list.push({
         type: 'assinatura',
@@ -64,11 +80,16 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
       });
     });
 
-    // 3. Transações futuras
     transactions
-      .filter(tx => tx.data_inicio && new Date(tx.data_inicio) > now)
+      .filter(tx => {
+        if (!tx.data_inicio) return false;
+        const [y, m, d] = tx.data_inicio.split('-').map(Number);
+        const date = new Date(y, m - 1, d);
+        return date > now;
+      })
       .forEach(tx => {
-        const date = new Date(tx.data_inicio);
+        const [y, m, d] = tx.data_inicio.split('-').map(Number);
+        const date = new Date(y, m - 1, d);
         list.push({
           type: 'transacao',
           title: tx.descricao || tx.categoria || 'Transação futura',
@@ -78,7 +99,7 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
         });
       });
 
-    return list;
+    return list.sort((a, b) => a.priority - b.priority);
   }, [transactions, subscriptions, moeda]);
 
   const displayedCommitments = showAll ? commitments : commitments.slice(0, 5);
@@ -87,32 +108,34 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
     <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold tracking-tight text-slate-900">Próximos Compromissos</h3>
-        <Calendar className="size-5 text-muted-foreground" />
+        <div className="p-2 bg-primary/10 rounded-xl">
+          <Calendar className="size-5 text-primary" />
+        </div>
       </div>
 
       <div className="space-y-4 flex-1">
         {commitments.length === 0 ? (
           <div className="py-8 text-center">
             <div className="size-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
-              <Clock className="size-6 text-slate-300" />
+              <Info className="size-6 text-slate-300" />
             </div>
             <p className="text-sm text-muted-foreground">Nenhum compromisso futuro encontrado.</p>
           </div>
         ) : (
           displayedCommitments.map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 transition-colors">
+            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/50 border border-slate-100 transition-colors group hover:bg-slate-50">
               <div className="flex items-center gap-3">
                 <div className={`shrink-0 p-2 rounded-lg ${
                   item.type === 'fatura' ? 'bg-primary/10 text-primary' :
-                  item.type === 'assinatura' ? 'bg-amber-50 text-amber-500' :
-                  'bg-blue-50 text-blue-500'
+                  item.type === 'assinatura' ? 'bg-amber-100 text-amber-600' :
+                  'bg-blue-100 text-blue-600'
                 }`}>
                   {item.type === 'fatura' ? <CreditCard className="size-4" /> : 
                    item.type === 'assinatura' ? <Tag className="size-4" /> : 
                    <Clock className="size-4" />}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800 leading-tight">{item.title}</p>
+                  <p className="text-sm font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors">{item.title}</p>
                   {item.dateLabel && <p className="text-[11px] font-medium text-muted-foreground mt-0.5">{item.dateLabel}</p>}
                 </div>
               </div>
