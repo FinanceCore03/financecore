@@ -28,18 +28,33 @@ export function SubscriptionsCard({ usuarioId }: SubscriptionsCardProps) {
     if (!usuarioId) return;
     setLoading(true);
     try {
+      // Temporarily log to see what's happening
+      console.log("Fetching subscriptions for user:", usuarioId);
+      
       const { data, error } = await supabase
         .from("Assinaturas")
         .select("*")
-        .eq("id_usuario", usuarioId)
-        .order("status", { ascending: false })
-        .order("created_at", { ascending: false });
+        .eq("id_usuario", usuarioId);
 
-      if (error) throw error;
-      setSubscriptions(data || []);
-    } catch (error) {
+      if (error) {
+        console.error("Supabase error fetching Assinaturas:", error);
+        throw error;
+      }
+      
+      console.log("Subscriptions data received:", data);
+      
+      // Separate sorting in JS if needed to avoid issues with missing columns in order
+      const sortedData = (data || []).sort((a, b) => {
+        // First by status (true first)
+        if (a.status !== b.status) return a.status ? -1 : 1;
+        // Then by id or created_at descending
+        return (b.id || 0) - (a.id || 0);
+      });
+
+      setSubscriptions(sortedData);
+    } catch (error: any) {
       console.error("Erro ao carregar assinaturas:", error);
-      toast.error("Erro ao carregar assinaturas.");
+      toast.error(`Erro ao carregar assinaturas: ${error.message || "Erro desconhecido"}`);
     } finally {
       setLoading(false);
     }
