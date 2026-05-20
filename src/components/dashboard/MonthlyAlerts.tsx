@@ -26,10 +26,8 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    // Helper to normalize strings for comparison
     const normalize = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    // 1. Gasto total acima de 70% das entradas
     if (stats.monthIncome > 0) {
       const percentageUsed = (stats.monthExpenses / stats.monthIncome) * 100;
       if (percentageUsed >= 70) {
@@ -41,7 +39,6 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       }
     }
 
-    // 2. Fatura do próximo mês alta (>= 50% das entradas)
     const nextMonth = new Date(currentYear, currentMonth + 1, 1);
     const endOfNextMonth = new Date(currentYear, currentMonth + 2, 0);
     
@@ -60,10 +57,6 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       const metodo = normalize(tx.metodo_pagamento || "");
       const isCredito = metodo.includes("credito");
 
-      // Inclui se:
-      // - start é no próximo mês
-      // - é crédito (geralmente pago no mês seguinte) e ocorreu no mês atual
-      // - o período (start-end) alcança o próximo mês
       const isNextMonth = start >= nextMonth && start <= endOfNextMonth;
       const isCurrentMonthCredito = isCredito && start.getMonth() === currentMonth && start.getFullYear() === currentYear;
       const overlapsNextMonth = start <= endOfNextMonth && (end && end >= nextMonth);
@@ -80,7 +73,6 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
 
     let incomeForComparison = stats.monthIncome;
     if (incomeForComparison === 0) {
-      // Calcular média de entradas dos últimos 3 meses
       const threeMonthsAgo = new Date(currentYear, currentMonth - 3, 1);
       const recentIncomes = transactions.filter(tx => {
         const isEntrada = normalize(tx.tipo) === "entrada";
@@ -104,7 +96,6 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       }
     }
 
-    // 3 & 4. Category limit alerts
     const spendingByCategory: Record<string, number> = {};
     transactions.forEach(tx => {
       const isSaida = normalize(tx.tipo) === "saida";
@@ -143,13 +134,11 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       }
     });
 
-    // 5. Subscription next 7 days
     activeSubscriptions.forEach(sub => {
       const diaCobranca = parseInt(sub.dia_cobranca);
       if (isNaN(diaCobranca)) return;
       
       let cobrancaDate = new Date(currentYear, currentMonth, diaCobranca);
-      // Se já passou este mês, verifica próximo mês
       if (now.getDate() > diaCobranca) {
         cobrancaDate = new Date(currentYear, currentMonth + 1, diaCobranca);
       }

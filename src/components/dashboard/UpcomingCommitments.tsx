@@ -28,7 +28,6 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
 
     const normalize = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    // 1. Fatura do próximo mês
     const nextMonth = new Date(currentYear, currentMonth + 1, 1);
     const endOfNextMonth = new Date(currentYear, currentMonth + 2, 0);
     const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -49,10 +48,6 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
       const metodo = normalize(tx.metodo_pagamento || "");
       const isCredito = metodo.includes("credito");
 
-      // Inclui se:
-      // - start é no próximo mês
-      // - é crédito e ocorreu no mês atual
-      // - o período (start-end) alcança o próximo mês
       const isNextMonth = start >= nextMonth && start <= endOfNextMonth;
       const isCurrentMonthCredito = isCredito && start.getMonth() === currentMonth && start.getFullYear() === currentYear;
       const overlapsNextMonth = start <= endOfNextMonth && (end && end >= nextMonth);
@@ -76,7 +71,6 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
       });
     }
 
-    // 2. Assinaturas próximas
     activeSubscriptions.forEach(sub => {
       list.push({
         type: 'assinatura',
@@ -86,7 +80,6 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
       });
     });
 
-    // 3. Transações futuras
     transactions
       .filter(tx => {
         if (!tx.data_inicio) return false;
