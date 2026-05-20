@@ -450,7 +450,7 @@ function TransactionsPage() {
                 {economyValue >= 0 ? 'Balanço positivo' : 'Balanço negativo'}
               </div>
             </div>
-          </div>
+          </AnimatedItem>
 
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1 min-w-0">
@@ -684,6 +684,7 @@ function TransactionsPage() {
             </div>
           </div>
         </main>
+      </PageTransition>
       </div>
       <AddTransactionModal 
         isOpen={isAddModalOpen} 
