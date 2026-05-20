@@ -179,17 +179,13 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
           </div>
         ) : (
           displayedAlerts.map((alert, idx) => (
-            <div key={idx} className="flex gap-3 items-start p-3 rounded-xl bg-slate-50/50 border border-slate-100 transition-colors group hover:bg-slate-50">
-              <div className={`mt-0.5 shrink-0 p-1.5 rounded-lg ${
-                alert.type === 'danger' ? 'bg-rose-100 text-rose-600' :
-                alert.type === 'warning' ? 'bg-amber-100 text-amber-600' :
-                'bg-blue-100 text-blue-600'
-              }`}>
-                {alert.type === 'danger' ? <AlertTriangle className="size-4" /> : 
-                 alert.type === 'warning' ? <AlertTriangle className="size-4" /> : 
-                 <Clock className="size-4" />}
+            <div key={idx} className="flex gap-3 items-start p-3 rounded-xl bg-[#FFF4E5] border border-[#F6C26B] border-l-4 border-l-[#F59E0B] transition-colors group hover:bg-[#FFF4E5]/80">
+              <div className="mt-0.5 shrink-0 p-1.5 rounded-lg bg-white/50">
+                {alert.type === 'danger' ? <AlertTriangle className="size-4 text-[#F59E0B]" /> : 
+                 alert.type === 'warning' ? <AlertTriangle className="size-4 text-[#F59E0B]" /> : 
+                 <Clock className="size-4 text-[#F59E0B]" />}
               </div>
-              <p className="text-sm font-medium text-slate-700 leading-snug">{alert.message}</p>
+              <p className="text-sm font-semibold text-slate-800 leading-snug">{alert.message}</p>
             </div>
           ))
         )}
