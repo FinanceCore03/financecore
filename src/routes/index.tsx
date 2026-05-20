@@ -84,7 +84,7 @@ function Dashboard() {
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
             <div className="xl:col-span-2">
-              <SpendingChart data={chartData} moeda={moeda} />
+              <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
             </div>
             <div>
               <TopExpenses categories={categoriesData.list} moeda={moeda} />

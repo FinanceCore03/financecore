@@ -87,15 +87,12 @@ export function PlanningCard({ usuarioId, moeda, transactions }: PlanningCardPro
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="font-semibold tracking-tight">Planejamento do Mês</h3>
-        <span className="text-[11px] font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full uppercase tracking-wider">
-          Ativo
-        </span>
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full flex flex-col">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-lg font-bold tracking-tight text-slate-900">Planejamento do Mês</h3>
       </div>
 
-      <div className="space-y-6 overflow-y-auto max-h-[400px] pr-1 custom-scrollbar">
+      <div className="space-y-8 overflow-y-auto max-h-[420px] pr-1 custom-scrollbar flex-1">
         {planningItems.length === 0 ? (
           <div className="py-8 text-center">
             <div className="size-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
@@ -105,59 +102,26 @@ export function PlanningCard({ usuarioId, moeda, transactions }: PlanningCardPro
           </div>
         ) : (
           planningItems.map((item) => (
-            <div key={item.id} className="space-y-2">
+            <div key={item.id} className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-700">{item.name}</span>
-                  {item.isOver && <AlertTriangle className="size-3.5 text-rose-500" />}
-                </div>
-                <span className={`text-xs font-bold ${item.isOver ? 'text-rose-600' : 'text-slate-500'}`}>
+                <span className="text-sm font-semibold text-slate-600">{item.name}</span>
+                <span className="text-sm font-bold text-slate-900">
                   {item.percentage.toFixed(0)}%
                 </span>
               </div>
               
-              <Progress 
-                value={Math.min(item.percentage, 100)} 
-                className="h-1.5 rounded-full bg-slate-100"
-                style={{ 
-                  "--progress-background": item.isOver ? "#F43F5E" : "oklch(0.62 0.18 290)" 
-                } as React.CSSProperties}
-              />
-
-              <div className="flex justify-between text-[11px] font-medium pt-1">
-                <div className="flex flex-col">
-                  <span className="text-muted-foreground uppercase tracking-tighter">Gasto</span>
-                  <span className="text-slate-700 font-bold">{formatCurrency(item.spent, moeda)}</span>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-muted-foreground uppercase tracking-tighter">
-                    {item.isOver ? "Excedido" : "Restante"}
-                  </span>
-                  <span className={`font-bold ${item.isOver ? 'text-rose-600' : 'text-emerald-600'}`}>
-                    {formatCurrency(Math.abs(item.remaining), moeda)}
-                  </span>
-                </div>
+              <div className="relative w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div 
+                  className="absolute left-0 top-0 h-full rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${Math.min(item.percentage, 100)}%`,
+                    backgroundColor: item.isOver ? "#F43F5E" : "oklch(0.62 0.18 290)"
+                  }}
+                />
               </div>
             </div>
           ))
         )}
-      </div>
-
-      <div className="mt-auto pt-6 border-t border-border mt-6">
-        <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-              <TrendingUp className="size-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Planejado</p>
-              <p className="text-sm font-bold text-slate-900">
-                {formatCurrency(planningItems.reduce((acc, curr) => acc + curr.planned, 0), moeda)}
-              </p>
-            </div>
-          </div>
-          <button className="text-[11px] font-bold text-primary hover:underline">Detalhes</button>
-        </div>
       </div>
     </div>
   );

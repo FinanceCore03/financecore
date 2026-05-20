@@ -1,30 +1,153 @@
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-import { ChevronDown } from "lucide-react";
+import { useState, useMemo } from "react";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { formatCurrency } from "@/lib/currency";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SpendingChartProps {
   data: { m: string; income: number; expenses: number }[];
   moeda: string;
+  transactions: any[];
 }
 
-export function SpendingChart({ data, moeda }: SpendingChartProps) {
+export function SpendingChart({ data: annualData, moeda, transactions }: SpendingChartProps) {
+  const [period, setPeriod] = useState("Anual");
   const fmt = (n: number) => formatCurrency(n, moeda);
+
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    if (period === "Anual") {
+      return annualData;
+    }
+
+    if (period === "3 meses") {
+      const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      const last3 = [];
+      for (let i = 2; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const mIdx = d.getMonth();
+        const year = d.getFullYear();
+        
+        const monthTransactions = transactions.filter(tx => {
+          if (!tx.data_inicio) return false;
+          const [txYear, txMonth] = tx.data_inicio.split('-').map(Number);
+          return (txMonth - 1) === mIdx && txYear === year;
+        });
+
+        const income = monthTransactions
+          .filter(tx => tx.tipo === "entrada")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        const expenses = monthTransactions
+          .filter(tx => tx.tipo === "saida")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        last3.push({ m: months[mIdx], income, expenses });
+      }
+      return last3;
+    }
+
+    if (period === "Mês") {
+      // Group by week of the current month
+      const weeks = [];
+      for (let i = 0; i < 4; i++) {
+        const startDay = i * 7 + 1;
+        const endDay = (i + 1) * 7;
+        
+        const weekTransactions = transactions.filter(tx => {
+          if (!tx.data_inicio) return false;
+          const [year, month, day] = tx.data_inicio.split('-').map(Number);
+          return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay;
+        });
+
+        const income = weekTransactions
+          .filter(tx => tx.tipo === "entrada")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        const expenses = weekTransactions
+          .filter(tx => tx.tipo === "saida")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        weeks.push({ m: `Semana ${i + 1}`, income, expenses });
+      }
+      return weeks;
+    }
+
+    if (period === "Semana") {
+      // Last 7 days
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        
+        const dayTransactions = transactions.filter(tx => tx.data_inicio === dateStr);
+
+        const income = dayTransactions
+          .filter(tx => tx.tipo === "entrada")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        const expenses = dayTransactions
+          .filter(tx => tx.tipo === "saida")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        last7Days.push({ 
+          m: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), 
+          income, 
+          expenses 
+        });
+      }
+      return last7Days;
+    }
+
+    return annualData;
+  }, [period, annualData, transactions]);
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full flex flex-col">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h3 className="text-lg font-bold tracking-tight text-slate-900">Fluxo de Caixa</h3>
-          <p className="text-xs text-muted-foreground mt-0.5 font-medium">Entradas vs Saídas no último ano</p>
+          <p className="text-xs text-muted-foreground mt-0.5 font-medium">Entradas vs Saídas no período selecionado</p>
         </div>
-        <button className="inline-flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-border rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors">
-          Este Ano <ChevronDown className="size-3.5 text-muted-foreground" />
-        </button>
+
+        <div className="flex items-center gap-6 self-end md:self-center">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="size-2 rounded-full bg-[#f43f5e]" />
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Saídas</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="size-2 rounded-full bg-[#10b981]" />
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Entradas</span>
+            </div>
+          </div>
+
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-[120px] h-9 rounded-full bg-slate-50 border-border text-[11px] font-bold">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border">
+              <SelectItem value="Semana" className="text-[11px] font-medium">Semana</SelectItem>
+              <SelectItem value="Mês" className="text-[11px] font-medium">Mês</SelectItem>
+              <SelectItem value="3 meses" className="text-[11px] font-medium">3 meses</SelectItem>
+              <SelectItem value="Anual" className="text-[11px] font-medium">Anual</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="h-[300px] w-full flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
+          <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
             <defs>
               <linearGradient id="gradIncome" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#10b981" stopOpacity={0.12} />
@@ -64,14 +187,6 @@ export function SpendingChart({ data, moeda }: SpendingChartProps) {
               ]}
               labelStyle={{ display: 'none' }}
               itemStyle={{ padding: '4px 0' }}
-            />
-            <Legend 
-              verticalAlign="top" 
-              align="right" 
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{ top: -45, right: 0, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}
-              formatter={(value) => <span className="text-slate-500 ml-1">{value === "income" ? "Entradas" : "Saídas"}</span>}
             />
             <Area 
               type="monotone" 
