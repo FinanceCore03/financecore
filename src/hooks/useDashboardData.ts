@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useDashboardData() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
   const [moeda, setMoeda] = useState<string>("Real");
@@ -38,22 +39,29 @@ export function useDashboardData() {
         if (usuario) {
           setUsuarioId(usuario.id);
           setMoeda(usuario.Moeda || "Real");
-          // 2. Fetch all transactions for this user
-          const { data, error: transacoesError } = await supabase
-            .from("Transacoes")
-            .select("*")
-            .eq("id_usuario", usuario.id)
-            .order("data_inicio", { ascending: false });
 
-          if (transacoesError) {
-            console.log("Erro ao buscar dados do dashboard:", transacoesError);
-            throw transacoesError;
+          // 2. Fetch all transactions and subscriptions for this user
+          const [transacoesRes, assinaturasRes] = await Promise.all([
+            supabase
+              .from("Transacoes")
+              .select("*")
+              .eq("id_usuario", usuario.id)
+              .order("data_inicio", { ascending: false }),
+            supabase
+              .from("Assinaturas")
+              .select("*")
+              .eq("id_usuario", usuario.id)
+          ]);
+
+          if (transacoesRes.error) {
+            console.log("Erro ao buscar transações:", transacoesRes.error);
+            throw transacoesRes.error;
           }
           
-          console.log("Transações do dashboard:", data);
+          console.log("Transações do dashboard:", transacoesRes.data);
           
           // Map and normalize transactions
-          const normalized = (data || []).map(tx => {
+          const normalized = (transacoesRes.data || []).map(tx => {
             const rawTipo = (tx.tipo || "").toLowerCase();
             const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             return {
@@ -63,6 +71,7 @@ export function useDashboardData() {
           });
           
           setTransactions(normalized);
+          setSubscriptions(assinaturasRes.data || []);
         } else {
           console.warn("Usuário não encontrado na tabela Usuarios para id_auth:", user.id);
         }
@@ -115,6 +124,8 @@ export function useDashboardData() {
       }
     };
 
+    const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
+    
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
       
@@ -145,6 +156,28 @@ export function useDashboardData() {
           if (isEntrada) prevMonthIncome += val;
           else if (isSaida) prevMonthExpenses += val;
         }
+      }
+    });
+
+    // Include active subscriptions in current month expenses
+    activeSubscriptions.forEach(sub => {
+      const val = parseFloat(sub.valor || "0");
+      totalBalance -= val; // Subscriptions are always expenses
+
+      // For month calculations, assuming they occur every month if active
+      monthExpenses += val;
+      
+      // Update sparklines for current month
+      const currentMonthIdx = last6Months.findIndex(item => item.month === currentMonth && item.year === currentYear);
+      if (currentMonthIdx !== -1) {
+        last6Months[currentMonthIdx].expenses += val;
+      }
+      
+      // Also update previous month for comparison
+      prevMonthExpenses += val;
+      const prevMonthIdx = last6Months.findIndex(item => item.month === lastMonth && item.year === lastMonthYear);
+      if (prevMonthIdx !== -1) {
+        last6Months[prevMonthIdx].expenses += val;
       }
     });
 
@@ -219,9 +252,14 @@ export function useDashboardData() {
         })
         .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
-      return { m, income, expenses };
+      // Include subscriptions in expenses for chart
+      const subscriptionTotal = subscriptions
+        .filter(sub => sub.status !== false)
+        .reduce((sum, sub) => sum + parseFloat(sub.valor || "0"), 0);
+
+      return { m, income, expenses: expenses + subscriptionTotal };
     });
-  }, [transactions]);
+  }, [transactions, subscriptions]);
 
   const categoriesData = useMemo(() => {
     const categoriesMap: Record<string, number> = {};
@@ -239,6 +277,17 @@ export function useDashboardData() {
         categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
         totalExps += val;
       });
+
+    // Include subscriptions as "Assinatura" category
+    const subscriptionTotal = subscriptions
+      .filter(sub => sub.status !== false)
+      .reduce((sum, sub) => sum + parseFloat(sub.valor || "0"), 0);
+    
+    if (subscriptionTotal > 0) {
+      const cat = "Assinatura";
+      categoriesMap[cat] = (categoriesMap[cat] || 0) + subscriptionTotal;
+      totalExps += subscriptionTotal;
+    }
 
     const colors = [
       "oklch(0.62 0.18 290)", // primary
@@ -272,6 +321,7 @@ export function useDashboardData() {
     categoriesData,
     usuarioId,
     moeda,
-    user
+    user,
+    subscriptions
   };
 }
