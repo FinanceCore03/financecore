@@ -69,15 +69,15 @@ function Dashboard() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-              <Skeleton className="xl:col-span-2 h-[350px] rounded-2xl" />
-              <Skeleton className="h-[350px] rounded-2xl" />
-            </div>
+            <Skeleton className="h-[420px] w-full rounded-2xl" />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <Skeleton className="h-64 rounded-2xl" />
-              <Skeleton className="h-64 rounded-2xl" />
-              <Skeleton className="h-64 rounded-2xl" />
+              <Skeleton className="h-96 rounded-2xl" />
+              <Skeleton className="h-96 rounded-2xl" />
+              <div className="space-y-5">
+                <Skeleton className="h-[280px] rounded-2xl" />
+                <Skeleton className="h-[350px] rounded-2xl" />
+              </div>
             </div>
           </main>
         </div>
@@ -97,7 +97,6 @@ function Dashboard() {
                   <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
                   <p className="text-sm text-muted-foreground mt-1">Resumo financeiro do seu mês</p>
                 </div>
-                <Filters />
               </header>
             </AnimatedItem>
 
@@ -105,27 +104,13 @@ function Dashboard() {
               <StatCards stats={stats} moeda={moeda} />
             </AnimatedItem>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-              <AnimatedItem className="xl:col-span-2">
-                <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
-              </AnimatedItem>
-              <AnimatedItem>
-                <TopExpenses categories={categoriesData.list} moeda={moeda} />
-              </AnimatedItem>
-            </div>
+            <AnimatedItem>
+              <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
+            </AnimatedItem>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
               <AnimatedItem>
                 <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} subscriptions={subscriptions} />
-              </AnimatedItem>
-              <AnimatedItem>
-                <MonthlyAlerts 
-                  transactions={transactions} 
-                  subscriptions={subscriptions} 
-                  planning={planning} 
-                  stats={stats} 
-                  moeda={moeda} 
-                />
               </AnimatedItem>
               <AnimatedItem>
                 <UpcomingCommitments 
@@ -134,6 +119,20 @@ function Dashboard() {
                   moeda={moeda} 
                 />
               </AnimatedItem>
+              <div className="space-y-5">
+                <AnimatedItem>
+                  <MonthlyAlerts 
+                    transactions={transactions} 
+                    subscriptions={subscriptions} 
+                    planning={planning} 
+                    stats={stats} 
+                    moeda={moeda} 
+                  />
+                </AnimatedItem>
+                <AnimatedItem>
+                  <TopExpenses categories={categoriesData.list} moeda={moeda} />
+                </AnimatedItem>
+              </div>
             </div>
 
             <AnimatedItem>
