@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 import { SubscriptionsCard } from "@/components/transactions/SubscriptionsCard";
+import { InvoiceCard } from "@/components/transactions/InvoiceCard";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
@@ -660,6 +661,7 @@ function TransactionsPage() {
                 </div>
               </div>
 
+              <InvoiceCard transactions={transactions} />
               <SubscriptionsCard usuarioId={usuarioId} />
             </div>
           </div>
