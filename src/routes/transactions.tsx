@@ -323,6 +323,7 @@ function TransactionsPage() {
 
   const { moeda: dashboardMoeda } = useDashboardData();
   const effectiveMoeda = dashboardMoeda || moeda;
+  const economyValue = totals.periodEntradas - totals.periodSaidas;
 
   if (loading) {
     return (
