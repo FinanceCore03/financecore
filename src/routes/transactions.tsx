@@ -297,7 +297,7 @@ function TransactionsPage() {
       amount: value,
       color: colors[i % colors.length]
     })).sort((a, b) => b.amount - a.amount);
-  }, [transactions, periodFilter]);
+  }, [transactions, periodFilter, dateRange]);
 
   const { moeda: dashboardMoeda } = useDashboardData();
   const effectiveMoeda = dashboardMoeda || moeda;
