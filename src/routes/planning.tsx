@@ -248,8 +248,7 @@ function PlanningPage() {
     <div className="min-h-screen bg-[#F8F9FA] flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar />
-        <main className="flex-1 px-8 py-6 space-y-8">
+        <main className="flex-1 px-8 py-8 space-y-8">
           <header className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Planejamento</h1>
             <p className="text-sm text-muted-foreground">Gerencie suas metas mensais e acompanhe seus gastos por categoria.</p>

@@ -302,8 +302,7 @@ function PersonalizationPage() {
     <div className="min-h-screen bg-[#F8F9FA] flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar />
-        <main className="flex-1 px-8 py-6 space-y-6">
+        <main className="flex-1 px-8 py-8 space-y-6">
           <header>
             <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Personalização</h1>
             <p className="text-sm text-muted-foreground mt-1">Gerencie suas categorias e métodos de pagamento personalizados.</p>

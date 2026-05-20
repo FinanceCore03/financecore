@@ -35,8 +35,7 @@ function Dashboard() {
       <div className="min-h-screen bg-background flex">
         <Sidebar />
         <div className="flex-1 min-w-0 flex flex-col">
-          <TopBar />
-          <main className="flex-1 px-8 py-6 space-y-6">
+          <main className="flex-1 px-8 py-8 space-y-6">
             <header className="flex flex-wrap items-center justify-between gap-4">
               <div className="space-y-2">
                 <Skeleton className="h-8 w-48" />
@@ -71,8 +70,7 @@ function Dashboard() {
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <TopBar />
-        <main className="flex-1 px-8 py-6 space-y-6">
+        <main className="flex-1 px-8 py-8 space-y-6">
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
