@@ -9,9 +9,10 @@ interface PlanningCardProps {
   usuarioId: number | null;
   moeda: string;
   transactions: any[];
+  subscriptions: any[];
 }
 
-export function PlanningCard({ usuarioId, moeda, transactions }: PlanningCardProps) {
+export function PlanningCard({ usuarioId, moeda, transactions, subscriptions }: PlanningCardProps) {
   const { data: budgets = [], isLoading } = useQuery({
     queryKey: ["planning", usuarioId],
     queryFn: async () => {
@@ -49,6 +50,16 @@ export function PlanningCard({ usuarioId, moeda, transactions }: PlanningCardPro
         }
       }
     });
+
+    // Add active subscriptions to "Assinatura" category spending if it exists in planning
+    // or just generally if we want to show it.
+    // However, the rule says "assinaturas ativas devem entrar no Planejamento do Mês"
+    // Usually, subscriptions are a separate category.
+    const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
+    const subTotal = activeSubscriptions.reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
+    if (subTotal > 0) {
+      spendingByCategory["Assinatura"] = (spendingByCategory["Assinatura"] || 0) + subTotal;
+    }
 
     return budgets.map(item => {
       const name = item.Categoria || "Sem nome";
