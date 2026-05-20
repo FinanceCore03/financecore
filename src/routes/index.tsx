@@ -27,6 +27,7 @@ function Dashboard() {
     stats, 
     chartData, 
     categoriesData,
+    usuarioId,
     moeda
   } = useDashboardData();
 

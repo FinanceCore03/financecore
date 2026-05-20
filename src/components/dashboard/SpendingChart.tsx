@@ -58,9 +58,9 @@ export function SpendingChart({ data, moeda }: SpendingChartProps) {
                 padding: "12px 16px"
               }}
               cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }}
-              formatter={(v: any, name: string) => [
-                <span className="font-bold text-slate-900">{fmt(v as number)}</span>, 
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{name === "income" ? "Entradas" : "Saídas"}</span>
+              formatter={(v: any, name: any) => [
+                <span className="font-bold text-slate-900" key="val">{fmt(v as number)}</span>, 
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider" key="name">{name === "income" ? "Entradas" : "Saídas"}</span>
               ]}
               labelStyle={{ display: 'none' }}
               itemStyle={{ padding: '4px 0' }}
