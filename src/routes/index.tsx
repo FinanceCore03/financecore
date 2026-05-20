@@ -109,19 +109,24 @@ function Dashboard() {
               <AnimatedItem className="xl:col-span-2">
                 <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
               </AnimatedItem>
-              <AnimatedItem>
-                <MonthlyAlerts 
-                  transactions={transactions} 
-                  subscriptions={subscriptions} 
-                  planning={planning} 
-                  stats={stats} 
-                  moeda={moeda} 
-                />
-              </AnimatedItem>
+              <div className="space-y-5">
+                <AnimatedItem>
+                  <MonthlyAlerts 
+                    transactions={transactions} 
+                    subscriptions={subscriptions} 
+                    planning={planning} 
+                    stats={stats} 
+                    moeda={moeda} 
+                  />
+                </AnimatedItem>
+                <AnimatedItem>
+                  <TopExpenses categories={categoriesData.list} moeda={moeda} />
+                </AnimatedItem>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              <AnimatedItem>
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+              <AnimatedItem className="xl:col-span-2">
                 <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} subscriptions={subscriptions} />
               </AnimatedItem>
               <AnimatedItem>
@@ -130,9 +135,6 @@ function Dashboard() {
                   subscriptions={subscriptions} 
                   moeda={moeda} 
                 />
-              </AnimatedItem>
-              <AnimatedItem>
-                <TopExpenses categories={categoriesData.list} moeda={moeda} />
               </AnimatedItem>
             </div>
 
