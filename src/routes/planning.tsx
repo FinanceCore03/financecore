@@ -6,7 +6,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { createFileRoute } from "@tanstack/react-router";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { formatCurrency } from "@/lib/currency";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -439,11 +439,11 @@ function PlanningPage() {
                               <div className="flex justify-between items-end">
                                 <div className="space-y-1">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Meta Planejada</p>
-                                  <p className="text-xl font-black text-[#1A1A1A]">{formatCurrency(cat.budget)}</p>
+                                  <p className="text-xl font-black text-[#1A1A1A]">{formatCurrencyVal(cat.budget)}</p>
                                 </div>
                                 <div className="text-right space-y-1">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Gasto Atual</p>
-                                  <p className="text-sm font-bold text-slate-600">{formatCurrency(cat.spent)}</p>
+                                  <p className="text-sm font-bold text-slate-600">{formatCurrencyVal(cat.spent)}</p>
                                 </div>
                               </div>
                               
@@ -510,7 +510,7 @@ function PlanningPage() {
                               axisLine={false} 
                               tickLine={false} 
                               tick={{ fill: '#64748B', fontSize: 12 }}
-                              tickFormatter={(value) => `R$ ${value}`}
+                              tickFormatter={(value) => `${getCurrencySymbol(moeda)} ${value}`}
                             />
                             <Tooltip 
                               cursor={{ fill: '#F8FAFC', radius: 8 }}
@@ -522,7 +522,7 @@ function PlanningPage() {
                               }}
                               itemStyle={{ padding: '4px 0', fontWeight: 600 }}
                               labelStyle={{ marginBottom: '8px', fontWeight: 700, color: '#1A1A1A' }}
-                              formatter={(value: any) => [formatCurrency(Number(value)), ""]}
+                              formatter={(value: any) => [formatCurrencyVal(Number(value)), ""]}
                             />
                             <Bar 
                               name="Planejado" 

@@ -32,8 +32,8 @@ export function useDashboardData() {
           throw usuarioError;
         }
 
-        console.log("Usuário interno:", usuario);
-        console.log("Moeda do usuário:", usuario?.Moeda);
+        console.log("Usuário interno (dashboard):", usuario);
+        console.log("Moeda do usuário (dashboard):", usuario?.Moeda);
 
         if (usuario) {
           setUsuarioId(usuario.id);
