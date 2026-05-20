@@ -157,7 +157,7 @@ function PersonalizationPage() {
         const { count, error: countError } = await supabase
           .from("Transacoes")
           .select("*", { count: 'exact', head: true })
-          .eq("id_categoria", itemToDelete.id);
+          .eq("categoria", itemToDelete.Nome);
         
         if (countError) throw countError;
         
