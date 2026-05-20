@@ -595,8 +595,8 @@ function PersonalizationPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      </main>
-      </PageTransition>
+          </main>
+        </PageTransition>
       </div>
     </div>
   );

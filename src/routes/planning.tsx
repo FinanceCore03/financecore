@@ -558,7 +558,8 @@ function PlanningPage() {
           <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
             Financeiro Core © 2025
           </footer>
-        </main>
+          </main>
+        </PageTransition>
       </div>
     </div>
   );
