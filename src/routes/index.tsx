@@ -16,7 +16,7 @@ import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Financeiro Core — Dashboard pessoal" },
+      { title: "Finance Core — Dashboard pessoal" },
       { name: "description", content: "Dashboard financeiro pessoal moderno com visão geral de saldo, gastos e categorias." },
     ],
   }),
@@ -138,7 +138,7 @@ function Dashboard() {
 
             <AnimatedItem>
               <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
-                Financeiro Core © 2025
+                Finance Core © 2025
               </footer>
             </AnimatedItem>
           </main>

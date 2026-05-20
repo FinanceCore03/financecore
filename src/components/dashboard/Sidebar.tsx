@@ -35,7 +35,7 @@ export function Sidebar() {
             <Wallet className="size-4 text-primary-foreground" strokeWidth={2.5} />
           </div>
           {!isCollapsed && (
-            <span className="font-bold text-lg tracking-tight text-foreground">MoneyFlow</span>
+            <span className="font-bold text-lg tracking-tight text-foreground">Finance Core</span>
           )}
         </div>
       </div>
