@@ -39,22 +39,29 @@ export function useDashboardData() {
         if (usuario) {
           setUsuarioId(usuario.id);
           setMoeda(usuario.Moeda || "Real");
-          // 2. Fetch all transactions for this user
-          const { data, error: transacoesError } = await supabase
-            .from("Transacoes")
-            .select("*")
-            .eq("id_usuario", usuario.id)
-            .order("data_inicio", { ascending: false });
 
-          if (transacoesError) {
-            console.log("Erro ao buscar dados do dashboard:", transacoesError);
-            throw transacoesError;
+          // 2. Fetch all transactions and subscriptions for this user
+          const [transacoesRes, assinaturasRes] = await Promise.all([
+            supabase
+              .from("Transacoes")
+              .select("*")
+              .eq("id_usuario", usuario.id)
+              .order("data_inicio", { ascending: false }),
+            supabase
+              .from("Assinaturas")
+              .select("*")
+              .eq("id_usuario", usuario.id)
+          ]);
+
+          if (transacoesRes.error) {
+            console.log("Erro ao buscar transações:", transacoesRes.error);
+            throw transacoesRes.error;
           }
           
-          console.log("Transações do dashboard:", data);
+          console.log("Transações do dashboard:", transacoesRes.data);
           
           // Map and normalize transactions
-          const normalized = (data || []).map(tx => {
+          const normalized = (transacoesRes.data || []).map(tx => {
             const rawTipo = (tx.tipo || "").toLowerCase();
             const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             return {
@@ -64,6 +71,7 @@ export function useDashboardData() {
           });
           
           setTransactions(normalized);
+          setSubscriptions(assinaturasRes.data || []);
         } else {
           console.warn("Usuário não encontrado na tabela Usuarios para id_auth:", user.id);
         }
