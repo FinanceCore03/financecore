@@ -515,7 +515,7 @@ function PlanningPage() {
                                       <p className="text-xl font-black text-[#1A1A1A]">{formatCurrencyVal(cat.budget)}</p>
                                       <button 
                                         onClick={() => startEditing(cat.id, cat.budget)}
-                                        className="text-slate-400 hover:text-primary transition-colors opacity-0 group-hover/meta:opacity-100"
+                                        className="text-slate-400 hover:text-primary transition-colors"
                                         title="Editar meta manualmente"
                                       >
                                         <Pencil className="size-3.5" />
