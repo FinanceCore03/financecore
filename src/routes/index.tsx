@@ -97,6 +97,7 @@ function Dashboard() {
                   <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
                   <p className="text-sm text-muted-foreground mt-1">Resumo financeiro do seu mês</p>
                 </div>
+                <Filters />
               </header>
             </AnimatedItem>
 
@@ -109,13 +110,7 @@ function Dashboard() {
                 <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
               </AnimatedItem>
               <AnimatedItem>
-                <MonthlyAlerts 
-                  transactions={transactions} 
-                  subscriptions={subscriptions} 
-                  planning={planning} 
-                  stats={stats} 
-                  moeda={moeda} 
-                />
+                <TopExpenses categories={categoriesData.list} moeda={moeda} />
               </AnimatedItem>
             </div>
 
@@ -124,14 +119,20 @@ function Dashboard() {
                 <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} subscriptions={subscriptions} />
               </AnimatedItem>
               <AnimatedItem>
+                <MonthlyAlerts 
+                  transactions={transactions} 
+                  subscriptions={subscriptions} 
+                  planning={planning} 
+                  stats={stats} 
+                  moeda={moeda} 
+                />
+              </AnimatedItem>
+              <AnimatedItem>
                 <UpcomingCommitments 
                   transactions={transactions} 
                   subscriptions={subscriptions} 
                   moeda={moeda} 
                 />
-              </AnimatedItem>
-              <AnimatedItem>
-                <TopExpenses categories={categoriesData.list} moeda={moeda} />
               </AnimatedItem>
             </div>
 
