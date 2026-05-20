@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
+import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -366,68 +367,72 @@ function TransactionsPage() {
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <main className="flex-1 px-8 py-8 space-y-6">
-          <header className="flex flex-row items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
-              <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
-                <PopoverTrigger asChild>
+        <PageTransition>
+          <main className="flex-1 px-8 py-8 space-y-6">
+            <AnimatedItem>
+              <header className="flex flex-row items-center justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
+                  <p className="text-sm text-muted-foreground">Visualize e gerencie suas entradas e saídas em um só lugar.</p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
+                    <PopoverTrigger asChild>
+                      <button 
+                        type="button"
+                        className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
+                      >
+                        <span>{periodFilter}</span>
+                        <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-48 p-1 rounded-xl border-border shadow-lg">
+                      {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                        <button
+                          key={option}
+                          onClick={() => {
+                            setPeriodFilter(option);
+                            setIsPeriodOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </PopoverContent>
+                  </Popover>
+                  
                   <button 
-                    type="button"
-                    className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm"
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm"
                   >
-                    <span>{periodFilter}</span>
-                    <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
+                    <Plus className="size-4" />
+                    <span>Adicionar Transação</span>
                   </button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-48 p-1 rounded-xl border-border shadow-lg">
-                  {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => {
-                        setPeriodFilter(option);
-                        setIsPeriodOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
-              
-              <button 
-                onClick={() => setIsAddModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm"
-              >
-                <Plus className="size-4" />
-                <span>Adicionar Transação</span>
-              </button>
-            </div>
-          </header>
+                </div>
+              </header>
+            </AnimatedItem>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-              <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
-                <Wallet className="size-5" />
-              </div>
-              <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
-              <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
-              <div className="text-xs text-success font-medium mt-2">Saldo total disponível</div>
-            </div>
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
-              <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
-                <TrendingUp className="size-5" />
-              </div>
-              <div className="text-xs text-muted-foreground mb-1">Entradas ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
-              <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
-              <div className="text-xs text-success font-medium mt-2">Total recebido no período</div>
-            </div>
-            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+            <AnimatedItem>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+                  <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
+                    <Wallet className="size-5" />
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
+                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
+                  <div className="text-xs text-success font-medium mt-2">Saldo total disponível</div>
+                </div>
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+                  <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
+                    <TrendingUp className="size-5" />
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-1">Entradas ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
+                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
+                  <div className="text-xs text-success font-medium mt-2">Total recebido no período</div>
+                </div>
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="size-10 rounded-xl bg-danger-soft text-danger flex items-center justify-center mb-4">
                 <TrendingDown className="size-5" />
               </div>

@@ -2,6 +2,7 @@ import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
+import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 import { Tags, CreditCard, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -303,14 +304,17 @@ function PersonalizationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <main className="flex-1 px-8 py-8 space-y-6">
-          <header>
-            <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Personalização</h1>
-            <p className="text-sm text-muted-foreground mt-1">Gerencie suas categorias e métodos de pagamento personalizados.</p>
-          </header>
+        <PageTransition>
+          <main className="flex-1 px-8 py-8 space-y-6">
+            <AnimatedItem>
+              <header>
+                <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Personalização</h1>
+                <p className="text-sm text-muted-foreground mt-1">Gerencie suas categorias e métodos de pagamento personalizados.</p>
+              </header>
+            </AnimatedItem>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Card Categorias */}

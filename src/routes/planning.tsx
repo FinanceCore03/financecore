@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { createFileRoute } from "@tanstack/react-router";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -243,14 +244,17 @@ function PlanningPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
-        <main className="flex-1 px-8 py-8 space-y-8">
-          <header className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Planejamento</h1>
-            <p className="text-sm text-muted-foreground">Gerencie suas metas mensais e acompanhe seus gastos por categoria.</p>
-          </header>
+        <PageTransition>
+          <main className="flex-1 px-8 py-8 space-y-8">
+            <AnimatedItem>
+              <header className="flex flex-col gap-1">
+                <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Planejamento</h1>
+                <p className="text-sm text-muted-foreground">Gerencie suas metas mensais e acompanhe seus gastos por categoria.</p>
+              </header>
+            </AnimatedItem>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
             <TabsList className="bg-[#F1F3F5] p-1 h-11 rounded-xl w-fit inline-flex">
