@@ -42,9 +42,14 @@ import {
   Plane,
   Gift,
   Eye,
-  EyeOff
+  EyeOff,
+  Pencil,
+  Check,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/planning")({
   head: () => ({
@@ -88,6 +93,8 @@ function PlanningPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [dbBudgets, setDbBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState("");
 
   const fetchBudgets = async () => {
     if (!usuarioId) return;
@@ -176,13 +183,18 @@ function PlanningPage() {
       };
     });
 
+    const sortedCategories = [...categories].sort((a, b) => {
+      if (a.visible === b.visible) return 0;
+      return a.visible ? -1 : 1;
+    });
+
     const visibleCategories = categories.filter(c => c.visible);
     const totalPlanned = visibleCategories.reduce((acc, curr) => acc + curr.budget, 0);
     const totalSpent = visibleCategories.reduce((acc, curr) => acc + curr.spent, 0);
     const difference = totalPlanned - totalSpent;
 
     return {
-      categories,
+      categories: sortedCategories,
       totalPlanned,
       totalSpent,
       difference
@@ -212,6 +224,28 @@ function PlanningPage() {
       console.error("Erro ao atualizar planejamento:", error);
       toast.error("Erro ao salvar alteração.");
     }
+  };
+
+  const startEditing = (id: number, currentValue: number) => {
+    setEditingId(id);
+    setEditValue(currentValue.toString());
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditValue("");
+  };
+
+  const saveManualBudget = async (id: number) => {
+    const numericValue = parseFloat(editValue.replace(",", "."));
+    if (isNaN(numericValue) || numericValue < 0) {
+      toast.error("Por favor, insira um valor válido e positivo.");
+      return;
+    }
+
+    await handleBudgetChange(id, numericValue);
+    setEditingId(null);
+    setEditValue("");
   };
 
   const toggleVisibility = async (id: number, currentVisible: boolean) => {
@@ -443,7 +477,51 @@ function PlanningPage() {
                               <div className="flex justify-between items-end">
                                 <div className="space-y-1">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Meta Planejada</p>
-                                  <p className="text-xl font-black text-[#1A1A1A]">{formatCurrencyVal(cat.budget)}</p>
+                                  {editingId === cat.id ? (
+                                    <div className="flex items-center gap-2">
+                                      <div className="relative">
+                                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">{getCurrencySymbol(moeda)}</span>
+                                        <Input
+                                          value={editValue}
+                                          onChange={(e) => setEditValue(e.target.value)}
+                                          className="h-8 w-28 pl-6 text-sm font-bold"
+                                          type="text"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') saveManualBudget(cat.id);
+                                            if (e.key === 'Escape') cancelEditing();
+                                          }}
+                                        />
+                                      </div>
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                        onClick={() => saveManualBudget(cat.id)}
+                                      >
+                                        <Check className="size-4" />
+                                      </Button>
+                                      <Button 
+                                        size="icon" 
+                                        variant="ghost" 
+                                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                        onClick={cancelEditing}
+                                      >
+                                        <X className="size-4" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2 group/meta">
+                                      <p className="text-xl font-black text-[#1A1A1A]">{formatCurrencyVal(cat.budget)}</p>
+                                      <button 
+                                        onClick={() => startEditing(cat.id, cat.budget)}
+                                        className="text-slate-400 hover:text-primary transition-colors opacity-0 group-hover/meta:opacity-100"
+                                        title="Editar meta manualmente"
+                                      >
+                                        <Pencil className="size-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="text-right space-y-1">
                                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Gasto Atual</p>
