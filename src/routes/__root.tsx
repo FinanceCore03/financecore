@@ -10,6 +10,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { PrivacyProvider } from "@/contexts/PrivacyContext";
 import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -162,7 +163,8 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AuthGuard>
+        <PrivacyProvider>
+          <AuthGuard>
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={location.pathname}
@@ -176,7 +178,8 @@ function RootComponent() {
           </AnimatePresence>
           <Toaster position="top-right" richColors closeButton />
         </AuthGuard>
-      </AuthProvider>
+      </PrivacyProvider>
+    </AuthProvider>
     </QueryClientProvider>
   );
 }
