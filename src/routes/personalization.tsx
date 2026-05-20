@@ -146,8 +146,63 @@ function PersonalizationPage() {
   };
 
   const handleDeleteItem = async () => {
-    setItemToDelete(null);
-    toast.success("Item removido.");
+    if (!itemToDelete || !usuarioId) return;
+
+    setIsSubmitting(true);
+    try {
+      const isCategory = itemToDelete.Tipo?.toLowerCase() === "categoria";
+      
+      // Validação de transações vinculadas para categorias
+      if (isCategory) {
+        const { count, error: countError } = await supabase
+          .from("Transacoes")
+          .select("*", { count: 'exact', head: true })
+          .eq("categoria", itemToDelete.Nome);
+        
+        if (countError) throw countError;
+        
+        if (count && count > 0) {
+          toast.error("Esta categoria possui transações vinculadas e não pode ser removida.");
+          setItemToDelete(null);
+          return;
+        }
+      }
+
+      const payload: any = {
+        acao: "remover",
+        tipo: isCategory ? "categoria" : "metodo_pagamento",
+        nome: itemToDelete.Nome,
+        id_usuario: usuarioId.toString()
+      };
+
+      if (isCategory) {
+        const usageMap: Record<string, string> = {
+          "ENTRADA": "entrada",
+          "SAÍDA": "saida",
+          "ENTRADA/SAÍDA": "entrada_saida"
+        };
+        payload.uso = usageMap[itemToDelete.Uso?.toUpperCase()] || "saida";
+      }
+
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Erro ao remover item");
+
+      toast.success("Solicitação de remoção enviada com sucesso!");
+      setItemToDelete(null);
+      
+      // Recarregar a lista após um delay
+      setTimeout(() => fetchOptions(usuarioId), 1500);
+    } catch (error) {
+      console.error("Erro no webhook de remoção:", error);
+      toast.error("Erro ao remover. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
