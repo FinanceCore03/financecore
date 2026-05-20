@@ -567,15 +567,15 @@ function TransactionsPage() {
                 <AnimatedItem>
                   <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                     <h3 className="font-semibold text-lg tracking-tight mb-6">Distribuição dos Gastos</h3>
-                    <div className="h-[200px] w-full mb-6">
+                    <div className="h-[220px] w-full mb-6 relative">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
                             data={distributionData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
+                            innerRadius={70}
+                            outerRadius={90}
                             paddingAngle={5}
                             dataKey="amount"
                           >
@@ -589,15 +589,24 @@ function TransactionsPage() {
                           />
                         </PieChart>
                       </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Total de Gastos</span>
+                        <span className="text-lg font-bold tracking-tight">
+                          {formatCurrency(distributionData.reduce((acc, curr) => acc + curr.amount, 0), effectiveMoeda)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="space-y-3">
-                      {distributionData.slice(0, 4).map((item) => (
-                        <div key={item.name} className="flex items-center justify-between">
+                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                      {distributionData.map((item) => (
+                        <div key={item.name} className="flex items-center justify-between group py-0.5">
                           <div className="flex items-center gap-2">
-                            <div className="size-2 rounded-full" style={{ backgroundColor: item.color }} />
-                            <span className="text-sm text-muted-foreground">{item.name}</span>
+                            <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                            <span className="text-xs text-muted-foreground truncate max-w-[100px]" title={item.name}>{item.name}</span>
                           </div>
-                          <span className="text-sm font-medium">{item.value}%</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-medium text-muted-foreground/70">{item.value}%</span>
+                            <span className="text-xs font-semibold">{formatCurrency(item.amount, effectiveMoeda)}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
