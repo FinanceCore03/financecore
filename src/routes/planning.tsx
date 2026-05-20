@@ -246,6 +246,7 @@ function PlanningPage() {
     await handleBudgetChange(id, numericValue);
     setEditingId(null);
     setEditValue("");
+  };
 
   const toggleVisibility = async (id: number, currentVisible: boolean) => {
     const newVisible = !currentVisible;
