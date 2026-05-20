@@ -34,7 +34,10 @@ function PersonalizationPage() {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
+  const [paymentMethodName, setPaymentMethodName] = useState("");
+  const [categoryUsage, setCategoryUsage] = useState("SAÍDA");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
 
@@ -65,6 +68,11 @@ function PersonalizationPage() {
     toast.success("Funcionalidade em desenvolvimento via Webhook.");
   };
 
+  const handleAddPaymentMethod = async () => {
+    setIsPaymentModalOpen(false);
+    toast.success("Funcionalidade em desenvolvimento via Webhook.");
+  };
+
   const handleDeleteItem = async () => {
     setItemToDelete(null);
     toast.success("Item removido.");
@@ -79,24 +87,143 @@ function PersonalizationPage() {
             <AnimatedItem>
               <header>
                 <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Personalização</h1>
-                <p className="text-sm text-muted-foreground mt-1">Gerencie suas preferências.</p>
+                <p className="text-sm text-muted-foreground mt-1">Configure as categorias e métodos de pagamento do seu sistema.</p>
               </header>
             </AnimatedItem>
 
             <AnimatedItem>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <Card className="border-none shadow-sm bg-white">
-                  <CardHeader><CardTitle>Categorias</CardTitle></CardHeader>
+                {/* Card 1: Categorias */}
+                <Card className="border-none shadow-sm bg-white overflow-hidden">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <Tags className="w-5 h-5 text-primary" />
+                      Categorias
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Adicione ou remova categorias usadas nas suas transações.
+                    </CardDescription>
+                  </CardHeader>
                   <CardContent>
-                    <div className="space-y-2 mb-4">
-                      {categories.map(cat => (
-                        <div key={cat.id} className="flex justify-between p-3 border rounded-xl">
-                          <span>{cat.Nome}</span>
-                          <button onClick={() => setItemToDelete(cat)} className="text-muted-foreground hover:text-danger"><Trash2 size={16}/></button>
+                    <div className="space-y-1 mb-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                      {loading ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         </div>
-                      ))}
+                      ) : categories.length === 0 ? (
+                        <p className="text-sm text-center text-muted-foreground py-8">Nenhuma categoria encontrada.</p>
+                      ) : (
+                        categories.map((cat) => {
+                          const isDeletable = cat.id_usuario !== null && !cat.Padrao;
+                          const usage = cat.Uso?.toUpperCase() || "SAÍDA";
+                          
+                          let dotColor = "bg-primary"; // ENTRADA/SAÍDA
+                          if (usage === "ENTRADA") dotColor = "bg-[#10B981]";
+                          if (usage === "SAÍDA") dotColor = "bg-[#EF4444]";
+
+                          return (
+                            <div 
+                              key={cat.id} 
+                              className="group flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-slate-800">{cat.Nome}</span>
+                                  <span className="text-[10px] text-muted-foreground font-semibold bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wider w-fit">
+                                    {usage}
+                                  </span>
+                                </div>
+                              </div>
+                              {isDeletable && (
+                                <button 
+                                  onClick={() => setItemToDelete(cat)} 
+                                  className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+                                  title="Excluir categoria"
+                                >
+                                  <Trash2 size={16}/>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-                    <Button onClick={() => setIsCategoryModalOpen(true)} className="w-full">Adicionar Categoria</Button>
+                    <Button 
+                      onClick={() => setIsCategoryModalOpen(true)} 
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 h-11"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Adicionar Categoria
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Card 2: Métodos de Pagamento */}
+                <Card className="border-none shadow-sm bg-white overflow-hidden">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-primary" />
+                      Métodos de Pagamento
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Adicione ou remova os métodos usados nas suas transações.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1 mb-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                      {loading ? (
+                        <div className="flex justify-center py-8">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                      ) : paymentMethods.length === 0 ? (
+                        <p className="text-sm text-center text-muted-foreground py-8">Nenhum método encontrado.</p>
+                      ) : (
+                        paymentMethods.map((method) => {
+                          const isDeletable = method.id_usuario !== null && !method.Padrao;
+                          const isDefault = method.Padrao === true;
+
+                          return (
+                            <div 
+                              key={method.id} 
+                              className="group flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 bg-slate-50 rounded-lg text-slate-400">
+                                  <CreditCard size={18} />
+                                </div>
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-slate-800">{method.Nome}</span>
+                                    {isDefault && (
+                                      <span className="text-[10px] text-primary font-bold bg-primary/10 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                        PADRÃO
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              {isDeletable && (
+                                <button 
+                                  onClick={() => setItemToDelete(method)} 
+                                  className="opacity-0 group-hover:opacity-100 p-2 text-muted-foreground hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+                                  title="Excluir método"
+                                >
+                                  <Trash2 size={16}/>
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                    <Button 
+                      onClick={() => setIsPaymentModalOpen(true)} 
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 h-11"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Adicionar Método
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -110,13 +237,64 @@ function PersonalizationPage() {
       </div>
 
       <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
-        <DialogContent className="rounded-2xl">
-          <DialogHeader><DialogTitle>Nova Categoria</DialogTitle></DialogHeader>
-          <div className="py-4">
-            <Label>Nome</Label>
-            <Input value={categoryName} onChange={(e) => setCategoryName(e.target.value)} />
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Categoria</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-name">Nome</Label>
+              <Input 
+                id="category-name"
+                placeholder="Ex: Alimentação, Lazer..."
+                value={categoryName} 
+                onChange={(e) => setCategoryName(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Uso</Label>
+              <div className="flex gap-2">
+                {["ENTRADA", "SAÍDA", "ENTRADA/SAÍDA"].map((type) => (
+                  <Button
+                    key={type}
+                    type="button"
+                    variant={categoryUsage === type ? "default" : "outline"}
+                    className="flex-1 text-[10px] h-9"
+                    onClick={() => setCategoryUsage(type)}
+                  >
+                    {type}
+                  </Button>
+                ))}
+              </div>
+            </div>
           </div>
-          <DialogFooter><Button onClick={handleAddCategory}>Salvar</Button></DialogFooter>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCategoryModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddCategory}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Método de Pagamento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="method-name">Nome</Label>
+              <Input 
+                id="method-name"
+                placeholder="Ex: Cartão Inter, Nubank, Dinheiro..."
+                value={paymentMethodName} 
+                onChange={(e) => setPaymentMethodName(e.target.value)} 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsPaymentModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddPaymentMethod}>Salvar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
