@@ -618,6 +618,7 @@ function TransactionsPage() {
             </div>
 
             <div className="w-full lg:w-80 space-y-6 shrink-0">
+              <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
               <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold tracking-tight">Distribuição dos Gastos</h3>
@@ -667,7 +668,6 @@ function TransactionsPage() {
                 </div>
               </div>
 
-              <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
               <SubscriptionsCard usuarioId={usuarioId} moeda={effectiveMoeda} />
             </div>
           </div>

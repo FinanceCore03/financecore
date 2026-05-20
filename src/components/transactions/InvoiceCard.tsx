@@ -46,7 +46,7 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
   }).length;
 
   return (
-    <div className="bg-white border border-border/60 rounded-2xl p-6 shadow-[0_2px_14px_-4px_rgba(0,0,0,0.1)]">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
       <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
         <Calendar className="size-5" />
       </div>
