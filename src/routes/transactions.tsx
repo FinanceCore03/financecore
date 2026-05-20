@@ -41,6 +41,7 @@ function TransactionsPage() {
   const [categoriaFilter, setCategoriaFilter] = useState<string>("Todas");
   const [metodoFilter, setMetodoFilter] = useState<string>("Todos");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -181,7 +182,7 @@ function TransactionsPage() {
       if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
       return true;
     });
-  }, [transactions, periodFilter, categoriaFilter, metodoFilter]);
+  }, [transactions, periodFilter, dateRange, categoriaFilter, metodoFilter]);
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   
@@ -247,7 +248,7 @@ function TransactionsPage() {
     });
 
     return { totalAccount, periodEntradas, periodSaidas };
-  }, [transactions, periodFilter]);
+  }, [transactions, periodFilter, dateRange]);
 
   const distributionData = useMemo(() => {
     const categoriesMap: Record<string, number> = {};
@@ -296,7 +297,7 @@ function TransactionsPage() {
       amount: value,
       color: colors[i % colors.length]
     })).sort((a, b) => b.amount - a.amount);
-  }, [transactions, periodFilter]);
+  }, [transactions, periodFilter, dateRange]);
 
   const { moeda: dashboardMoeda } = useDashboardData();
   const effectiveMoeda = dashboardMoeda || moeda;
@@ -451,7 +452,7 @@ function TransactionsPage() {
               <AnimatedItem className="flex-1 min-w-0">
                 <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                    <h3 className="font-semibold text-lg tracking-tight">Atividade</h3>
+                    <h3 className="font-semibold text-lg tracking-tight">Atividade de Transações</h3>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1 border border-border rounded-xl p-1 bg-muted/20 mr-1">
                         <button 
@@ -476,9 +477,38 @@ function TransactionsPage() {
                             <span>Filtrar</span>
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="w-72 rounded-2xl p-5 shadow-xl border-border bg-white">
+                        <PopoverContent align="end" className="w-80 rounded-2xl p-5 shadow-xl border-border bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
                           <div className="space-y-4">
                               <h4 className="font-bold text-sm">Filtros</h4>
+                              
+                              <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Período</label>
+                                <select 
+                                  value={periodFilter} 
+                                  onChange={(e) => {
+                                    setPeriodFilter(e.target.value);
+                                    if (e.target.value !== "Personalizado") setDateRange(undefined);
+                                  }}
+                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm mb-2"
+                                >
+                                  {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses", "Personalizado"].map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                                
+                                {periodFilter === "Personalizado" && (
+                                  <div className="p-2 border border-border rounded-xl bg-muted/10">
+                                    <Calendar
+                                      mode="range"
+                                      selected={dateRange}
+                                      onSelect={setDateRange}
+                                      initialFocus
+                                      className="rounded-md"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
                               <div className="space-y-2">
                                 <label className="text-[10px] uppercase font-bold text-muted-foreground">Categoria</label>
                                 <select 
@@ -565,6 +595,10 @@ function TransactionsPage() {
 
               <div className="w-full lg:w-80 space-y-6">
                 <AnimatedItem>
+                  <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
+                </AnimatedItem>
+                
+                <AnimatedItem>
                   <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
                     <h3 className="font-semibold text-lg tracking-tight mb-6">Distribuição dos Gastos</h3>
                     <div className="h-[220px] w-full mb-6 relative">
@@ -578,9 +612,22 @@ function TransactionsPage() {
                             outerRadius={90}
                             paddingAngle={5}
                             dataKey="amount"
+                            onMouseEnter={(_, index) => setActiveCategory(distributionData[index].name)}
+                            onMouseLeave={() => setActiveCategory(null)}
                           >
                             {distributionData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.color} 
+                                stroke="none" 
+                                className="transition-all duration-300 outline-none"
+                                style={{
+                                  filter: activeCategory === entry.name ? 'brightness(1.1)' : 'none',
+                                  opacity: activeCategory && activeCategory !== entry.name ? 0.6 : 1,
+                                  transform: activeCategory === entry.name ? 'scale(1.05)' : 'scale(1)',
+                                  transformOrigin: 'center'
+                                }}
+                              />
                             ))}
                           </Pie>
                           <Tooltip 
@@ -598,23 +645,26 @@ function TransactionsPage() {
                     </div>
                     <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
                       {distributionData.map((item) => (
-                        <div key={item.name} className="flex items-center justify-between group py-0.5">
+                        <div 
+                          key={item.name} 
+                          onMouseEnter={() => setActiveCategory(item.name)}
+                          onMouseLeave={() => setActiveCategory(null)}
+                          className={`flex items-center justify-between group py-1.5 px-2 rounded-xl transition-all duration-300 cursor-default ${activeCategory === item.name ? 'bg-muted shadow-sm scale-[1.02]' : ''}`}
+                        >
                           <div className="flex items-center gap-2">
-                            <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                            <span className="text-xs text-muted-foreground truncate max-w-[100px]" title={item.name}>{item.name}</span>
+                            <div className="size-2.5 rounded-full shrink-0 transition-transform duration-300" style={{ backgroundColor: item.color, transform: activeCategory === item.name ? 'scale(1.2)' : 'scale(1)' }} />
+                            <span className={`text-xs truncate max-w-[100px] transition-colors duration-300 ${activeCategory === item.name ? 'text-foreground font-medium' : 'text-muted-foreground'}`} title={item.name}>{item.name}</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-[10px] font-medium text-muted-foreground/70">{item.value}%</span>
-                            <span className="text-xs font-semibold">{formatCurrency(item.amount, effectiveMoeda)}</span>
+                            <span className={`text-[10px] font-medium transition-colors duration-300 ${activeCategory === item.name ? 'text-primary' : 'text-muted-foreground/70'}`}>{item.value}%</span>
+                            <span className={`text-xs font-semibold transition-colors duration-300 ${activeCategory === item.name ? 'text-foreground' : ''}`}>{formatCurrency(item.amount, effectiveMoeda)}</span>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 </AnimatedItem>
-                <AnimatedItem>
-                  <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
-                </AnimatedItem>
+
                 <AnimatedItem>
                   <SubscriptionsCard usuarioId={usuarioId} moeda={effectiveMoeda} />
                 </AnimatedItem>
