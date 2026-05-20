@@ -64,13 +64,85 @@ function PersonalizationPage() {
   }
 
   const handleAddCategory = async () => {
-    setIsCategoryModalOpen(false);
-    toast.success("Funcionalidade em desenvolvimento via Webhook.");
+    if (!categoryName || !usuarioId) {
+      toast.error("Preencha o nome da categoria.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const usageMap: Record<string, string> = {
+        "ENTRADA": "entrada",
+        "SAÍDA": "saida",
+        "ENTRADA/SAÍDA": "entrada_saida"
+      };
+
+      const payload = {
+        acao: "adicionar",
+        tipo: "categoria",
+        nome: categoryName,
+        uso: usageMap[categoryUsage] || "saida",
+        id_usuario: usuarioId.toString()
+      };
+
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Erro ao salvar categoria");
+
+      toast.success("Categoria enviada com sucesso!");
+      setIsCategoryModalOpen(false);
+      setCategoryName("");
+      setCategoryUsage("SAÍDA");
+      
+      // Pequeno delay para garantir que a automação processou antes de recarregar
+      setTimeout(() => fetchOptions(usuarioId), 1500);
+    } catch (error) {
+      console.error("Erro no webhook:", error);
+      toast.error("Erro ao salvar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddPaymentMethod = async () => {
-    setIsPaymentModalOpen(false);
-    toast.success("Funcionalidade em desenvolvimento via Webhook.");
+    if (!paymentMethodName || !usuarioId) {
+      toast.error("Preencha o nome do método.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        acao: "adicionar",
+        tipo: "metodo_pagamento",
+        nome: paymentMethodName,
+        id_usuario: usuarioId.toString()
+      };
+
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Erro ao salvar método");
+
+      toast.success("Método de pagamento enviado!");
+      setIsPaymentModalOpen(false);
+      setPaymentMethodName("");
+      
+      // Pequeno delay para recarregar
+      setTimeout(() => fetchOptions(usuarioId), 1500);
+    } catch (error) {
+      console.error("Erro no webhook:", error);
+      toast.error("Erro ao salvar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDeleteItem = async () => {
@@ -270,7 +342,9 @@ function PersonalizationPage() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsCategoryModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleAddCategory}>Salvar</Button>
+            <Button onClick={handleAddCategory} disabled={isSubmitting}>
+              {isSubmitting ? "Enviando..." : "Salvar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -293,7 +367,9 @@ function PersonalizationPage() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsPaymentModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleAddPaymentMethod}>Salvar</Button>
+            <Button onClick={handleAddPaymentMethod} disabled={isSubmitting}>
+              {isSubmitting ? "Enviando..." : "Salvar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
