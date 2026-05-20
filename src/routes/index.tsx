@@ -97,8 +97,6 @@ function Dashboard() {
                   <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
                   <p className="text-sm text-muted-foreground mt-1">Resumo financeiro do seu mês</p>
                 </div>
-                <Filters />
-              </header>
             </AnimatedItem>
 
             <AnimatedItem>
