@@ -374,7 +374,7 @@ function PlanningPage() {
                 value="categories" 
                 className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm px-6 py-2 text-sm font-medium transition-all duration-200"
               >
-                Categories
+                Edit
               </TabsTrigger>
               <TabsTrigger 
                 value="analytics" 
@@ -439,7 +439,7 @@ function PlanningPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {planningData.categories.map((cat) => (
+                    {planningData.categories.filter(c => c.visible).map((cat) => (
                       <Card 
                         key={cat.name} 
                         className={`border border-slate-200/60 shadow-sm rounded-2xl bg-white overflow-hidden group hover:shadow-md transition-all duration-300 ${!cat.visible ? 'opacity-60 bg-slate-50 grayscale-[0.3]' : ''}`}
