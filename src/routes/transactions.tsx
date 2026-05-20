@@ -375,7 +375,8 @@ function TransactionsPage() {
                     <Wallet className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Saldo total disponível</div>
                 </div>
               </AnimatedItem>
               <AnimatedItem>
@@ -384,7 +385,8 @@ function TransactionsPage() {
                     <TrendingUp className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Entradas</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Total recebido no período</div>
                 </div>
               </AnimatedItem>
               <AnimatedItem>
@@ -393,7 +395,8 @@ function TransactionsPage() {
                     <TrendingDown className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Saídas</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodSaidas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodSaidas, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Total gasto no período</div>
                 </div>
               </AnimatedItem>
               <AnimatedItem>
@@ -402,7 +405,8 @@ function TransactionsPage() {
                     <PiggyBank className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Economia</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(economyValue, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(economyValue, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Balanço positivo</div>
                 </div>
               </AnimatedItem>
             </div>
