@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { createFileRoute } from "@tanstack/react-router";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { formatCurrency } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -82,7 +83,7 @@ const categoryColors: Record<string, string> = {
 };
 
 function PlanningPage() {
-  const { transactions, loading: dashboardLoading, usuarioId, user } = useDashboardData();
+  const { transactions, loading: dashboardLoading, usuarioId, user, moeda } = useDashboardData();
   const [activeTab, setActiveTab] = useState("overview");
   const [dbBudgets, setDbBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,11 +232,8 @@ function PlanningPage() {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
+  const formatCurrencyVal = (value: number) => {
+    return formatCurrency(value, moeda);
   };
 
   const pageVariants = {
@@ -297,7 +295,7 @@ function PlanningPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrency(planningData.totalPlanned)}</div>
+                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrencyVal(planningData.totalPlanned)}</div>
                       </CardContent>
                     </Card>
                     <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
@@ -310,7 +308,7 @@ function PlanningPage() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrency(planningData.totalSpent)}</div>
+                        <div className="text-2xl font-black text-[#1A1A1A]">{formatCurrencyVal(planningData.totalSpent)}</div>
                       </CardContent>
                     </Card>
                     <Card className="border border-slate-200/60 shadow-sm rounded-2xl bg-white">
@@ -324,7 +322,7 @@ function PlanningPage() {
                       </CardHeader>
                       <CardContent>
                         <div className={`text-2xl font-black ${planningData.difference >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {formatCurrency(planningData.difference)}
+                          {formatCurrencyVal(planningData.difference)}
                         </div>
                       </CardContent>
                     </Card>
@@ -365,11 +363,11 @@ function PlanningPage() {
                             <div className="flex justify-between items-end">
                               <div className="space-y-0.5">
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Gasto</p>
-                                <p className="text-lg font-bold text-slate-700">{formatCurrency(cat.spent)}</p>
+                                <p className="text-lg font-bold text-slate-700">{formatCurrencyVal(cat.spent)}</p>
                               </div>
                               <div className="text-right space-y-0.5">
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Meta</p>
-                                <p className="text-sm font-semibold text-slate-500">{formatCurrency(cat.budget)}</p>
+                                <p className="text-sm font-semibold text-slate-500">{formatCurrencyVal(cat.budget)}</p>
                               </div>
                             </div>
                             <Progress 
@@ -387,7 +385,7 @@ function PlanningPage() {
                                 {cat.isOver ? "Excedido" : "Disponível"}
                               </span>
                               <span className={`text-sm font-black ${cat.isOver ? 'text-red-500' : 'text-emerald-500'}`}>
-                                {formatCurrency(cat.remaining)}
+                                {formatCurrencyVal(cat.remaining)}
                               </span>
                             </div>
                             <div className={`size-8 rounded-full flex items-center justify-center ${cat.isOver ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500'}`}>

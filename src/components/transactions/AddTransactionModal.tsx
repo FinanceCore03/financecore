@@ -19,6 +19,7 @@ interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  moeda: string;
 }
 
 const standardPaymentMethods = [
