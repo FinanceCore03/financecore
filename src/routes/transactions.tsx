@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 import { SubscriptionsCard } from "@/components/transactions/SubscriptionsCard";
 import { InvoiceCard } from "@/components/transactions/InvoiceCard";
+import { useDashboardData } from "@/hooks/useDashboardData";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
