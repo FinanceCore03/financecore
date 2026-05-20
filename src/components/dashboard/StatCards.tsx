@@ -1,3 +1,4 @@
+import React from "react";
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/currency";
