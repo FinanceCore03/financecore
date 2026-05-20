@@ -24,7 +24,9 @@ import {
   Cell
 } from "recharts";
 import { 
+  Plus,
   Target, 
+
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
@@ -50,6 +52,10 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+
 
 export const Route = createFileRoute("/planning")({
   head: () => ({
@@ -89,12 +95,75 @@ const categoryColors: Record<string, string> = {
 };
 
 function PlanningPage() {
-  const { transactions, loading: dashboardLoading, usuarioId, user, moeda } = useDashboardData();
+  const { transactions, loading: dashboardLoading, usuarioId: contextUsuarioId, user: contextUser, moeda } = useDashboardData();
+  const { user: authUser } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [dbBudgets, setDbBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
+  const [categoryUsage, setCategoryUsage] = useState("SAÍDA");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchUserId() {
+      if (!authUser) return;
+      const { data: usuario } = await supabase.from("Usuarios").select("id").eq("id_auth", authUser.id).maybeSingle();
+      if (usuario) {
+        setUsuarioId(usuario.id);
+      }
+    }
+    fetchUserId();
+  }, [authUser]);
+
+  const handleAddCategory = async () => {
+    if (!categoryName || !usuarioId) {
+      toast.error("Preencha o nome da categoria.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const usageMap: Record<string, string> = {
+        "ENTRADA": "entrada",
+        "SAÍDA": "saida",
+        "ENTRADA/SAÍDA": "entrada_saida"
+      };
+
+      const payload = {
+        acao: "adicionar",
+        tipo: "categoria",
+        nome: categoryName,
+        uso: usageMap[categoryUsage] || "saida",
+        id_usuario: usuarioId.toString()
+      };
+
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Erro ao salvar categoria");
+
+      toast.success("Categoria enviada com sucesso!");
+      setIsCategoryModalOpen(false);
+      setCategoryName("");
+      setCategoryUsage("SAÍDA");
+      
+      // Delay para aguardar a automação criar o planejamento e recarregar
+      setTimeout(() => fetchBudgets(), 2000);
+    } catch (error) {
+      console.error("Erro no webhook:", error);
+      toast.error("Erro ao salvar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   const fetchBudgets = async () => {
     if (!usuarioId) return;
@@ -284,11 +353,21 @@ function PlanningPage() {
         <PageTransition>
           <main className="flex-1 px-8 py-8 space-y-8">
             <AnimatedItem>
-              <header className="flex flex-col gap-1">
-                <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Planejamento</h1>
-                <p className="text-sm text-muted-foreground">Gerencie suas metas mensais e acompanhe seus gastos por categoria.</p>
+              <header className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Planejamento</h1>
+                  <p className="text-sm text-muted-foreground">Gerencie suas metas mensais e acompanhe seus gastos por categoria.</p>
+                </div>
+                <Button 
+                  onClick={() => setIsCategoryModalOpen(true)}
+                  className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6 h-11 shadow-sm flex items-center gap-2 transition-all duration-200"
+                >
+                  <Plus className="size-4" />
+                  <span className="font-semibold">Adicionar</span>
+                </Button>
               </header>
             </AnimatedItem>
+
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full space-y-8">
             <TabsList className="bg-[#F1F3F5] p-1 h-11 rounded-xl w-fit inline-flex">
@@ -639,6 +718,48 @@ function PlanningPage() {
           </main>
         </PageTransition>
       </div>
+
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Categoria</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="category-name">Nome</Label>
+              <Input 
+                id="category-name"
+                placeholder="Ex: Alimentação, Lazer..."
+                value={categoryName} 
+                onChange={(e) => setCategoryName(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Uso</Label>
+              <div className="flex gap-2">
+                {["ENTRADA", "SAÍDA", "ENTRADA/SAÍDA"].map((type) => (
+                  <Button
+                    key={type}
+                    type="button"
+                    variant={categoryUsage === type ? "default" : "outline"}
+                    className="flex-1 text-[10px] h-9"
+                    onClick={() => setCategoryUsage(type)}
+                  >
+                    {type}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsCategoryModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleAddCategory} disabled={isSubmitting} className="bg-primary hover:bg-primary/90 text-white">
+              {isSubmitting ? "Enviando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
