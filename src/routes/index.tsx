@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { Filters } from "@/components/dashboard/Filters";
+// Filters removed as per user request
 import { StatCards } from "@/components/dashboard/StatCards";
 import { SpendingChart } from "@/components/dashboard/SpendingChart";
 import { TopExpenses } from "@/components/dashboard/TopExpenses";
@@ -60,7 +60,7 @@ function Dashboard() {
                 <Skeleton className="h-8 w-48" />
                 <Skeleton className="h-4 w-64" />
               </div>
-              <Skeleton className="h-10 w-32 rounded-xl" />
+              {/* Filters skeleton removed */ }
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -97,7 +97,7 @@ function Dashboard() {
                   <h1 className="text-2xl font-semibold tracking-tight">Overview</h1>
                   <p className="text-sm text-muted-foreground mt-1">Resumo financeiro do seu mês</p>
                 </div>
-                <Filters />
+                {/* <Filters /> removed as per user request */}
               </header>
             </AnimatedItem>
 
