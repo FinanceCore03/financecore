@@ -113,7 +113,7 @@ export function SubscriptionsCard({ usuarioId, moeda }: SubscriptionsCardProps) 
   };
 
   return (
-    <div className="bg-white border border-border/60 rounded-2xl p-6 shadow-[0_2px_14px_-4px_rgba(0,0,0,0.1)]">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-bold text-[#1A1A1A] text-lg tracking-tight">Assinaturas</h3>
         <div className="flex items-center gap-2">
