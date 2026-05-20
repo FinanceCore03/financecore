@@ -1,5 +1,5 @@
 
-import { createClient } from '@supabase/supabase-client';
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -19,13 +19,13 @@ async function checkTable() {
 
   if (error) {
     console.error("Error fetching Assinaturas:", error);
-    if (error.code === '42P01') {
-      console.log("TABLE_NOT_FOUND");
-    } else if (error.message.includes('column')) {
-       console.log("COLUMN_ERROR", error.message);
-    }
   } else {
-    console.log("TABLE_EXISTS", data);
+    console.log("TABLE_EXISTS");
+    if (data && data.length > 0) {
+        console.log("Columns found in first row:", Object.keys(data[0]));
+    } else {
+        console.log("No data in table to check columns.");
+    }
   }
 }
 
