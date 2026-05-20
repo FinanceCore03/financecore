@@ -221,7 +221,11 @@ function TransactionsPage() {
       if (periodFilter !== "Todas" && tx.data_inicio) {
         const txDate = parseISOAsLocal(tx.data_inicio);
         if (txDate) {
-          if (periodFilter === "Hoje") inPeriod = txDate.getTime() === today.getTime();
+          if (periodFilter === "Personalizado" && dateRange?.from) {
+            const from = startOfDay(dateRange.from);
+            const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+            inPeriod = txDate >= from && txDate <= to;
+          } else if (periodFilter === "Hoje") inPeriod = txDate.getTime() === today.getTime();
           else if (periodFilter === "Esta semana") {
             const startOfWeek = new Date(today);
             startOfWeek.setDate(today.getDate() - today.getDay());
