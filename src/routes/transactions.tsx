@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
@@ -11,8 +11,10 @@ import { InvoiceCard } from "@/components/transactions/InvoiceCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
@@ -31,6 +33,7 @@ function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState("Todas");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
@@ -132,6 +135,12 @@ function TransactionsPage() {
     const txDate = parseISOAsLocal(tx.data_inicio);
     if (!txDate) return true;
     
+    if (periodFilter === "Personalizado" && dateRange?.from) {
+      const from = startOfDay(dateRange.from);
+      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+      return txDate >= from && txDate <= to;
+    }
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
@@ -212,7 +221,11 @@ function TransactionsPage() {
       if (periodFilter !== "Todas" && tx.data_inicio) {
         const txDate = parseISOAsLocal(tx.data_inicio);
         if (txDate) {
-          if (periodFilter === "Hoje") inPeriod = txDate.getTime() === today.getTime();
+          if (periodFilter === "Personalizado" && dateRange?.from) {
+            const from = startOfDay(dateRange.from);
+            const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+            inPeriod = txDate >= from && txDate <= to;
+          } else if (periodFilter === "Hoje") inPeriod = txDate.getTime() === today.getTime();
           else if (periodFilter === "Esta semana") {
             const startOfWeek = new Date(today);
             startOfWeek.setDate(today.getDate() - today.getDay());
@@ -249,6 +262,11 @@ function TransactionsPage() {
         if (!tx.data_inicio) return true;
         const txDate = parseISOAsLocal(tx.data_inicio);
         if (!txDate) return true;
+        if (periodFilter === "Personalizado" && dateRange?.from) {
+          const from = startOfDay(dateRange.from);
+          const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+          return txDate >= from && txDate <= to;
+        }
         if (periodFilter === "Hoje") return txDate.getTime() === today.getTime();
         if (periodFilter === "Esta semana") {
           const startOfWeek = new Date(today);
@@ -322,20 +340,56 @@ function TransactionsPage() {
                   <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
                     <PopoverTrigger asChild>
                       <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
-                        <span>{periodFilter}</span>
+                        <CalendarIcon className="size-4 text-muted-foreground" />
+                        <span>{periodFilter === "Personalizado" && dateRange?.from ? 
+                          `${format(dateRange.from, "dd/MM")}${dateRange.to ? ` - ${format(dateRange.to, "dd/MM")}` : ""}` : 
+                          periodFilter}</span>
                         <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent align="end" className="w-48 p-1 rounded-xl border-border shadow-lg bg-white">
-                      {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => { setPeriodFilter(option); setIsPeriodOpen(false); }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
-                        >
-                          {option}
-                        </button>
-                      ))}
+                    <PopoverContent align="end" className="w-auto p-0 rounded-2xl border-border shadow-xl bg-white overflow-hidden">
+                      <div className="flex flex-col md:flex-row">
+                        <div className="p-2 border-r border-border min-w-[160px] bg-muted/5">
+                          {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                            <button
+                              key={option}
+                              onClick={() => { setPeriodFilter(option); setIsPeriodOpen(false); setDateRange(undefined); }}
+                              className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors mb-1 ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                          <div className="h-px bg-border my-2 mx-2" />
+                          <button
+                            onClick={() => setPeriodFilter("Personalizado")}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === "Personalizado" ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                          >
+                            Personalizado
+                          </button>
+                        </div>
+                        {periodFilter === "Personalizado" && (
+                          <div className="p-3">
+                            <Calendar
+                              initialFocus
+                              mode="range"
+                              defaultMonth={dateRange?.from}
+                              selected={dateRange}
+                              onSelect={setDateRange}
+                              numberOfMonths={1}
+                              locale={undefined}
+                              className="rounded-md border-none"
+                            />
+                            <div className="mt-3 flex justify-end">
+                              <button 
+                                onClick={() => setIsPeriodOpen(false)}
+                                className="px-4 py-2 bg-primary text-primary-foreground text-xs font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                              >
+                                Aplicar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </PopoverContent>
                   </Popover>
                   
@@ -357,7 +411,8 @@ function TransactionsPage() {
                     <Wallet className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Saldo total disponível</div>
                 </div>
               </AnimatedItem>
               <AnimatedItem>
@@ -366,7 +421,8 @@ function TransactionsPage() {
                     <TrendingUp className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Entradas</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Total recebido no período</div>
                 </div>
               </AnimatedItem>
               <AnimatedItem>
@@ -375,7 +431,8 @@ function TransactionsPage() {
                     <TrendingDown className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Saídas</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodSaidas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodSaidas, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Total gasto no período</div>
                 </div>
               </AnimatedItem>
               <AnimatedItem>
@@ -384,7 +441,8 @@ function TransactionsPage() {
                     <PiggyBank className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Economia</div>
-                  <div className="text-2xl font-semibold tracking-tight">{formatCurrency(economyValue, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(economyValue, effectiveMoeda)}</div>
+                  <div className="text-[10px] text-muted-foreground">Balanço positivo</div>
                 </div>
               </AnimatedItem>
             </div>
@@ -395,6 +453,22 @@ function TransactionsPage() {
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <h3 className="font-semibold text-lg tracking-tight">Atividade</h3>
                     <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1 border border-border rounded-xl p-1 bg-muted/20 mr-1">
+                        <button 
+                          onClick={goToPreviousPage}
+                          disabled={currentPage === 1}
+                          className="p-1.5 hover:bg-card rounded-lg disabled:opacity-40 transition-colors"
+                        >
+                          <ChevronLeft className="size-4" />
+                        </button>
+                        <button 
+                          onClick={goToNextPage}
+                          disabled={currentPage === totalPages}
+                          className="p-1.5 hover:bg-card rounded-lg disabled:opacity-40 transition-colors"
+                        >
+                          <ChevronRight className="size-4" />
+                        </button>
+                      </div>
                       <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                         <PopoverTrigger asChild>
                           <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
@@ -449,7 +523,7 @@ function TransactionsPage() {
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
                             <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
                             <td className="py-4 px-4 text-muted-foreground">
-                              {tx.data_fim ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
+                              {tx.data_fim && tx.data_fim !== tx.data_inicio ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
                             </td>
                             <td className="py-4 px-4 text-muted-foreground max-w-[200px] truncate">{tx.descricao || "—"}</td>
                             <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
@@ -490,6 +564,45 @@ function TransactionsPage() {
               </AnimatedItem>
 
               <div className="w-full lg:w-80 space-y-6">
+                <AnimatedItem>
+                  <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                    <h3 className="font-semibold text-lg tracking-tight mb-6">Distribuição dos Gastos</h3>
+                    <div className="h-[200px] w-full mb-6">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={distributionData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="amount"
+                          >
+                            {distributionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value: any) => formatCurrency(Number(value), effectiveMoeda)}
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-3">
+                      {distributionData.slice(0, 4).map((item) => (
+                        <div key={item.name} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="size-2 rounded-full" style={{ backgroundColor: item.color }} />
+                            <span className="text-sm text-muted-foreground">{item.name}</span>
+                          </div>
+                          <span className="text-sm font-medium">{item.value}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AnimatedItem>
                 <AnimatedItem>
                   <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
                 </AnimatedItem>
