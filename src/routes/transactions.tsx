@@ -33,6 +33,7 @@ function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState("Todas");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
