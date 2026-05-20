@@ -324,11 +324,6 @@ function TransactionsPage() {
   const { moeda: dashboardMoeda } = useDashboardData();
   const effectiveMoeda = dashboardMoeda || moeda;
 
-  const economyValue = totals.periodEntradas - totals.periodSaidas;
-
-  const { moeda: dashboardMoeda } = useDashboardData();
-  const effectiveMoeda = dashboardMoeda || moeda;
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex">
