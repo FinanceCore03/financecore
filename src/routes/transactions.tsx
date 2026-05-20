@@ -182,7 +182,7 @@ function TransactionsPage() {
       if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
       return true;
     });
-  }, [transactions, periodFilter, categoriaFilter, metodoFilter]);
+  }, [transactions, periodFilter, dateRange, categoriaFilter, metodoFilter]);
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   
