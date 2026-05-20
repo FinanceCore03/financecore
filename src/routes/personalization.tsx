@@ -20,7 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export const Route = createFileRoute("/personalization")({
   head: () => ({
     meta: [
-      { title: "Personalização — Financeiro Core" },
+      { title: "Personalização — Finance Core" },
     ],
   }),
   component: () => <PersonalizationPage />,
@@ -357,7 +357,7 @@ function PersonalizationPage() {
             </AnimatedItem>
 
             <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
-              Financeiro Core © 2025
+              Finance Core © 2025
             </footer>
           </main>
         </PageTransition>

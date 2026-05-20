@@ -60,7 +60,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export const Route = createFileRoute("/planning")({
   head: () => ({
     meta: [
-      { title: "Planejamento — Financeiro Core" },
+      { title: "Planejamento — Finance Core" },
     ],
   }),
   component: () => <PlanningPage />,
