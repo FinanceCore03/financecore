@@ -156,9 +156,8 @@ function PersonalizationPage() {
             id_usuario: usuarioId,
             Categoria: categoryName,
             Valor: "0",
-            Moeda: moeda || "Real",
             "Período": new Date().toISOString().split('T')[0]
-          });
+          } as any);
         
         if (planningError) {
           console.error("Erro ao criar planejamento automático:", planningError);
