@@ -1,7 +1,7 @@
-import React, { useState } from \"react\";
-import { AlertCircle, AlertTriangle, Clock, ChevronRight, Info } from \"lucide-react\";
-import { formatCurrency } from \"@/lib/currency\";
-import { Button } from \"@/components/ui/button\";
+import React, { useState } from "react";
+import { AlertCircle, AlertTriangle, Clock, ChevronRight, Info } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
+import { Button } from "@/components/ui/button";
 
 interface Alert {
   type: 'danger' | 'warning' | 'info';
@@ -27,7 +27,7 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
     const currentYear = now.getFullYear();
 
     // Helper to normalize strings for comparison
-    const normalize = (str: string) => (str || \"\").toLowerCase().normalize(\"NFD\").replace(/[\\u0300-\\u036f]/g, \"\");
+    const normalize = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     // 1. Gasto total acima de 70% das entradas
     if (stats.monthIncome > 0) {
@@ -46,7 +46,7 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
     const endOfNextMonth = new Date(currentYear, currentMonth + 2, 0);
     
     const nextMonthTransactions = transactions.reduce((acc, tx) => {
-      const isSaida = normalize(tx.tipo) === \"saida\";
+      const isSaida = normalize(tx.tipo) === "saida";
       if (!isSaida) return acc;
 
       const startStr = tx.data_inicio;
@@ -57,8 +57,8 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       const endStr = tx.data_fim;
       const end = endStr ? new Date(endStr.split('-')[0], parseInt(endStr.split('-')[1]) - 1, parseInt(endStr.split('-')[2])) : null;
 
-      const metodo = normalize(tx.metodo_pagamento || \"\");
-      const isCredito = metodo.includes(\"credito\");
+      const metodo = normalize(tx.metodo_pagamento || "");
+      const isCredito = metodo.includes("credito");
 
       // Inclui se:
       // - start é no próximo mês
@@ -69,13 +69,13 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       const overlapsNextMonth = start <= endOfNextMonth && (end && end >= nextMonth);
 
       if (isNextMonth || isCurrentMonthCredito || overlapsNextMonth) {
-        return acc + parseFloat(tx.valor || \"0\");
+        return acc + parseFloat(tx.valor || "0");
       }
       return acc;
     }, 0);
 
     const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
-    const nextMonthSubs = activeSubscriptions.reduce((acc, sub) => acc + parseFloat(sub.valor || \"0\"), 0);
+    const nextMonthSubs = activeSubscriptions.reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
     const faturaProximoMes = nextMonthTransactions + nextMonthSubs;
 
     let incomeForComparison = stats.monthIncome;
@@ -83,13 +83,13 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       // Calcular média de entradas dos últimos 3 meses
       const threeMonthsAgo = new Date(currentYear, currentMonth - 3, 1);
       const recentIncomes = transactions.filter(tx => {
-        const isEntrada = normalize(tx.tipo) === \"entrada\";
+        const isEntrada = normalize(tx.tipo) === "entrada";
         if (!isEntrada || !tx.data_inicio) return false;
         const [y, m, d] = tx.data_inicio.split('-').map(Number);
         const date = new Date(y, m - 1, d);
         return date >= threeMonthsAgo && date < new Date(currentYear, currentMonth, 1);
       });
-      const totalRecentIncome = recentIncomes.reduce((acc, tx) => acc + parseFloat(tx.valor || \"0\"), 0);
+      const totalRecentIncome = recentIncomes.reduce((acc, tx) => acc + parseFloat(tx.valor || "0"), 0);
       incomeForComparison = totalRecentIncome / 3;
     }
 
@@ -107,19 +107,19 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
     // 3 & 4. Category limit alerts
     const spendingByCategory: Record<string, number> = {};
     transactions.forEach(tx => {
-      const isSaida = normalize(tx.tipo) === \"saida\";
+      const isSaida = normalize(tx.tipo) === "saida";
       if (isSaida && tx.data_inicio) {
         const [y, m] = tx.data_inicio.split('-').map(Number);
         if (m - 1 === currentMonth && y === currentYear) {
-          const cat = tx.categoria || \"Outros\";
-          spendingByCategory[cat] = (spendingByCategory[cat] || 0) + parseFloat(tx.valor || \"0\");
+          const cat = tx.categoria || "Outros";
+          spendingByCategory[cat] = (spendingByCategory[cat] || 0) + parseFloat(tx.valor || "0");
         }
       }
     });
 
     planning.filter(p => p.Visivel).forEach(plan => {
       const name = plan.Categoria;
-      const meta = parseFloat(plan.Valor || \"0\");
+      const meta = parseFloat(plan.Valor || "0");
       if (meta <= 0) return;
       
       const gasto = spendingByCategory[name] || 0;
@@ -172,35 +172,35 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
   const displayedAlerts = showAll ? alerts : alerts.slice(0, 6);
 
   return (
-    <div className=\"bg-card border border-border rounded-2xl p-6 shadow-sm h-full flex flex-col\">
-      <div className=\"flex items-center justify-between mb-6\">
-        <h3 className=\"text-lg font-bold tracking-tight text-slate-900\">Alertas do Mês</h3>
-        <div className=\"p-2 bg-rose-50 rounded-xl\">
-          <AlertCircle className=\"size-5 text-rose-500\" />
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-bold tracking-tight text-slate-900">Alertas do Mês</h3>
+        <div className="p-2 bg-rose-50 rounded-xl">
+          <AlertCircle className="size-5 text-rose-500" />
         </div>
       </div>
 
-      <div className=\"space-y-4 flex-1\">
+      <div className="space-y-4 flex-1">
         {alerts.length === 0 ? (
-          <div className=\"py-8 text-center\">
-            <div className=\"size-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3\">
-              <Info className=\"size-6 text-slate-300\" />
+          <div className="py-8 text-center">
+            <div className="size-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
+              <Info className="size-6 text-slate-300" />
             </div>
-            <p className=\"text-sm text-muted-foreground\">Nenhum alerta importante no momento.</p>
+            <p className="text-sm text-muted-foreground">Nenhum alerta importante no momento.</p>
           </div>
         ) : (
           displayedAlerts.map((alert, idx) => (
-            <div key={idx} className=\"flex gap-3 items-start p-3 rounded-xl bg-slate-50/50 border border-slate-100 transition-colors group hover:bg-slate-50\">
+            <div key={idx} className="flex gap-3 items-start p-3 rounded-xl bg-slate-50/50 border border-slate-100 transition-colors group hover:bg-slate-50">
               <div className={`mt-0.5 shrink-0 p-1.5 rounded-lg ${
                 alert.type === 'danger' ? 'bg-rose-100 text-rose-600' :
                 alert.type === 'warning' ? 'bg-amber-100 text-amber-600' :
                 'bg-blue-100 text-blue-600'
               }`}>
-                {alert.type === 'danger' ? <AlertTriangle className=\"size-4\" /> : 
-                 alert.type === 'warning' ? <AlertTriangle className=\"size-4\" /> : 
-                 <Clock className=\"size-4\" />}
+                {alert.type === 'danger' ? <AlertTriangle className="size-4" /> : 
+                 alert.type === 'warning' ? <AlertTriangle className="size-4" /> : 
+                 <Clock className="size-4" />}
               </div>
-              <p className=\"text-sm font-medium text-slate-700 leading-snug\">{alert.message}</p>
+              <p className="text-sm font-medium text-slate-700 leading-snug">{alert.message}</p>
             </div>
           ))
         )}
@@ -208,12 +208,12 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
 
       {alerts.length > 6 && (
         <Button 
-          variant=\"ghost\" 
-          size=\"sm\" 
-          className=\"mt-4 text-xs font-bold text-primary hover:bg-primary/5 mx-auto\"
+          variant="ghost" 
+          size="sm" 
+          className="mt-4 text-xs font-bold text-primary hover:bg-primary/5 mx-auto"
           onClick={() => setShowAll(!showAll)}
         >
-          {showAll ? \"Ver menos\" : \"Ver mais\"}
+          {showAll ? "Ver menos" : "Ver mais"}
           <ChevronRight className={`size-3 ml-1 transition-transform ${showAll ? 'rotate-90' : ''}`} />
         </Button>
       )}
