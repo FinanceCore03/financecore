@@ -210,7 +210,7 @@ function PlanningPage() {
     try {
       const { error } = await supabase
         .from("Planejamento")
-        .update({ Valor: finalValue })
+        .update({ Valor: finalValue.toString() })
         .eq("id", id);
       
       if (error) {
