@@ -417,6 +417,22 @@ function TransactionsPage() {
                   <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <h3 className="font-semibold text-lg tracking-tight">Atividade</h3>
                     <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1 border border-border rounded-xl p-1 bg-muted/20 mr-1">
+                        <button 
+                          onClick={goToPreviousPage}
+                          disabled={currentPage === 1}
+                          className="p-1.5 hover:bg-card rounded-lg disabled:opacity-40 transition-colors"
+                        >
+                          <ChevronLeft className="size-4" />
+                        </button>
+                        <button 
+                          onClick={goToNextPage}
+                          disabled={currentPage === totalPages}
+                          className="p-1.5 hover:bg-card rounded-lg disabled:opacity-40 transition-colors"
+                        >
+                          <ChevronRight className="size-4" />
+                        </button>
+                      </div>
                       <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                         <PopoverTrigger asChild>
                           <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
