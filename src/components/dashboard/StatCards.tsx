@@ -30,6 +30,7 @@ interface CardProps {
   sparklineData: { value: number }[];
   color: string;
   infoText?: string;
+  showPrivacyToggle?: boolean;
 }
 
 function MiniChart({ data, color }: { data: any[]; color: string }) {
@@ -57,7 +58,7 @@ function MiniChart({ data, color }: { data: any[]; color: string }) {
   );
 }
 
-function StatCard({ title, value, change, icon, sparklineData, color, infoText }: CardProps) {
+function StatCard({ title, value, change, icon, sparklineData, color, infoText, showPrivacyToggle }: CardProps) {
   const { isPrivate, togglePrivacy } = usePrivacy();
   const isPositive = change ? change.value >= 0 : true;
   const isGood = change?.inverse ? !isPositive : isPositive;
@@ -76,13 +77,15 @@ function StatCard({ title, value, change, icon, sparklineData, color, infoText }
       <div>
         <div className="flex items-baseline gap-2 group">
           <div className="text-2xl font-bold tracking-tight text-slate-900">{displayValue}</div>
-          <button 
-            onClick={togglePrivacy}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:opacity-100"
-            title={isPrivate ? "Mostrar valores" : "Ocultar valores"}
-          >
-            {isPrivate ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-          </button>
+          {showPrivacyToggle && (
+            <button 
+              onClick={togglePrivacy}
+              className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:opacity-100"
+              title={isPrivate ? "Mostrar valores" : "Ocultar valores"}
+            >
+              {isPrivate ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            </button>
+          )}
         </div>
         
         <MiniChart data={sparklineData} color={color} />
@@ -119,6 +122,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         sparklineData={stats.sparklines.balance}
         color="#7c3aed"
         infoText="saldo acumulado"
+        showPrivacyToggle={true}
       />
       <StatCard
         title="Entradas do Mês"
