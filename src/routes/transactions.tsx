@@ -248,7 +248,7 @@ function TransactionsPage() {
     });
 
     return { totalAccount, periodEntradas, periodSaidas };
-  }, [transactions, periodFilter]);
+  }, [transactions, periodFilter, dateRange]);
 
   const distributionData = useMemo(() => {
     const categoriesMap: Record<string, number> = {};
