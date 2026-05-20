@@ -62,7 +62,7 @@ function StatCard({ title, value, change, icon, sparklineData, color, infoText }
   const isPositive = change ? change.value >= 0 : true;
   const isGood = change?.inverse ? !isPositive : isPositive;
 
-  const displayValue = isPrivate ? "R$ ••••••" : value;
+  const displayValue = isPrivate ? "R$ ——————" : value;
 
   return (
     <div className="bg-white border border-border rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col justify-between">
@@ -78,7 +78,7 @@ function StatCard({ title, value, change, icon, sparklineData, color, infoText }
           <div className="text-2xl font-bold tracking-tight text-slate-900">{displayValue}</div>
           <button 
             onClick={togglePrivacy}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:opacity-100"
             title={isPrivate ? "Mostrar valores" : "Ocultar valores"}
           >
             {isPrivate ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
