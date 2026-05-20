@@ -41,6 +41,7 @@ function TransactionsPage() {
   const [categoriaFilter, setCategoriaFilter] = useState<string>("Todas");
   const [metodoFilter, setMetodoFilter] = useState<string>("Todos");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
