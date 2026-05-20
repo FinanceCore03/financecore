@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, EyeOff } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { PageTransition, AnimatedItem } from "@/components/PageTransition";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/transactions")({
 });
 
 function TransactionsPage() {
+  const { isPrivate, togglePrivacy } = usePrivacy();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -412,7 +414,18 @@ function TransactionsPage() {
                     <Wallet className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
-                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-semibold tracking-tight mb-1">
+                      {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.totalAccount, effectiveMoeda)}
+                    </div>
+                    <button 
+                      onClick={togglePrivacy}
+                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors focus:opacity-100"
+                      title={isPrivate ? "Mostrar valores" : "Ocultar valores"}
+                    >
+                      {isPrivate ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                    </button>
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Saldo total disponível</div>
                 </div>
               </AnimatedItem>
@@ -422,7 +435,9 @@ function TransactionsPage() {
                     <TrendingUp className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Entradas</div>
-                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">
+                    {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.periodEntradas, effectiveMoeda)}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Total recebido no período</div>
                 </div>
               </AnimatedItem>
@@ -432,7 +447,9 @@ function TransactionsPage() {
                     <TrendingDown className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Saídas</div>
-                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodSaidas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">
+                    {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.periodSaidas, effectiveMoeda)}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Total gasto no período</div>
                 </div>
               </AnimatedItem>
@@ -442,7 +459,9 @@ function TransactionsPage() {
                     <PiggyBank className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Economia</div>
-                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(economyValue, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">
+                    {isPrivate ? "R$ - - - - - -" : formatCurrency(economyValue, effectiveMoeda)}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Balanço positivo</div>
                 </div>
               </AnimatedItem>
