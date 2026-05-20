@@ -169,7 +169,7 @@ function PlanningPage() {
     if (!usuarioId) return;
     setLoading(true);
     try {
-      console.log("Usuário auth:", user);
+      console.log("Usuário auth:", authUser);
       console.log("Usuário interno:", usuarioId);
       
       const { data, error } = await supabase
