@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -31,6 +32,7 @@ function TransactionsPage() {
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const [moeda, setMoeda] = useState<string>("Real");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("Todas");
   const [metodoFilter, setMetodoFilter] = useState<string>("Todos");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -50,7 +52,7 @@ function TransactionsPage() {
     if (user) {
       const { data: usuario, error: usuarioError } = await supabase
         .from("Usuarios")
-        .select("id")
+        .select("id, Moeda")
         .eq("id_auth", user.id)
         .maybeSingle();
 
@@ -59,6 +61,7 @@ function TransactionsPage() {
 
       if (usuario) {
         setUsuarioId(usuario.id);
+        setMoeda(usuario.Moeda || "Real");
         
         const { data: transacoes, error } = await supabase
           .from("Transacoes")
@@ -410,7 +413,7 @@ function TransactionsPage() {
                 <Wallet className="size-5" />
               </div>
               <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ {totals.totalAccount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.totalAccount, moeda)}</div>
               <div className="text-xs text-success font-medium mt-2">Saldo total disponível</div>
             </div>
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
@@ -418,7 +421,7 @@ function TransactionsPage() {
                 <TrendingUp className="size-5" />
               </div>
               <div className="text-xs text-muted-foreground mb-1">Entradas ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ {totals.periodEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodEntradas, moeda)}</div>
               <div className="text-xs text-success font-medium mt-2">Total recebido no período</div>
             </div>
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
@@ -426,7 +429,7 @@ function TransactionsPage() {
                 <TrendingDown className="size-5" />
               </div>
               <div className="text-xs text-muted-foreground mb-1">Saídas ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ {totals.periodSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodSaidas, moeda)}</div>
               <div className="text-xs text-danger font-medium mt-2">Total gasto no período</div>
             </div>
             <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
@@ -434,7 +437,7 @@ function TransactionsPage() {
                 <PiggyBank className="size-5" />
               </div>
               <div className="text-xs text-muted-foreground mb-1">Economia ({periodFilter === "Este mês" ? "Mês" : periodFilter})</div>
-              <div className="text-2xl font-semibold tracking-tight">R$ {economyValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div className="text-2xl font-semibold tracking-tight">{formatCurrency(economyValue, moeda)}</div>
               <div className={`text-xs font-medium mt-2 ${economyValue >= 0 ? 'text-success' : 'text-danger'}`}>
                 {economyValue >= 0 ? 'Balanço positivo' : 'Balanço negativo'}
               </div>
@@ -588,7 +591,7 @@ function TransactionsPage() {
                             </td>
                             <td className="py-4 px-4 text-muted-foreground truncate max-w-[200px]">{tx.descricao || "-"}</td>
                             <td className={`py-4 px-4 font-semibold tabular-nums whitespace-nowrap ${isEntrada ? 'text-success' : 'text-danger'}`}>
-                              {isEntrada ? '+' : '-'}R$ {parseFloat(tx.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              {isEntrada ? '+' : '-'}{formatCurrency(tx.valor, moeda)}
                             </td>
                             <td className="py-4 px-4">
                               <span className="px-2 py-1 bg-muted rounded-md text-[11px] font-medium whitespace-nowrap">{tx.metodo_pagamento || "N/A"}</span>
@@ -638,7 +641,7 @@ function TransactionsPage() {
                       </ResponsiveContainer>
                       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                         <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Gastos</div>
-                        <div className="text-lg font-bold tracking-tight">R$ {totals.periodSaidas.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</div>
+                        <div className="text-lg font-bold tracking-tight">{formatCurrency(totals.periodSaidas, moeda)}</div>
                       </div>
                     </>
                   ) : (
@@ -661,8 +664,8 @@ function TransactionsPage() {
                 </div>
               </div>
 
-              <InvoiceCard transactions={transactions} />
-              <SubscriptionsCard usuarioId={usuarioId} />
+              <InvoiceCard transactions={transactions} moeda={moeda} />
+              <SubscriptionsCard usuarioId={usuarioId} moeda={moeda} />
             </div>
           </div>
         </main>
@@ -671,6 +674,7 @@ function TransactionsPage() {
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onSuccess={fetchTransactions}
+        moeda={moeda}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !isDeleting) setDeleteTarget(null); }}>
