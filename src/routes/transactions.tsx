@@ -459,7 +459,9 @@ function TransactionsPage() {
                     <PiggyBank className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Economia</div>
-                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(economyValue, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">
+                    {isPrivate ? "R$ - - - - - -" : formatCurrency(economyValue, effectiveMoeda)}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Balanço positivo</div>
                 </div>
               </AnimatedItem>
