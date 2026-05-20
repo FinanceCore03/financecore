@@ -104,7 +104,7 @@ function PlanningPage() {
   const [editValue, setEditValue] = useState("");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryUsage, setCategoryUsage] = useState("SAÍDA");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
