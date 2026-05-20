@@ -477,9 +477,38 @@ function TransactionsPage() {
                             <span>Filtrar</span>
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="w-72 rounded-2xl p-5 shadow-xl border-border bg-white">
+                        <PopoverContent align="end" className="w-80 rounded-2xl p-5 shadow-xl border-border bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
                           <div className="space-y-4">
                               <h4 className="font-bold text-sm">Filtros</h4>
+                              
+                              <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Período</label>
+                                <select 
+                                  value={periodFilter} 
+                                  onChange={(e) => {
+                                    setPeriodFilter(e.target.value);
+                                    if (e.target.value !== "Personalizado") setDateRange(undefined);
+                                  }}
+                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm mb-2"
+                                >
+                                  {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses", "Personalizado"].map(opt => (
+                                    <option key={opt} value={opt}>{opt}</option>
+                                  ))}
+                                </select>
+                                
+                                {periodFilter === "Personalizado" && (
+                                  <div className="p-2 border border-border rounded-xl bg-muted/10">
+                                    <Calendar
+                                      mode="range"
+                                      selected={dateRange}
+                                      onSelect={setDateRange}
+                                      initialFocus
+                                      className="rounded-md"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+
                               <div className="space-y-2">
                                 <label className="text-[10px] uppercase font-bold text-muted-foreground">Categoria</label>
                                 <select 
