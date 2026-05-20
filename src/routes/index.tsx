@@ -105,11 +105,11 @@ function Dashboard() {
               <StatCards stats={stats} moeda={moeda} />
             </AnimatedItem>
 
-            <div className=\"grid grid-cols-1 xl:grid-cols-3 gap-5\">
-              <AnimatedItem className=\"xl:col-span-2\">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+              <AnimatedItem className="xl:col-span-2">
                 <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
               </AnimatedItem>
-              <div className=\"space-y-5\">
+              <div className="space-y-5">
                 <AnimatedItem>
                   <MonthlyAlerts 
                     transactions={transactions} 
@@ -125,8 +125,8 @@ function Dashboard() {
               </div>
             </div>
 
-            <div className=\"grid grid-cols-1 xl:grid-cols-3 gap-5\">
-              <AnimatedItem className=\"xl:col-span-2\">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+              <AnimatedItem className="xl:col-span-2">
                 <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} subscriptions={subscriptions} />
               </AnimatedItem>
               <AnimatedItem>
