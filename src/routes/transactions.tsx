@@ -565,6 +565,45 @@ function TransactionsPage() {
 
               <div className="w-full lg:w-80 space-y-6">
                 <AnimatedItem>
+                  <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+                    <h3 className="font-semibold text-lg tracking-tight mb-6">Distribuição dos Gastos</h3>
+                    <div className="h-[200px] w-full mb-6">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={distributionData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="amount"
+                          >
+                            {distributionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value: number) => formatCurrency(value, effectiveMoeda)}
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-3">
+                      {distributionData.slice(0, 4).map((item) => (
+                        <div key={item.name} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="size-2 rounded-full" style={{ backgroundColor: item.color }} />
+                            <span className="text-sm text-muted-foreground">{item.name}</span>
+                          </div>
+                          <span className="text-sm font-medium">{item.value}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </AnimatedItem>
+                <AnimatedItem>
                   <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
                 </AnimatedItem>
                 <AnimatedItem>
