@@ -17,7 +17,7 @@ interface SpendingChartProps {
 }
 
 export function SpendingChart({ data: annualData, moeda, transactions }: SpendingChartProps) {
-  const [period, setPeriod] = useState("Anual");
+  const [period, setPeriod] = useState("Mês");
   const fmt = (n: number) => formatCurrency(n, moeda);
 
   const chartData = useMemo(() => {
