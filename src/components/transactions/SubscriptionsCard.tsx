@@ -28,18 +28,24 @@ export function SubscriptionsCard({ usuarioId }: SubscriptionsCardProps) {
     if (!usuarioId) return;
     setLoading(true);
     try {
+      // Temporarily log to see what's happening
+      console.log("Fetching subscriptions for user:", usuarioId);
+      
       const { data, error } = await supabase
         .from("Assinaturas")
         .select("*")
         .eq("id_usuario", usuarioId)
-        .order("status", { ascending: false })
-        .order("created_at", { ascending: false });
+        .order("status", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error fetching Assinaturas:", error);
+        throw error;
+      }
+      
       setSubscriptions(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao carregar assinaturas:", error);
-      toast.error("Erro ao carregar assinaturas.");
+      toast.error(`Erro ao carregar assinaturas: ${error.message || "Erro desconhecido"}`);
     } finally {
       setLoading(false);
     }
