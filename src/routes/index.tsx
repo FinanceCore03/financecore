@@ -69,15 +69,15 @@ function Dashboard() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-              <Skeleton className="xl:col-span-2 h-[350px] rounded-2xl" />
-              <Skeleton className="h-[350px] rounded-2xl" />
-            </div>
+            <Skeleton className="h-[420px] w-full rounded-2xl" />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <Skeleton className="h-64 rounded-2xl" />
-              <Skeleton className="h-64 rounded-2xl" />
-              <Skeleton className="h-64 rounded-2xl" />
+              <Skeleton className="h-96 rounded-2xl" />
+              <Skeleton className="h-96 rounded-2xl" />
+              <div className="space-y-5">
+                <Skeleton className="h-[280px] rounded-2xl" />
+                <Skeleton className="h-[350px] rounded-2xl" />
+              </div>
             </div>
           </main>
         </div>
