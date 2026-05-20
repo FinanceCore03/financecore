@@ -655,14 +655,21 @@ function TransactionsPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-x-2 gap-y-3 mt-4">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-6 mt-6">
                   {distributionData.map((d) => (
                     <div key={d.name} className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5">
-                        <div className="size-2 rounded-full" style={{ backgroundColor: d.color }} />
-                        <span className="text-[10px] text-muted-foreground font-medium truncate">{d.name}</span>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="size-2 rounded-full shrink-0" 
+                          style={{ backgroundColor: d.color }} 
+                        />
+                        <span className="text-xs font-semibold text-foreground truncate">
+                          {d.name}
+                        </span>
                       </div>
-                      <span className="text-xs font-bold tabular-nums ml-3.5">{d.value}%</span>
+                      <span className="text-[11px] font-medium text-muted-foreground ml-4">
+                        {d.value}%
+                      </span>
                     </div>
                   ))}
                 </div>
