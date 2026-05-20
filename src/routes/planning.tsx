@@ -104,7 +104,7 @@ function PlanningPage() {
   const [editValue, setEditValue] = useState("");
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const [categoryUsage, setCategoryUsage] = useState("SAÍDA");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
 
@@ -121,23 +121,17 @@ function PlanningPage() {
 
   const handleAddCategory = async () => {
     if (!categoryName || !usuarioId) {
-      toast.error("Preencha o nome da categoria.");
+      toast.error("Preencha o nome do planejamento.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const usageMap: Record<string, string> = {
-        "ENTRADA": "entrada",
-        "SAÍDA": "saida",
-        "ENTRADA/SAÍDA": "entrada_saida"
-      };
-
       const payload = {
         acao: "adicionar",
         tipo: "categoria",
         nome: categoryName,
-        uso: usageMap[categoryUsage] || "saida",
+        uso: "saida",
         id_usuario: usuarioId.toString()
       };
 
@@ -147,12 +141,11 @@ function PlanningPage() {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error("Erro ao salvar categoria");
+      if (!response.ok) throw new Error("Erro ao salvar planejamento");
 
-      toast.success("Categoria enviada com sucesso!");
+      toast.success("Planejamento enviado com sucesso!");
       setIsCategoryModalOpen(false);
       setCategoryName("");
-      setCategoryUsage("SAÍDA");
       
       // Delay para aguardar a automação criar o planejamento e recarregar
       setTimeout(() => fetchBudgets(), 2000);
@@ -722,7 +715,7 @@ function PlanningPage() {
       <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
         <DialogContent className="rounded-2xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nova Categoria</DialogTitle>
+            <DialogTitle>Novo planejamento</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -733,22 +726,6 @@ function PlanningPage() {
                 value={categoryName} 
                 onChange={(e) => setCategoryName(e.target.value)} 
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Uso</Label>
-              <div className="flex gap-2">
-                {["ENTRADA", "SAÍDA", "ENTRADA/SAÍDA"].map((type) => (
-                  <Button
-                    key={type}
-                    type="button"
-                    variant={categoryUsage === type ? "default" : "outline"}
-                    className="flex-1 text-[10px] h-9"
-                    onClick={() => setCategoryUsage(type)}
-                  >
-                    {type}
-                  </Button>
-                ))}
-              </div>
             </div>
           </div>
           <DialogFooter>
