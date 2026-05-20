@@ -350,106 +350,154 @@ function TransactionsPage() {
               </header>
             </AnimatedItem>
 
-            <AnimatedItem>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <AnimatedItem>
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm h-full">
                   <div className="size-10 rounded-xl bg-primary-soft text-primary flex items-center justify-center mb-4">
                     <Wallet className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
                   <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.totalAccount, effectiveMoeda)}</div>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              </AnimatedItem>
+              <AnimatedItem>
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm h-full">
                   <div className="size-10 rounded-xl bg-success-soft text-success flex items-center justify-center mb-4">
                     <TrendingUp className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Entradas</div>
                   <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              </AnimatedItem>
+              <AnimatedItem>
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm h-full">
                   <div className="size-10 rounded-xl bg-danger-soft text-danger flex items-center justify-center mb-4">
                     <TrendingDown className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Saídas</div>
                   <div className="text-2xl font-semibold tracking-tight">{formatCurrency(totals.periodSaidas, effectiveMoeda)}</div>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm">
+              </AnimatedItem>
+              <AnimatedItem>
+                <div className="bg-card border border-border rounded-2xl p-5 shadow-sm h-full">
                   <div className={`size-10 rounded-xl flex items-center justify-center mb-4 ${economyValue >= 0 ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'}`}>
                     <PiggyBank className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Economia</div>
                   <div className="text-2xl font-semibold tracking-tight">{formatCurrency(economyValue, effectiveMoeda)}</div>
                 </div>
-              </div>
-            </AnimatedItem>
+              </AnimatedItem>
+            </div>
 
-            <AnimatedItem>
-              <div className="flex flex-col lg:flex-row gap-6">
-                <div className="flex-1 min-w-0">
-                  <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
-                    <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                      <h3 className="font-semibold text-lg tracking-tight">Atividade</h3>
-                      <div className="flex items-center gap-3">
-                        <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                          <PopoverTrigger asChild>
-                            <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
-                              <Filter className="size-4 text-muted-foreground" />
-                              <span>Filtrar</span>
-                            </button>
-                          </PopoverTrigger>
-                          <PopoverContent align="end" className="w-72 rounded-2xl p-5 shadow-xl border-border bg-white">
-                            <div className="space-y-4">
-                                <h4 className="font-bold text-sm">Filtros</h4>
-                                <div className="space-y-2">
-                                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Categoria</label>
-                                  <select 
-                                    value={categoriaFilter} 
-                                    onChange={(e) => setCategoriaFilter(e.target.value)}
-                                    className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm"
-                                  >
-                                    <option value="Todas">Todas</option>
-                                    {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                                  </select>
-                                </div>
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
-                            <th className="text-left py-3 px-4">Categoria</th>
-                            <th className="text-left py-3 px-4">Data</th>
-                            <th className="text-left py-3 px-4">Valor</th>
-                            <th className="text-center py-3 px-4">Ação</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {paginatedTransactions.map((tx) => (
-                            <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
-                              <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
-                              <td className="py-4 px-4 text-muted-foreground">{formatDisplayDate(tx.data_inicio)}</td>
-                              <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
-                                {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
-                              </td>
-                              <td className="py-4 px-4 text-center">
-                                <button onClick={() => setDeleteTarget(tx)} className="p-1 text-muted-foreground hover:text-danger"><Trash2 size={16}/></button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+            <div className="flex flex-col lg:flex-row gap-6">
+              <AnimatedItem className="flex-1 min-w-0">
+                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <h3 className="font-semibold text-lg tracking-tight">Atividade</h3>
+                    <div className="flex items-center gap-3">
+                      <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                        <PopoverTrigger asChild>
+                          <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
+                            <Filter className="size-4 text-muted-foreground" />
+                            <span>Filtrar</span>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-72 rounded-2xl p-5 shadow-xl border-border bg-white">
+                          <div className="space-y-4">
+                              <h4 className="font-bold text-sm">Filtros</h4>
+                              <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Categoria</label>
+                                <select 
+                                  value={categoriaFilter} 
+                                  onChange={(e) => setCategoriaFilter(e.target.value)}
+                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm"
+                                >
+                                  <option value="Todas">Todas</option>
+                                  {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Método</label>
+                                <select 
+                                  value={metodoFilter} 
+                                  onChange={(e) => setMetodoFilter(e.target.value)}
+                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm"
+                                >
+                                  <option value="Todos">Todos</option>
+                                  {availableMethods.map(m => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                              </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
+                          <th className="text-left py-3 px-4">Categoria</th>
+                          <th className="text-left py-3 px-4">Data / Período</th>
+                          <th className="text-left py-3 px-4">Descrição</th>
+                          <th className="text-left py-3 px-4">Valor</th>
+                          <th className="text-left py-3 px-4">Método</th>
+                          <th className="text-center py-3 px-4">Ação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {paginatedTransactions.map((tx) => (
+                          <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
+                            <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
+                            <td className="py-4 px-4 text-muted-foreground">
+                              {tx.data_fim ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
+                            </td>
+                            <td className="py-4 px-4 text-muted-foreground max-w-[200px] truncate">{tx.descricao || "—"}</td>
+                            <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
+                              {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
+                            </td>
+                            <td className="py-4 px-4 text-muted-foreground">{tx.metodo_pagamento || "—"}</td>
+                            <td className="py-4 px-4 text-center">
+                              <button onClick={() => setDeleteTarget(tx)} className="p-1 text-muted-foreground hover:text-danger transition-colors"><Trash2 size={16}/></button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                      <p className="text-xs text-muted-foreground">Página {currentPage} de {totalPages}</p>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={goToPreviousPage}
+                          disabled={currentPage === 1}
+                          className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition shadow-sm"
+                        >
+                          <ChevronLeft className="size-4" />
+                        </button>
+                        <button 
+                          onClick={goToNextPage}
+                          disabled={currentPage === totalPages}
+                          className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition shadow-sm"
+                        >
+                          <ChevronRight className="size-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="w-full lg:w-80 space-y-6">
+              </AnimatedItem>
+
+              <div className="w-full lg:w-80 space-y-6">
+                <AnimatedItem>
                   <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
+                </AnimatedItem>
+                <AnimatedItem>
                   <SubscriptionsCard usuarioId={usuarioId} moeda={effectiveMoeda} />
-                </div>
+                </AnimatedItem>
               </div>
-            </AnimatedItem>
+            </div>
           </main>
         </PageTransition>
       </div>
