@@ -61,38 +61,50 @@ export function SubscriptionsCard({ usuarioId, moeda }: SubscriptionsCardProps) 
     if (!selectedSub || !usuarioId) return;
     setIsCancelling(true);
 
-    const payload = {
-      acao: "cancelar",
-      tipo: "assinatura",
-      id_assinatura: selectedSub.id,
-      nome: selectedSub.nome || selectedSub.descricao || "Assinatura",
-      categoria: "Assinatura",
-      valor: selectedSub.valor,
-      metodo_pagamento: selectedSub.metodo_pagamento,
-      dia_cobranca: selectedSub.dia_cobranca,
-      data_compra: selectedSub.data_compra,
-      data_final: selectedSub.data_final,
-      descricao: selectedSub.descricao,
-      status: false,
-      id_usuario: usuarioId,
-    };
-
     try {
-      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const { error } = await supabase
+        .from("Assinaturas")
+        .update({ status: false })
+        .eq("id", selectedSub.id)
+        .eq("id_usuario", usuarioId);
 
-      if (!response.ok) throw new Error("Erro ao cancelar assinatura");
+      if (error) throw error;
 
-      toast.success("Solicitação de cancelamento enviada!");
+      // Also call the webhook if it's still needed for other sync purposes, 
+      // but the primary requirement is to update the Supabase table status column.
+      const payload = {
+        acao: "cancelar",
+        tipo: "assinatura",
+        id_assinatura: selectedSub.id,
+        nome: selectedSub.nome || selectedSub.descricao || "Assinatura",
+        categoria: "Assinatura",
+        valor: selectedSub.valor,
+        metodo_pagamento: selectedSub.metodo_pagamento,
+        dia_cobranca: selectedSub.dia_cobranca,
+        data_compra: selectedSub.data_compra,
+        data_final: selectedSub.data_final,
+        descricao: selectedSub.descricao,
+        status: false,
+        id_usuario: usuarioId,
+      };
+
+      try {
+        await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (webhookError) {
+        console.warn("Webhook error (ignoring since DB update succeeded):", webhookError);
+      }
+
+      toast.success("Assinatura cancelada com sucesso!");
       setIsCancelConfirmOpen(false);
       setSelectedSub(null);
       fetchSubscriptions();
-    } catch (error) {
-      console.log("Erro cancelamento assinatura:", error);
-      toast.error("Erro ao processar cancelamento. Tente novamente.");
+    } catch (error: any) {
+      console.error("Erro ao cancelar assinatura:", error);
+      toast.error(`Erro ao processar cancelamento: ${error.message || "Tente novamente"}`);
     } finally {
       setIsCancelling(false);
     }
@@ -316,7 +328,7 @@ export function SubscriptionsCard({ usuarioId, moeda }: SubscriptionsCardProps) 
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-bold text-[#1A1A1A]">Cancelar assinatura?</AlertDialogTitle>
             <AlertDialogDescription className="text-base font-medium">
-              Essa assinatura deixará de ser considerada como ativa nos próximos meses, mas continuará no histórico.
+              Essa assinatura será marcada como cancelada, mas continuará no histórico.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3 mt-4">
