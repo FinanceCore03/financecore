@@ -342,7 +342,9 @@ function PersonalizationPage() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsCategoryModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleAddCategory}>Salvar</Button>
+            <Button onClick={handleAddCategory} disabled={isSubmitting}>
+              {isSubmitting ? "Enviando..." : "Salvar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
