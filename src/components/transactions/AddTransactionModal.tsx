@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { getCurrencySymbol } from "@/lib/currency";
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ const standardPaymentMethods = [
   "Dinheiro",
 ];
 
-export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransactionModalProps) {
+export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTransactionModalProps) {
   const { user } = useAuth();
   const [tipo, setTipo] = useState<string>("saida");
   const [categoria, setCategoria] = useState<string>("");
@@ -292,7 +293,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess }: AddTransacti
                   {metodo === "Crédito" ? "Valor da parcela" : "Valor"}
                 </Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">R$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">{getCurrencySymbol(moeda)}</span>
                   <Input
                     id="valor"
                     placeholder="0,00"

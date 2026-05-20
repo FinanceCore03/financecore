@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, ChevronRight, Tv, CreditCard, Calendar as CalendarIcon, Loader2, Info, ChevronLeft } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -12,9 +13,10 @@ import { Badge } from "@/components/ui/badge";
 
 interface SubscriptionsCardProps {
   usuarioId: number | null;
+  moeda: string;
 }
 
-export function SubscriptionsCard({ usuarioId }: SubscriptionsCardProps) {
+export function SubscriptionsCard({ usuarioId, moeda }: SubscriptionsCardProps) {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -192,7 +194,7 @@ export function SubscriptionsCard({ usuarioId }: SubscriptionsCardProps) {
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <div className="flex items-center gap-1">
                       <div className={`font-bold text-sm tabular-nums ${!isActive ? 'text-[#666666]' : 'text-[#1A1A1A]'}`}>
-                        R$ {parseFloat(sub.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {formatCurrency(sub.valor, moeda)}
                       </div>
                       <ChevronRight className="size-3.5 text-muted-foreground/60 group-hover:translate-x-0.5 transition-transform" />
                     </div>
@@ -215,6 +217,7 @@ export function SubscriptionsCard({ usuarioId }: SubscriptionsCardProps) {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={fetchSubscriptions}
         usuarioId={usuarioId}
+        moeda={moeda}
       />
 
       <Dialog open={!!selectedSub} onOpenChange={(open) => !open && setSelectedSub(null)}>
@@ -238,7 +241,7 @@ export function SubscriptionsCard({ usuarioId }: SubscriptionsCardProps) {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
                     <CreditCard className="size-3" /> Valor
                   </p>
-                  <p className="font-bold text-lg tabular-nums text-[#1A1A1A]">R$ {parseFloat(selectedSub.valor || "0").toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  <p className="font-bold text-lg tabular-nums text-[#1A1A1A]">{formatCurrency(selectedSub.valor, moeda)}</p>
                 </div>
                 <div className="space-y-1.5">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
