@@ -340,20 +340,56 @@ function TransactionsPage() {
                   <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
                     <PopoverTrigger asChild>
                       <button className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
-                        <span>{periodFilter}</span>
+                        <CalendarIcon className="size-4 text-muted-foreground" />
+                        <span>{periodFilter === "Personalizado" && dateRange?.from ? 
+                          `${format(dateRange.from, "dd/MM")}${dateRange.to ? ` - ${format(dateRange.to, "dd/MM")}` : ""}` : 
+                          periodFilter}</span>
                         <ChevronDown className={`size-4 text-muted-foreground transition-transform ${isPeriodOpen ? 'rotate-180' : ''}`} />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent align="end" className="w-48 p-1 rounded-xl border-border shadow-lg bg-white">
-                      {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => { setPeriodFilter(option); setIsPeriodOpen(false); }}
-                          className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
-                        >
-                          {option}
-                        </button>
-                      ))}
+                    <PopoverContent align="end" className="w-auto p-0 rounded-2xl border-border shadow-xl bg-white overflow-hidden">
+                      <div className="flex flex-col md:flex-row">
+                        <div className="p-2 border-r border-border min-w-[160px] bg-muted/5">
+                          {["Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses"].map((option) => (
+                            <button
+                              key={option}
+                              onClick={() => { setPeriodFilter(option); setIsPeriodOpen(false); setDateRange(undefined); }}
+                              className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors mb-1 ${periodFilter === option ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                          <div className="h-px bg-border my-2 mx-2" />
+                          <button
+                            onClick={() => setPeriodFilter("Personalizado")}
+                            className={`w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors ${periodFilter === "Personalizado" ? 'text-primary font-medium bg-primary/5' : 'text-foreground'}`}
+                          >
+                            Personalizado
+                          </button>
+                        </div>
+                        {periodFilter === "Personalizado" && (
+                          <div className="p-3">
+                            <Calendar
+                              initialFocus
+                              mode="range"
+                              defaultMonth={dateRange?.from}
+                              selected={dateRange}
+                              onSelect={setDateRange}
+                              numberOfMonths={1}
+                              locale={undefined}
+                              className="rounded-md border-none"
+                            />
+                            <div className="mt-3 flex justify-end">
+                              <button 
+                                onClick={() => setIsPeriodOpen(false)}
+                                className="px-4 py-2 bg-primary text-primary-foreground text-xs font-medium rounded-lg hover:bg-primary/90 transition-colors"
+                              >
+                                Aplicar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </PopoverContent>
                   </Popover>
                   
