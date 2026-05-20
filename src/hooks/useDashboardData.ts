@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useDashboardData() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
   const [moeda, setMoeda] = useState<string>("Real");
@@ -115,6 +116,8 @@ export function useDashboardData() {
       }
     };
 
+    const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
+    
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
       
@@ -145,6 +148,28 @@ export function useDashboardData() {
           if (isEntrada) prevMonthIncome += val;
           else if (isSaida) prevMonthExpenses += val;
         }
+      }
+    });
+
+    // Include active subscriptions in current month expenses
+    activeSubscriptions.forEach(sub => {
+      const val = parseFloat(sub.valor || "0");
+      totalBalance -= val; // Subscriptions are always expenses
+
+      // For month calculations, assuming they occur every month if active
+      monthExpenses += val;
+      
+      // Update sparklines for current month
+      const currentMonthIdx = last6Months.findIndex(item => item.month === currentMonth && item.year === currentYear);
+      if (currentMonthIdx !== -1) {
+        last6Months[currentMonthIdx].expenses += val;
+      }
+      
+      // Also update previous month for comparison
+      prevMonthExpenses += val;
+      const prevMonthIdx = last6Months.findIndex(item => item.month === lastMonth && item.year === lastMonthYear);
+      if (prevMonthIdx !== -1) {
+        last6Months[prevMonthIdx].expenses += val;
       }
     });
 
@@ -219,9 +244,14 @@ export function useDashboardData() {
         })
         .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
-      return { m, income, expenses };
+      // Include subscriptions in expenses for chart
+      const subscriptionTotal = subscriptions
+        .filter(sub => sub.status !== false)
+        .reduce((sum, sub) => sum + parseFloat(sub.valor || "0"), 0);
+
+      return { m, income, expenses: expenses + subscriptionTotal };
     });
-  }, [transactions]);
+  }, [transactions, subscriptions]);
 
   const categoriesData = useMemo(() => {
     const categoriesMap: Record<string, number> = {};
@@ -239,6 +269,17 @@ export function useDashboardData() {
         categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
         totalExps += val;
       });
+
+    // Include subscriptions as "Assinatura" category
+    const subscriptionTotal = subscriptions
+      .filter(sub => sub.status !== false)
+      .reduce((sum, sub) => sum + parseFloat(sub.valor || "0"), 0);
+    
+    if (subscriptionTotal > 0) {
+      const cat = "Assinatura";
+      categoriesMap[cat] = (categoriesMap[cat] || 0) + subscriptionTotal;
+      totalExps += subscriptionTotal;
+    }
 
     const colors = [
       "oklch(0.62 0.18 290)", // primary
@@ -272,6 +313,7 @@ export function useDashboardData() {
     categoriesData,
     usuarioId,
     moeda,
-    user
+    user,
+    subscriptions
   };
 }

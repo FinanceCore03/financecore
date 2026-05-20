@@ -8,6 +8,10 @@ import { PlanningCard } from "@/components/dashboard/PlanningCard";
 import { CategoryBars } from "@/components/dashboard/CategoryBars";
 import { DistributionDonut } from "@/components/dashboard/DistributionDonut";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { MonthlyAlerts } from "@/components/dashboard/MonthlyAlerts";
+import { UpcomingCommitments } from "@/components/dashboard/UpcomingCommitments";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 
@@ -29,8 +33,23 @@ function Dashboard() {
     chartData, 
     categoriesData,
     usuarioId,
-    moeda
+    moeda,
+    subscriptions
   } = useDashboardData();
+
+  const { data: planning = [] } = useQuery({
+    queryKey: ["planning", usuarioId],
+    queryFn: async () => {
+      if (!usuarioId) return [];
+      const { data, error } = await supabase
+        .from("Planejamento")
+        .select("*")
+        .eq("id_usuario", usuarioId);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!usuarioId,
+  });
 
   if (loading) {
     return (
@@ -106,6 +125,25 @@ function Dashboard() {
               </AnimatedItem>
               <AnimatedItem>
                 <DistributionDonut data={categoriesData.list} total={categoriesData.total} moeda={moeda} />
+              </AnimatedItem>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              <AnimatedItem>
+                <MonthlyAlerts 
+                  transactions={transactions} 
+                  subscriptions={subscriptions} 
+                  planning={planning} 
+                  stats={stats} 
+                  moeda={moeda} 
+                />
+              </AnimatedItem>
+              <AnimatedItem>
+                <UpcomingCommitments 
+                  transactions={transactions} 
+                  subscriptions={subscriptions} 
+                  moeda={moeda} 
+                />
               </AnimatedItem>
             </div>
 
