@@ -435,7 +435,9 @@ function TransactionsPage() {
                     <TrendingUp className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Entradas</div>
-                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodEntradas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">
+                    {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.periodEntradas, effectiveMoeda)}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Total recebido no período</div>
                 </div>
               </AnimatedItem>
@@ -445,7 +447,9 @@ function TransactionsPage() {
                     <TrendingDown className="size-5" />
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Saídas</div>
-                  <div className="text-2xl font-semibold tracking-tight mb-1">{formatCurrency(totals.periodSaidas, effectiveMoeda)}</div>
+                  <div className="text-2xl font-semibold tracking-tight mb-1">
+                    {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.periodSaidas, effectiveMoeda)}
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Total gasto no período</div>
                 </div>
               </AnimatedItem>
