@@ -127,6 +127,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
             id_usuario: internalUsuarioId,
             Categoria: newCategoryName,
             Valor: "0",
+            Moeda: moeda || "Real",
             "Período": new Date().toISOString().split('T')[0]
           });
       }

@@ -7,6 +7,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { getCurrencySymbol } from "@/lib/currency";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -48,6 +50,7 @@ const WEBHOOK_URL = "https://autowebhook.dudaclientes.site/webhook/Transacoes";
 
 function PersonalizationPage() {
   const { user } = useAuth();
+  const { moeda } = useDashboardData();
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -153,6 +156,7 @@ function PersonalizationPage() {
             id_usuario: usuarioId,
             Categoria: categoryName,
             Valor: "0",
+            Moeda: moeda || "Real",
             "Período": new Date().toISOString().split('T')[0]
           });
         
