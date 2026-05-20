@@ -135,6 +135,12 @@ function TransactionsPage() {
     const txDate = parseISOAsLocal(tx.data_inicio);
     if (!txDate) return true;
     
+    if (periodFilter === "Personalizado" && dateRange?.from) {
+      const from = startOfDay(dateRange.from);
+      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+      return txDate >= from && txDate <= to;
+    }
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
