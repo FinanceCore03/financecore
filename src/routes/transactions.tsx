@@ -11,7 +11,7 @@ import { InvoiceCard } from "@/components/transactions/InvoiceCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isSameDay, isSameMonth } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
@@ -31,6 +31,7 @@ export const Route = createFileRoute("/transactions")({
 
 function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState("Todas");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
@@ -62,14 +63,23 @@ function TransactionsPage() {
         setUsuarioId(usuario.id);
         setMoeda(usuario.Moeda || "Real");
         
-        const { data: transacoes, error } = await supabase
-          .from("Transacoes")
-          .select("*")
-          .eq("id_usuario", usuario.id)
-          .order("data_inicio", { ascending: false });
+        const [transacoesRes, assinaturasRes] = await Promise.all([
+          supabase
+            .from("Transacoes")
+            .select("*")
+            .eq("id_usuario", usuario.id)
+            .order("data_inicio", { ascending: false }),
+          supabase
+            .from("Assinaturas")
+            .select("*")
+            .eq("id_usuario", usuario.id)
+        ]);
         
-        if (transacoes) {
-          setTransactions(transacoes);
+        if (transacoesRes.data) {
+          setTransactions(transacoesRes.data);
+        }
+        if (assinaturasRes.data) {
+          setSubscriptions(assinaturasRes.data);
         }
       }
     }
@@ -130,59 +140,135 @@ function TransactionsPage() {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   };
 
-  const matchPeriod = (tx: any) => {
+  const matchPeriod = (date: Date) => {
     if (periodFilter === "Todas") return true;
-    if (!tx.data_inicio) return true;
-    const txDate = parseISOAsLocal(tx.data_inicio);
-    if (!txDate) return true;
     
     if (periodFilter === "Personalizado" && dateRange?.from) {
       const from = startOfDay(dateRange.from);
       const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-      return txDate >= from && txDate <= to;
+      return date >= from && date <= to;
     }
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    if (periodFilter === "Hoje") return txDate.getTime() === today.getTime();
+    if (periodFilter === "Hoje") return isSameDay(date, today);
     if (periodFilter === "Esta semana") {
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay());
-      return txDate >= startOfWeek;
+      return date >= startOfWeek;
     }
     if (periodFilter === "Este mês") {
-      return txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear();
+      return isSameMonth(date, today);
     }
     if (periodFilter === "Últimos 3 meses") {
       const threeMonthsAgo = new Date(today);
       threeMonthsAgo.setMonth(today.getMonth() - 3);
-      return txDate >= threeMonthsAgo;
+      return date >= threeMonthsAgo;
     }
     return true;
   };
 
-  const availableCategories = useMemo(() => {
-    const set = new Set<string>();
-    transactions.forEach(tx => tx.categoria && set.add(tx.categoria));
-    return Array.from(set).sort();
-  }, [transactions]);
+  const matchSubscriptionPeriod = (sub: any) => {
+    if (sub.status === false) return false;
+    if (periodFilter === "Todas") return true;
 
-  const availableMethods = useMemo(() => {
-    const set = new Set<string>();
-    transactions.forEach(tx => tx.metodo_pagamento && set.add(tx.metodo_pagamento));
-    return Array.from(set).sort();
-  }, [transactions]);
+    const now = new Date();
+    const diaCobranca = parseInt(sub.dia_cobranca);
+    if (isNaN(diaCobranca)) return true;
+    
+    if (periodFilter === "Hoje") {
+      return now.getDate() === diaCobranca;
+    }
+    
+    if (periodFilter === "Personalizado" && dateRange?.from) {
+      let check = new Date(dateRange.from);
+      const to = dateRange.to || dateRange.from;
+      while (check <= to) {
+        if (check.getDate() === diaCobranca) return true;
+        check.setDate(check.getDate() + 1);
+      }
+      return false;
+    }
+
+    return true;
+  };
 
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
     return transactions.filter(tx => {
-      if (!matchPeriod(tx)) return false;
+      if (!tx.data_inicio) return true;
+      const txDate = parseISOAsLocal(tx.data_inicio);
+      if (!txDate || !matchPeriod(txDate)) return false;
       if (categoriaFilter !== "Todas" && tx.categoria !== categoriaFilter) return false;
       if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
       return true;
     });
   }, [transactions, periodFilter, dateRange, categoriaFilter, metodoFilter]);
+
+  const totals = useMemo(() => {
+    let totalAccount = 0;
+    let periodEntradas = 0;
+    let periodSaidas = 0;
+
+    transactions.forEach(tx => {
+      const val = parseFloat(tx.valor || "0");
+      const isEntrada = tx.tipo === "entrada";
+      
+      if (isEntrada) totalAccount += val;
+      else totalAccount -= val;
+
+      if (tx.data_inicio) {
+        const txDate = parseISOAsLocal(tx.data_inicio);
+        if (txDate && matchPeriod(txDate)) {
+          if (isEntrada) periodEntradas += val;
+          else periodSaidas += val;
+        }
+      }
+    });
+
+    subscriptions.forEach(sub => {
+      if (matchSubscriptionPeriod(sub)) {
+        const val = parseFloat(sub.valor || "0");
+        periodSaidas += val;
+        totalAccount -= val;
+      }
+    });
+
+    return { totalAccount, periodEntradas, periodSaidas };
+  }, [transactions, subscriptions, periodFilter, dateRange]);
+
+  const distributionData = useMemo(() => {
+    const categoriesMap: Record<string, number> = {};
+    let totalExps = 0;
+
+    filteredTransactions
+      .filter(tx => tx.tipo === "saida")
+      .forEach(tx => {
+        const cat = tx.categoria || "Outros";
+        const val = parseFloat(tx.valor || "0");
+        categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
+        totalExps += val;
+      });
+
+    subscriptions.forEach(sub => {
+      if (matchSubscriptionPeriod(sub)) {
+        const cat = "Assinatura";
+        const val = parseFloat(sub.valor || "0");
+        categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
+        totalExps += val;
+      }
+    });
+
+    const colors = ["var(--primary)", "#8E9196", "#D3E4FD", "#FDE1D3", "#FEC6A1", "#E5DEFF"];
+
+    return Object.entries(categoriesMap).map(([name, value], i) => ({
+      name,
+      value: totalExps > 0 ? Math.round((value / totalExps) * 100) : 0,
+      amount: value,
+      color: colors[i % colors.length]
+    })).sort((a, b) => b.amount - a.amount);
+  }, [filteredTransactions, subscriptions, periodFilter, dateRange]);
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   
@@ -203,104 +289,19 @@ function TransactionsPage() {
     setCurrentPage(1);
   }, [periodFilter, categoriaFilter, metodoFilter]);
 
-  const totals = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    let totalAccount = 0;
-    let periodEntradas = 0;
-    let periodSaidas = 0;
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach(tx => tx.categoria && set.add(tx.categoria));
+    return Array.from(set).sort();
+  }, [transactions]);
 
-    transactions.forEach(tx => {
-      const val = parseFloat(tx.valor || "0");
-      const isEntrada = tx.tipo === "entrada";
-      
-      if (isEntrada) totalAccount += val;
-      else totalAccount -= val;
+  const availableMethods = useMemo(() => {
+    const set = new Set<string>();
+    transactions.forEach(tx => tx.metodo_pagamento && set.add(tx.metodo_pagamento));
+    return Array.from(set).sort();
+  }, [transactions]);
 
-      let inPeriod = true;
-      if (periodFilter !== "Todas" && tx.data_inicio) {
-        const txDate = parseISOAsLocal(tx.data_inicio);
-        if (txDate) {
-          if (periodFilter === "Personalizado" && dateRange?.from) {
-            const from = startOfDay(dateRange.from);
-            const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-            inPeriod = txDate >= from && txDate <= to;
-          } else if (periodFilter === "Hoje") inPeriod = txDate.getTime() === today.getTime();
-          else if (periodFilter === "Esta semana") {
-            const startOfWeek = new Date(today);
-            startOfWeek.setDate(today.getDate() - today.getDay());
-            inPeriod = txDate >= startOfWeek;
-          } else if (periodFilter === "Este mês") {
-            inPeriod = txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear();
-          } else if (periodFilter === "Últimos 3 meses") {
-            const threeMonthsAgo = new Date(today);
-            threeMonthsAgo.setMonth(today.getMonth() - 3);
-            inPeriod = txDate >= threeMonthsAgo;
-          }
-        }
-      }
-
-      if (inPeriod) {
-        if (isEntrada) periodEntradas += val;
-        else periodSaidas += val;
-      }
-    });
-
-    return { totalAccount, periodEntradas, periodSaidas };
-  }, [transactions, periodFilter, dateRange]);
-
-  const distributionData = useMemo(() => {
-    const categoriesMap: Record<string, number> = {};
-    let totalExps = 0;
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    transactions
-      .filter(tx => {
-        if (tx.tipo !== "saida") return false;
-        if (periodFilter === "Todas") return true;
-        if (!tx.data_inicio) return true;
-        const txDate = parseISOAsLocal(tx.data_inicio);
-        if (!txDate) return true;
-        if (periodFilter === "Personalizado" && dateRange?.from) {
-          const from = startOfDay(dateRange.from);
-          const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-          return txDate >= from && txDate <= to;
-        }
-        if (periodFilter === "Hoje") return txDate.getTime() === today.getTime();
-        if (periodFilter === "Esta semana") {
-          const startOfWeek = new Date(today);
-          startOfWeek.setDate(today.getDate() - today.getDay());
-          return txDate >= startOfWeek;
-        }
-        if (periodFilter === "Este mês") return txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear();
-        if (periodFilter === "Últimos 3 meses") {
-          const threeMonthsAgo = new Date(today);
-          threeMonthsAgo.setMonth(today.getMonth() - 3);
-          return txDate >= threeMonthsAgo;
-        }
-        return true;
-      })
-      .forEach(tx => {
-        const cat = tx.categoria || "Outros";
-        const val = parseFloat(tx.valor || "0");
-        categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
-        totalExps += val;
-      });
-
-    const colors = ["var(--primary)", "#8E9196", "#D3E4FD", "#FDE1D3", "#FEC6A1", "#E5DEFF"];
-
-    return Object.entries(categoriesMap).map(([name, value], i) => ({
-      name,
-      value: totalExps > 0 ? Math.round((value / totalExps) * 100) : 0,
-      amount: value,
-      color: colors[i % colors.length]
-    })).sort((a, b) => b.amount - a.amount);
-  }, [transactions, periodFilter, dateRange]);
-
-  const { moeda: dashboardMoeda } = useDashboardData();
-  const effectiveMoeda = dashboardMoeda || moeda;
+  const effectiveMoeda = moeda;
   const economyValue = totals.periodEntradas - totals.periodSaidas;
 
   if (loading) {
@@ -377,7 +378,6 @@ function TransactionsPage() {
                               selected={dateRange}
                               onSelect={setDateRange}
                               numberOfMonths={1}
-                              locale={undefined}
                               className="rounded-md border-none"
                             />
                             <div className="mt-3 flex justify-end">
@@ -595,7 +595,7 @@ function TransactionsPage() {
 
               <div className="w-full lg:w-80 space-y-6">
                 <AnimatedItem>
-                  <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
+                  <InvoiceCard transactions={transactions} subscriptions={subscriptions} moeda={effectiveMoeda} />
                 </AnimatedItem>
                 
                 <AnimatedItem>
