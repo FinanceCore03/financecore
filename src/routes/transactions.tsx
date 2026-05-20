@@ -523,7 +523,7 @@ function TransactionsPage() {
                           <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
                             <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
                             <td className="py-4 px-4 text-muted-foreground">
-                              {tx.data_fim ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
+                              {tx.data_fim && tx.data_fim !== tx.data_inicio ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
                             </td>
                             <td className="py-4 px-4 text-muted-foreground max-w-[200px] truncate">{tx.descricao || "—"}</td>
                             <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
