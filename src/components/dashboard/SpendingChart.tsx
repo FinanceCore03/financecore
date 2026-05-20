@@ -194,10 +194,10 @@ export function SpendingChart({ data: annualData, moeda, transactions }: Spendin
               dataKey="income" 
               name="income"
               stroke="#10b981" 
-              strokeWidth={3} 
+              strokeWidth={2} 
               fill="url(#gradIncome)" 
               dot={false}
-              activeDot={{ r: 6, strokeWidth: 3, stroke: "white" }} 
+              activeDot={{ r: 5, strokeWidth: 2, stroke: "white" }} 
               animationDuration={1500}
               animationEasing="ease-in-out"
             />
@@ -206,10 +206,10 @@ export function SpendingChart({ data: annualData, moeda, transactions }: Spendin
               dataKey="expenses" 
               name="expenses"
               stroke="#f43f5e" 
-              strokeWidth={3} 
+              strokeWidth={2} 
               fill="url(#gradExpenses)" 
               dot={false}
-              activeDot={{ r: 6, strokeWidth: 3, stroke: "white" }} 
+              activeDot={{ r: 5, strokeWidth: 2, stroke: "white" }} 
               animationDuration={1500}
               animationEasing="ease-in-out"
               animationBegin={200}
