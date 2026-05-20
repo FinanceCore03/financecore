@@ -367,7 +367,9 @@ function PersonalizationPage() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsPaymentModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleAddPaymentMethod}>Salvar</Button>
+            <Button onClick={handleAddPaymentMethod} disabled={isSubmitting}>
+              {isSubmitting ? "Enviando..." : "Salvar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
