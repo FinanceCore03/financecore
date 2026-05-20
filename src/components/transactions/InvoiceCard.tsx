@@ -3,10 +3,11 @@ import { formatCurrency } from "@/lib/currency";
 
 interface InvoiceCardProps {
   transactions: any[];
+  subscriptions?: any[];
   moeda: string;
 }
 
-export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
+export function InvoiceCard({ transactions, subscriptions = [], moeda }: InvoiceCardProps) {
   // Logic to calculate next month's scheduled value
   const nextMonthTotal = (() => {
     const now = new Date();
@@ -15,7 +16,7 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
     // End of next month
     const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
 
-    return transactions.reduce((acc, tx) => {
+    const txTotal = transactions.reduce((acc, tx) => {
       if (tx.tipo !== "saida") return acc;
       
       const start = tx.data_inicio ? new Date(tx.data_inicio) : null;
@@ -23,16 +24,25 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
       
       if (!start) return acc;
 
-      // Rule 5: Credit, Installment, transactions with start and end dates, or those reaching next month
-      // We check if the transaction is active during next month
+      // Rules: Credit, Installment, transactions with start and end dates, or those reaching next month
+      // Normalize method check
+      const metodo = (tx.metodo_pagamento || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const isCredito = metodo.includes("credito");
+
       const isActiveNextMonth = start <= endOfNextMonth && (!end || end >= nextMonth);
-      
-      if (isActiveNextMonth) {
+      const isCurrentMonthCredito = isCredito && start.getMonth() === now.getMonth() && start.getFullYear() === now.getFullYear();
+
+      if (isActiveNextMonth || isCurrentMonthCredito) {
         return acc + parseFloat(tx.valor || "0");
       }
       
       return acc;
     }, 0);
+
+    const activeSubs = subscriptions.filter(sub => sub.status !== false);
+    const subsTotal = activeSubs.reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
+
+    return txTotal + subsTotal;
   })();
 
   const scheduledCount = transactions.filter(tx => {
@@ -42,8 +52,12 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
     const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
     const start = tx.data_inicio ? new Date(tx.data_inicio) : null;
     const end = tx.data_fim ? new Date(tx.data_fim) : null;
-    return start && start <= endOfNextMonth && (!end || end >= nextMonth);
-  }).length;
+
+    const metodo = (tx.metodo_pagamento || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const isCredito = metodo.includes("credito");
+
+    return (start && start <= endOfNextMonth && (!end || end >= nextMonth)) || (isCredito && start && start.getMonth() === now.getMonth());
+  }).length + subscriptions.filter(sub => sub.status !== false).length;
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
@@ -61,7 +75,7 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
       </div>
       {scheduledCount > 0 && (
         <div className="text-[10px] text-primary font-bold mt-1 bg-primary/5 inline-block px-2 py-0.5 rounded-md">
-          {scheduledCount} {scheduledCount === 1 ? 'lançamento programado' : 'lançamentos programados'}
+          {scheduledCount} {scheduledCount === 1 ? 'item programado' : 'itens programados'}
         </div>
       )}
     </div>
