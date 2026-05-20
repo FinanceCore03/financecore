@@ -1,7 +1,9 @@
 import { ShoppingCart, Wallet, Car, Tv, Utensils, HelpCircle } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 interface TransactionsProps {
   transactions: any[];
+  moeda: string;
 }
 
 const getIcon = (categoria: string) => {
@@ -23,7 +25,7 @@ const getBg = (tipo: string, categoria: string) => {
   return "bg-primary-soft text-primary";
 };
 
-export function Transactions({ transactions }: TransactionsProps) {
+export function Transactions({ transactions, moeda }: TransactionsProps) {
   return (
     <div className="bg-card border border-border rounded-2xl p-5 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full">
       <div className="flex items-center justify-between mb-4">
@@ -56,7 +58,7 @@ export function Transactions({ transactions }: TransactionsProps) {
                   {isEntrada ? "Entrada" : "Gasto"}
                 </span>
                 <span className="font-semibold tabular-nums">
-                  R$ {parseFloat(t.valor || "0").toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  {formatCurrency(t.valor, moeda)}
                 </span>
               </div>
             );

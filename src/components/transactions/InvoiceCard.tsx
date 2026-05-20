@@ -1,10 +1,12 @@
 import { Calendar } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 interface InvoiceCardProps {
   transactions: any[];
+  moeda: string;
 }
 
-export function InvoiceCard({ transactions }: InvoiceCardProps) {
+export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
   // Logic to calculate next month's scheduled value
   const nextMonthTotal = (() => {
     const now = new Date();
@@ -50,7 +52,7 @@ export function InvoiceCard({ transactions }: InvoiceCardProps) {
       </div>
       <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Fatura</div>
       <div className="text-2xl font-bold tracking-tight text-[#1A1A1A]">
-        R$ {nextMonthTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        {formatCurrency(nextMonthTotal, moeda)}
       </div>
       <div className="text-[11px] text-muted-foreground font-medium mt-2">
         {nextMonthTotal > 0 

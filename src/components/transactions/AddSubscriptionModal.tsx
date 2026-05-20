@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { getCurrencySymbol } from "@/lib/currency";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,11 +19,12 @@ interface AddSubscriptionModalProps {
   onClose: () => void;
   onSuccess: () => void;
   usuarioId: number | null;
+  moeda: string;
 }
 
 const paymentMethods = ["Crédito", "Débito", "Pix", "Dinheiro", "Parcelado", "Boleto", "Transferência"];
 
-export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: AddSubscriptionModalProps) {
+export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId, moeda }: AddSubscriptionModalProps) {
   const [nome, setNome] = useState("");
   const [valor, setValor] = useState("");
   const [metodo, setMetodo] = useState("");
@@ -116,7 +118,7 @@ export function AddSubscriptionModal({ isOpen, onClose, onSuccess, usuarioId }: 
               <div className="grid gap-2">
                 <Label htmlFor="valor" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Valor Mensal</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">R$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">{getCurrencySymbol(moeda)}</span>
                   <Input
                     id="valor"
                     placeholder="0,00"

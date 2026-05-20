@@ -7,6 +7,7 @@ export function useDashboardData() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const [moeda, setMoeda] = useState<string>("Real");
 
   useEffect(() => {
     async function fetchData() {
@@ -19,10 +20,10 @@ export function useDashboardData() {
       try {
         console.log("Auth user:", user);
         
-        // 1. Get the internal ID from "Usuarios" table
+        // 1. Get the internal ID and currency from "Usuarios" table
         const { data: usuario, error: usuarioError } = await supabase
           .from("Usuarios")
-          .select("id")
+          .select("id, Moeda")
           .eq("id_auth", user.id)
           .maybeSingle();
 
@@ -31,10 +32,12 @@ export function useDashboardData() {
           throw usuarioError;
         }
 
-        console.log("Usuário interno:", usuario);
+        console.log("Usuário interno (dashboard):", usuario);
+        console.log("Moeda do usuário (dashboard):", usuario?.Moeda);
 
         if (usuario) {
           setUsuarioId(usuario.id);
+          setMoeda(usuario.Moeda || "Real");
           // 2. Fetch all transactions for this user
           const { data, error: transacoesError } = await supabase
             .from("Transacoes")
@@ -254,6 +257,7 @@ export function useDashboardData() {
     chartData,
     categoriesData,
     usuarioId,
+    moeda,
     user
   };
 }
