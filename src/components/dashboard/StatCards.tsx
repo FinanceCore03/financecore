@@ -1,7 +1,8 @@
 import React from "react";
-import { Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight, Eye, EyeOff } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { formatCurrency } from "@/lib/currency";
+import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface StatCardsProps {
   stats: {
@@ -57,8 +58,11 @@ function MiniChart({ data, color }: { data: any[]; color: string }) {
 }
 
 function StatCard({ title, value, change, icon, sparklineData, color, infoText }: CardProps) {
+  const { isPrivate, togglePrivacy } = usePrivacy();
   const isPositive = change ? change.value >= 0 : true;
   const isGood = change?.inverse ? !isPositive : isPositive;
+
+  const displayValue = isPrivate ? "R$ ••••••" : value;
 
   return (
     <div className="bg-white border border-border rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col justify-between">
@@ -70,7 +74,16 @@ function StatCard({ title, value, change, icon, sparklineData, color, infoText }
       </div>
       
       <div>
-        <div className="text-2xl font-bold tracking-tight text-slate-900">{value}</div>
+        <div className="flex items-baseline gap-2 group">
+          <div className="text-2xl font-bold tracking-tight text-slate-900">{displayValue}</div>
+          <button 
+            onClick={togglePrivacy}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+            title={isPrivate ? "Mostrar valores" : "Ocultar valores"}
+          >
+            {isPrivate ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+          </button>
+        </div>
         
         <MiniChart data={sparklineData} color={color} />
         
