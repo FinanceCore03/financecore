@@ -161,11 +161,11 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
   const displayedAlerts = showAll ? alerts : alerts.slice(0, 6);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full flex flex-col">
+    <div className="bg-[#FFF7ED] border-[#FED7AA] border rounded-2xl p-6 shadow-sm h-full flex flex-col transition-all hover:shadow-md">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold tracking-tight text-slate-900">Alertas do Mês</h3>
-        <div className="p-2 bg-rose-50 rounded-xl">
-          <AlertCircle className="size-5 text-rose-500" />
+        <div className="p-2 bg-orange-100/50 rounded-xl">
+          <AlertCircle className="size-5 text-[#F97316]" />
         </div>
       </div>
 
