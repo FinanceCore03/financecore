@@ -1,7 +1,7 @@
 import React from "react";
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight, Eye, EyeOff } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
-import { formatCurrency } from "@/lib/currency";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface StatCardsProps {
