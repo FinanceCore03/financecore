@@ -63,7 +63,8 @@ function StatCard({ title, value, change, icon, sparklineData, color, infoText, 
   const isPositive = change ? change.value >= 0 : true;
   const isGood = change?.inverse ? !isPositive : isPositive;
 
-  const displayValue = isPrivate ? "R$ - - - - - -" : value;
+  const currencySymbol = getCurrencySymbol(moeda);
+  const displayValue = isPrivate ? `${currencySymbol} - - - - - -` : value;
 
   return (
     <div className="bg-white border border-border rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col justify-between">
