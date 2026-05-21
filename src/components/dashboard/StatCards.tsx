@@ -1,7 +1,7 @@
 import React from "react";
 import { Wallet, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight, Eye, EyeOff } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
-import { formatCurrency } from "@/lib/currency";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 
 interface StatCardsProps {
@@ -31,6 +31,7 @@ interface CardProps {
   color: string;
   infoText?: string;
   showPrivacyToggle?: boolean;
+  moeda: string;
 }
 
 function MiniChart({ data, color }: { data: any[]; color: string }) {
@@ -58,12 +59,13 @@ function MiniChart({ data, color }: { data: any[]; color: string }) {
   );
 }
 
-function StatCard({ title, value, change, icon, sparklineData, color, infoText, showPrivacyToggle }: CardProps) {
+function StatCard({ title, value, change, icon, sparklineData, color, infoText, showPrivacyToggle, moeda }: CardProps) {
   const { isPrivate, togglePrivacy } = usePrivacy();
   const isPositive = change ? change.value >= 0 : true;
   const isGood = change?.inverse ? !isPositive : isPositive;
 
-  const displayValue = isPrivate ? "R$ - - - - - -" : value;
+  const currencySymbol = getCurrencySymbol(moeda);
+  const displayValue = isPrivate ? `${currencySymbol} - - - - - -` : value;
 
   return (
     <div className="bg-white border border-border rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col justify-between">
@@ -123,6 +125,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         color="#7c3aed"
         infoText="saldo acumulado"
         showPrivacyToggle={true}
+        moeda={moeda}
       />
       <StatCard
         title="Entradas do Mês"
@@ -131,6 +134,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         icon={<TrendingUp className="size-4" />}
         sparklineData={stats.sparklines.income}
         color="#10b981"
+        moeda={moeda}
       />
       <StatCard
         title="Gastos do Mês"
@@ -139,6 +143,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         icon={<TrendingDown className="size-4" />}
         sparklineData={stats.sparklines.expenses}
         color="#f43f5e"
+        moeda={moeda}
       />
       <StatCard
         title="Disponível no Mês"
@@ -147,6 +152,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         sparklineData={stats.sparklines.available}
         color="#0ea5e9"
         infoText={stats.monthIncome > 0 ? `${incomePct}% disponível` : "Sem entradas no mês"}
+        moeda={moeda}
       />
     </div>
   );

@@ -416,7 +416,7 @@ function TransactionsPage() {
                   <div className="text-xs text-muted-foreground mb-1">Total em Conta</div>
                   <div className="flex items-center gap-2">
                     <div className="text-2xl font-semibold tracking-tight mb-1">
-                      {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.totalAccount, effectiveMoeda)}
+                      {isPrivate ? `${getCurrencySymbol(effectiveMoeda)} - - - - - -` : formatCurrency(totals.totalAccount, effectiveMoeda)}
                     </div>
                     <button 
                       onClick={togglePrivacy}
@@ -436,7 +436,7 @@ function TransactionsPage() {
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Entradas</div>
                   <div className="text-2xl font-semibold tracking-tight mb-1">
-                    {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.periodEntradas, effectiveMoeda)}
+                    {isPrivate ? `${getCurrencySymbol(effectiveMoeda)} - - - - - -` : formatCurrency(totals.periodEntradas, effectiveMoeda)}
                   </div>
                   <div className="text-[10px] text-muted-foreground">Total recebido no período</div>
                 </div>
@@ -448,7 +448,7 @@ function TransactionsPage() {
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Saídas</div>
                   <div className="text-2xl font-semibold tracking-tight mb-1">
-                    {isPrivate ? "R$ - - - - - -" : formatCurrency(totals.periodSaidas, effectiveMoeda)}
+                    {isPrivate ? `${getCurrencySymbol(effectiveMoeda)} - - - - - -` : formatCurrency(totals.periodSaidas, effectiveMoeda)}
                   </div>
                   <div className="text-[10px] text-muted-foreground">Total gasto no período</div>
                 </div>
@@ -460,7 +460,7 @@ function TransactionsPage() {
                   </div>
                   <div className="text-xs text-muted-foreground mb-1">Economia</div>
                   <div className="text-2xl font-semibold tracking-tight mb-1">
-                    {isPrivate ? "R$ - - - - - -" : formatCurrency(economyValue, effectiveMoeda)}
+                    {isPrivate ? `${getCurrencySymbol(effectiveMoeda)} - - - - - -` : formatCurrency(economyValue, effectiveMoeda)}
                   </div>
                   <div className="text-[10px] text-muted-foreground">Balanço positivo</div>
                 </div>
