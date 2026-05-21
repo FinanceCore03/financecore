@@ -31,6 +31,7 @@ interface CardProps {
   color: string;
   infoText?: string;
   showPrivacyToggle?: boolean;
+  moeda: string;
 }
 
 function MiniChart({ data, color }: { data: any[]; color: string }) {
@@ -58,7 +59,7 @@ function MiniChart({ data, color }: { data: any[]; color: string }) {
   );
 }
 
-function StatCard({ title, value, change, icon, sparklineData, color, infoText, showPrivacyToggle }: CardProps) {
+function StatCard({ title, value, change, icon, sparklineData, color, infoText, showPrivacyToggle, moeda }: CardProps) {
   const { isPrivate, togglePrivacy } = usePrivacy();
   const isPositive = change ? change.value >= 0 : true;
   const isGood = change?.inverse ? !isPositive : isPositive;
@@ -124,6 +125,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         color="#7c3aed"
         infoText="saldo acumulado"
         showPrivacyToggle={true}
+        moeda={moeda}
       />
       <StatCard
         title="Entradas do Mês"
@@ -132,6 +134,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         icon={<TrendingUp className="size-4" />}
         sparklineData={stats.sparklines.income}
         color="#10b981"
+        moeda={moeda}
       />
       <StatCard
         title="Gastos do Mês"
@@ -140,6 +143,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         icon={<TrendingDown className="size-4" />}
         sparklineData={stats.sparklines.expenses}
         color="#f43f5e"
+        moeda={moeda}
       />
       <StatCard
         title="Disponível no Mês"
@@ -148,6 +152,7 @@ export function StatCards({ stats, moeda }: StatCardsProps) {
         sparklineData={stats.sparklines.available}
         color="#0ea5e9"
         infoText={stats.monthIncome > 0 ? `${incomePct}% disponível` : "Sem entradas no mês"}
+        moeda={moeda}
       />
     </div>
   );
