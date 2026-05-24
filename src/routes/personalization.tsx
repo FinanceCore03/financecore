@@ -55,10 +55,10 @@ function SettingsPage() {
       const { data: usuario } = await supabase.from("Usuarios").select("*").eq("id_auth", user.id).maybeSingle() as any;
       if (usuario) {
         setUsuarioId(usuario.id);
-        setBestPurchaseDay(usuario.dia_otimo?.toString() || "");
-        setDueDay(usuario.dia_vencimento?.toString() || "");
-        setInitialBestPurchaseDay(usuario.dia_otimo?.toString() || "");
-        setInitialDueDay(usuario.dia_vencimento?.toString() || "");
+        setBestPurchaseDay(usuario.Dia_otimo?.toString() || "");
+        setDueDay(usuario.Dia_vencimento?.toString() || "");
+        setInitialBestPurchaseDay(usuario.Dia_otimo?.toString() || "");
+        setInitialDueDay(usuario.Dia_vencimento?.toString() || "");
         fetchOptions(usuario.id);
       }
     }
