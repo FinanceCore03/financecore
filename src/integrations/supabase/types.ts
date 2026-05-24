@@ -146,6 +146,7 @@ export type Database = {
           descricao: string | null
           id: number
           id_usuario: number | null
+          Juros: string | null
           metodo_pagamento: string | null
           tipo: string | null
           valor: string | null
@@ -158,6 +159,7 @@ export type Database = {
           descricao?: string | null
           id?: number
           id_usuario?: number | null
+          Juros?: string | null
           metodo_pagamento?: string | null
           tipo?: string | null
           valor?: string | null
@@ -170,6 +172,7 @@ export type Database = {
           descricao?: string | null
           id?: number
           id_usuario?: number | null
+          Juros?: string | null
           metodo_pagamento?: string | null
           tipo?: string | null
           valor?: string | null
