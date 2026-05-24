@@ -1,4 +1,4 @@
-import { LayoutDashboard, ArrowLeftRight, Target, Palette, LogOut, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Target, Settings, LogOut, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
@@ -8,7 +8,7 @@ const items = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Transações", icon: ArrowLeftRight, href: "/transactions" },
   { label: "Planejamento", icon: Target, href: "/planning" },
-  { label: "Personalização", icon: Palette, href: "/personalization" },
+  { label: "Configurações", icon: Settings, href: "/personalization" },
 ];
 
 export function Sidebar() {

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { PageTransition, AnimatedItem } from "@/components/PageTransition";
-import { Tags, CreditCard, Plus, Trash2 } from "lucide-react";
+import { Tags, CreditCard, Plus, Trash2, Info, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,13 +20,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export const Route = createFileRoute("/personalization")({
   head: () => ({
     meta: [
-      { title: "Personalização — Finance Core" },
+      { title: "Configurações — Finance Core" },
     ],
   }),
-  component: () => <PersonalizationPage />,
+  component: () => <SettingsPage />,
 });
 
-function PersonalizationPage() {
+function SettingsPage() {
   const { user } = useAuth();
   const { moeda } = useDashboardData();
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
@@ -41,12 +41,22 @@ function PersonalizationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
 
+  // Novos estados para Dados do Cartão
+  const [bestPurchaseDay, setBestPurchaseDay] = useState<string>("");
+  const [dueDay, setDueDay] = useState<string>("");
+  const [initialBestPurchaseDay, setInitialBestPurchaseDay] = useState<string>("");
+  const [initialDueDay, setInitialDueDay] = useState<string>("");
+
   useEffect(() => {
     async function fetchUserData() {
       if (!user) return;
-      const { data: usuario } = await supabase.from("Usuarios").select("id").eq("id_auth", user.id).maybeSingle();
+      const { data: usuario } = await supabase.from("Usuarios").select("id, dia_otimo, dia_vencimento").eq("id_auth", user.id).maybeSingle();
       if (usuario) {
         setUsuarioId(usuario.id);
+        setBestPurchaseDay(usuario.dia_otimo?.toString() || "");
+        setDueDay(usuario.dia_vencimento?.toString() || "");
+        setInitialBestPurchaseDay(usuario.dia_otimo?.toString() || "");
+        setInitialDueDay(usuario.dia_vencimento?.toString() || "");
         fetchOptions(usuario.id);
       }
     }
@@ -203,7 +213,50 @@ function PersonalizationPage() {
     } finally {
       setIsSubmitting(false);
     }
+  const handleUpdateCardData = async () => {
+    if (!dueDay || !usuarioId) {
+      toast.error("O campo dia de vencimento da fatura é obrigatório.");
+      return;
+    }
+
+    const bestDayNum = bestPurchaseDay ? parseInt(bestPurchaseDay) : null;
+    const dueDayNum = parseInt(dueDay);
+
+    if ((bestDayNum !== null && (bestDayNum < 1 || bestDayNum > 31)) || dueDayNum < 1 || dueDayNum > 31) {
+      toast.error("Informe um dia válido entre 1 e 31.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        acao: "dados_pessoais",
+        dia_otimo: bestPurchaseDay,
+        dia_vencimento: dueDay,
+        id_usuario: usuarioId.toString()
+      };
+
+      const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Erro ao atualizar dados do cartão");
+
+      toast.success("Dados do cartão atualizados com sucesso!");
+      setInitialBestPurchaseDay(bestPurchaseDay);
+      setInitialDueDay(dueDay);
+    } catch (error) {
+      console.error("Erro no webhook de dados do cartão:", error);
+      toast.error("Erro ao atualizar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const isCardDataChanged = bestPurchaseDay !== initialBestPurchaseDay || dueDay !== initialDueDay;
+  const isUpdateButtonEnabled = isCardDataChanged && dueDay !== "" && !isSubmitting;
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -213,8 +266,8 @@ function PersonalizationPage() {
           <main className="flex-1 px-8 py-8 space-y-6">
             <AnimatedItem>
               <header>
-                <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Personalização</h1>
-                <p className="text-sm text-muted-foreground mt-1">Configure as categorias e métodos de pagamento do seu sistema.</p>
+                <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Configurações</h1>
+                <p className="text-sm text-muted-foreground mt-1">Gerencie suas categorias, métodos de pagamento e dados do cartão.</p>
               </header>
             </AnimatedItem>
 
@@ -350,6 +403,68 @@ function PersonalizationPage() {
                     >
                       <Plus className="w-4 h-4" />
                       Adicionar Método
+                    </Button>
+                  </CardContent>
+                </Card>
+                {/* Card 3: Dados do Cartão */}
+                <Card className="border-none shadow-sm bg-white overflow-hidden xl:col-span-2">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-primary" />
+                      Dados do Cartão
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Gerencie as datas de vencimento e melhor dia de compra.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="best-purchase-day" className="text-sm font-medium">Melhor dia de compra</Label>
+                        <Input 
+                          id="best-purchase-day"
+                          type="number"
+                          min="1"
+                          max="31"
+                          placeholder="Ex: 9"
+                          value={bestPurchaseDay}
+                          onChange={(e) => setBestPurchaseDay(e.target.value)}
+                          className="h-11"
+                        />
+                        <p className="text-[11px] text-muted-foreground italic">Esse campo não é obrigatório.</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="due-day" className="text-sm font-medium">Dia de vencimento da fatura <span className="text-danger">*</span></Label>
+                        <Input 
+                          id="due-day"
+                          type="number"
+                          min="1"
+                          max="31"
+                          placeholder="Ex: 19"
+                          value={dueDay}
+                          onChange={(e) => setDueDay(e.target.value)}
+                          className="h-11"
+                        />
+                        <p className="text-[11px] text-muted-foreground italic">Esse campo deve ser obrigatório.</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex gap-3 items-start">
+                      <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        O melhor dia de compra é o dia em que novas compras entram apenas na próxima fatura, ajudando você a ter mais prazo para pagar. A data de vencimento é o dia em que sua fatura fecha para pagamento. Cada banco pode ter uma regra diferente.
+                      </p>
+                    </div>
+
+                    <Button 
+                      onClick={handleUpdateCardData} 
+                      disabled={!isUpdateButtonEnabled}
+                      className={cn(
+                        "w-full h-11 text-white font-medium transition-all duration-200",
+                        isUpdateButtonEnabled ? "bg-[#2563EB] hover:bg-[#1D4ED8] shadow-md" : "bg-slate-200 text-slate-400"
+                      )}
+                    >
+                      {isSubmitting ? "Atualizando..." : "Atualizar"}
                     </Button>
                   </CardContent>
                 </Card>
