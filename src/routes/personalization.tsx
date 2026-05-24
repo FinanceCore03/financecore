@@ -276,7 +276,70 @@ function SettingsPage() {
 
             <AnimatedItem>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {/* Card 1: Categorias */}
+                {/* Card 1: Dados do Cartão */}
+                <Card className="border-none shadow-sm bg-white overflow-hidden xl:col-span-2">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-primary" />
+                      Dados do Cartão
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Gerencie as datas de vencimento e melhor dia de compra.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="best-purchase-day" className="text-sm font-medium">Melhor dia de compra</Label>
+                        <Input 
+                          id="best-purchase-day"
+                          type="number"
+                          min="1"
+                          max="31"
+                          placeholder="Ex: 9"
+                          value={bestPurchaseDay}
+                          onChange={(e) => setBestPurchaseDay(e.target.value)}
+                          className="h-11"
+                        />
+                        <p className="text-[11px] text-muted-foreground italic">Esse campo não é obrigatório.</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="due-day" className="text-sm font-medium">Dia de vencimento da fatura <span className="text-danger">*</span></Label>
+                        <Input 
+                          id="due-day"
+                          type="number"
+                          min="1"
+                          max="31"
+                          placeholder="Ex: 19"
+                          value={dueDay}
+                          onChange={(e) => setDueDay(e.target.value)}
+                          className="h-11"
+                        />
+                        <p className="text-[11px] text-muted-foreground italic">Esse campo deve ser obrigatório.</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex gap-3 items-start">
+                      <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        O melhor dia de compra é o dia em que novas compras entram apenas na próxima fatura, ajudando você a ter mais prazo para pagar. A data de vencimento é o dia em que sua fatura fecha para pagamento. Cada banco pode ter uma regra diferente.
+                      </p>
+                    </div>
+
+                    <Button 
+                      onClick={handleUpdateCardData} 
+                      disabled={!isUpdateButtonEnabled}
+                      className={cn(
+                        "w-full h-11 text-white font-medium transition-all duration-200",
+                        isUpdateButtonEnabled ? "bg-[#2563EB] hover:bg-[#1D4ED8] shadow-md" : "bg-slate-200 text-slate-400"
+                      )}
+                    >
+                      {isSubmitting ? "Atualizando..." : "Atualizar"}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Card 2: Categorias */}
                 <Card className="border-none shadow-sm bg-white overflow-hidden">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -342,7 +405,7 @@ function SettingsPage() {
                   </CardContent>
                 </Card>
 
-                {/* Card 2: Métodos de Pagamento */}
+                {/* Card 3: Métodos de Pagamento */}
                 <Card className="border-none shadow-sm bg-white overflow-hidden">
                   <CardHeader className="pb-4">
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -406,68 +469,6 @@ function SettingsPage() {
                     >
                       <Plus className="w-4 h-4" />
                       Adicionar Método
-                    </Button>
-                  </CardContent>
-                </Card>
-                {/* Card 3: Dados do Cartão */}
-                <Card className="border-none shadow-sm bg-white overflow-hidden xl:col-span-2">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                      <Settings className="w-5 h-5 text-primary" />
-                      Dados do Cartão
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Gerencie as datas de vencimento e melhor dia de compra.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="best-purchase-day" className="text-sm font-medium">Melhor dia de compra</Label>
-                        <Input 
-                          id="best-purchase-day"
-                          type="number"
-                          min="1"
-                          max="31"
-                          placeholder="Ex: 9"
-                          value={bestPurchaseDay}
-                          onChange={(e) => setBestPurchaseDay(e.target.value)}
-                          className="h-11"
-                        />
-                        <p className="text-[11px] text-muted-foreground italic">Esse campo não é obrigatório.</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="due-day" className="text-sm font-medium">Dia de vencimento da fatura <span className="text-danger">*</span></Label>
-                        <Input 
-                          id="due-day"
-                          type="number"
-                          min="1"
-                          max="31"
-                          placeholder="Ex: 19"
-                          value={dueDay}
-                          onChange={(e) => setDueDay(e.target.value)}
-                          className="h-11"
-                        />
-                        <p className="text-[11px] text-muted-foreground italic">Esse campo deve ser obrigatório.</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex gap-3 items-start">
-                      <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        O melhor dia de compra é o dia em que novas compras entram apenas na próxima fatura, ajudando você a ter mais prazo para pagar. A data de vencimento é o dia em que sua fatura fecha para pagamento. Cada banco pode ter uma regra diferente.
-                      </p>
-                    </div>
-
-                    <Button 
-                      onClick={handleUpdateCardData} 
-                      disabled={!isUpdateButtonEnabled}
-                      className={cn(
-                        "w-full h-11 text-white font-medium transition-all duration-200",
-                        isUpdateButtonEnabled ? "bg-[#2563EB] hover:bg-[#1D4ED8] shadow-md" : "bg-slate-200 text-slate-400"
-                      )}
-                    >
-                      {isSubmitting ? "Atualizando..." : "Atualizar"}
                     </Button>
                   </CardContent>
                 </Card>

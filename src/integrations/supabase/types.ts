@@ -186,6 +186,8 @@ export type Database = {
       }
       Usuarios: {
         Row: {
+          Dia_otimo: string | null
+          Dia_vencimento: string | null
           Email: string | null
           id: number
           id_auth: string | null
@@ -193,6 +195,8 @@ export type Database = {
           Nome: string | null
         }
         Insert: {
+          Dia_otimo?: string | null
+          Dia_vencimento?: string | null
           Email?: string | null
           id?: number
           id_auth?: string | null
@@ -200,6 +204,8 @@ export type Database = {
           Nome?: string | null
         }
         Update: {
+          Dia_otimo?: string | null
+          Dia_vencimento?: string | null
           Email?: string | null
           id?: number
           id_auth?: string | null
