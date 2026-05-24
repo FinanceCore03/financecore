@@ -572,20 +572,20 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
       <AlertDialog open={showVencimentoWarning} onOpenChange={setShowVencimentoWarning}>
         <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Vencimento da fatura necessário</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-xl font-bold">Configure o vencimento da fatura</AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-muted-foreground pt-2">
               Para cadastrar compras no crédito corretamente, você precisa informar ao menos o dia de vencimento da sua fatura. Isso ajuda o sistema a calcular em qual mês a compra será cobrada.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="pt-4">
+            <AlertDialogCancel className="h-11 rounded-xl font-semibold">Cancelar</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
                 setShowVencimentoWarning(false);
                 onClose();
                 window.location.href = "/personalization";
               }} 
-              className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
             >
               Ir para Configurações
             </AlertDialogAction>
