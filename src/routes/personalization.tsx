@@ -213,6 +213,8 @@ function SettingsPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
   const handleUpdateCardData = async () => {
     if (!dueDay || !usuarioId) {
       toast.error("O campo dia de vencimento da fatura é obrigatório.");
