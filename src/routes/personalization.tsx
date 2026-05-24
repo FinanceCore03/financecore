@@ -47,6 +47,7 @@ function SettingsPage() {
   const [dueDay, setDueDay] = useState<string>("");
   const [initialBestPurchaseDay, setInitialBestPurchaseDay] = useState<string>("");
   const [initialDueDay, setInitialDueDay] = useState<string>("");
+  const [showCardInfo, setShowCardInfo] = useState(false);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -319,11 +320,30 @@ function SettingsPage() {
                       </div>
                     </div>
 
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex gap-3 items-start">
-                      <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        O melhor dia de compra é o dia em que novas compras entram apenas na próxima fatura, ajudando você a ter mais prazo para pagar. A data de vencimento é o dia em que sua fatura fecha para pagamento. Cada banco pode ter uma regra diferente.
-                      </p>
+                    <div className="space-y-4">
+                      <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col gap-3">
+                        <div className="flex gap-3 items-start">
+                          <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            O melhor dia de compra é o dia em que novas compras entram apenas na próxima fatura, ajudando você a ter mais prazo para pagar. A data de vencimento é o dia em que sua fatura fecha para pagamento. Cada banco pode ter uma regra diferente.
+                          </p>
+                        </div>
+                        
+                        <button 
+                          onClick={() => setShowCardInfo(!showCardInfo)}
+                          className="text-[#2563EB] text-xs font-semibold hover:underline w-fit transition-all"
+                        >
+                          Como posso descobrir?
+                        </button>
+
+                        {showCardInfo && (
+                          <div className="mt-2 p-4 bg-white border border-blue-100 rounded-xl shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                              Você normalmente encontra essas informações no aplicativo do seu banco, na área de cartões. Procure pela data de vencimento da fatura e pelo melhor dia de compra. Se tiver dúvida, você também pode pesquisar no ChatGPT como descobrir essas informações no app do seu banco.
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <Button 

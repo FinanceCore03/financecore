@@ -43,15 +43,19 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [numParcelas, setNumParcelas] = useState<string>("1");
+  const [jurosParcela, setJurosParcela] = useState<string>("");
 
   // Sub-modal states
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMethodModalOpen, setIsMethodModalOpen] = useState(false);
+  const [showVencimentoWarning, setShowVencimentoWarning] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryUsage, setNewCategoryUsage] = useState("saida");
   const [newMethodName, setNewMethodName] = useState("");
   const [isSubmittingQuick, setIsSubmittingQuick] = useState(false);
   const [internalUsuarioId, setInternalUsuarioId] = useState<number | null>(null);
+  const [diaVencimento, setDiaVencimento] = useState<number | null>(null);
 
   const fetchCustomData = async () => {
     if (!user) return;
@@ -59,12 +63,13 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
     try {
       const { data: usuario } = await supabase
         .from("Usuarios")
-        .select("id")
+        .select("id, dia_vencimento")
         .eq("id_auth", user.id)
         .maybeSingle();
 
       if (usuario) {
         setInternalUsuarioId(usuario.id);
+        setDiaVencimento(usuario.dia_vencimento);
         const { data: customOptions } = await supabase
           .from("Opcoes")
           .select("*")
@@ -174,16 +179,19 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
     }
   };
 
-  const isPeriodMethod = metodo === "Crédito" || metodo === "Parcelado";
+  const isCreditoVista = metodo === "Crédito à vista" || metodo === "Crédito";
+  const isCreditoParcelado = metodo === "Crédito Parcelado" || metodo === "Parcelado";
+  const isCredito = isCreditoVista || isCreditoParcelado;
 
   const isFormValid = 
     tipo !== "" && 
     categoria !== "" && 
     valor !== "" && 
     metodo !== "" && 
-    (isPeriodMethod ? (data !== null && dataFinal !== null) : data !== null);
+    data !== null &&
+    (isCreditoParcelado ? (parseInt(numParcelas) > 0) : true);
 
-  const isFormDirty = tipo !== "saida" || categoria !== "" || valor !== "" || metodo !== "" || descricao !== "";
+  const isFormDirty = tipo !== "saida" || categoria !== "" || valor !== "" || metodo !== "" || descricao !== "" || numParcelas !== "1" || jurosParcela !== "";
 
   const resetForm = () => {
     setTipo("saida");
@@ -193,6 +201,8 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
     setValor("");
     setMetodo("");
     setDescricao("");
+    setNumParcelas("1");
+    setJurosParcela("");
   };
 
   const handleClose = () => {
@@ -212,6 +222,11 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
   const handleSave = async () => {
     if (!isFormValid) {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (isCredito && !diaVencimento) {
+      setShowVencimentoWarning(true);
       return;
     }
 
@@ -239,9 +254,14 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
         id_usuario: usuario.id,
       };
 
-      if (isPeriodMethod) {
+      if (isCreditoParcelado) {
+        payload.metodo_pagamento = "Crédito Parcelado";
         payload.data_inicio = format(data, "yyyy-MM-dd");
-        payload.data_fim = format(dataFinal, "yyyy-MM-dd");
+        payload.numero_parcelas = parseInt(numParcelas);
+        payload.juros_parcela = jurosParcela ? parseFloat(jurosParcela.replace(",", ".")) : 0;
+      } else if (isCreditoVista) {
+        payload.metodo_pagamento = "Crédito à vista";
+        payload.data_inicio = format(data, "yyyy-MM-dd");
       } else {
         payload.data_inicio = format(data, "yyyy-MM-dd");
       }
@@ -291,7 +311,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
 
               <div className="grid gap-2">
                 <Label htmlFor="valor" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {metodo === "Crédito" ? "Valor da parcela" : "Valor"}
+                  {isCreditoParcelado ? "Valor da parcela" : "Valor"}
                 </Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">{getCurrencySymbol(moeda)}</span>
@@ -567,6 +587,31 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Alerta de Vencimento Faltando */}
+      <AlertDialog open={showVencimentoWarning} onOpenChange={setShowVencimentoWarning}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Vencimento da fatura necessário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para cadastrar compras no crédito corretamente, você precisa informar ao menos o dia de vencimento da sua fatura. Isso ajuda o sistema a calcular em qual mês a compra será cobrada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowVencimentoWarning(false);
+                onClose();
+                window.location.href = "/personalization";
+              }} 
+              className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Ir para Configurações
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
