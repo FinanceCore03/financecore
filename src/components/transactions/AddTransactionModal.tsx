@@ -22,20 +22,11 @@ interface AddTransactionModalProps {
   moeda: string;
 }
 
-const standardPaymentMethods = [
-  "Crédito",
-  "Débito",
-  "Pix",
-  "Parcelado",
-  "Dinheiro",
-];
-
 export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTransactionModalProps) {
   const { user } = useAuth();
   const [tipo, setTipo] = useState<string>("saida");
   const [categoria, setCategoria] = useState<string>("");
   const [data, setData] = useState<Date>(new Date());
-  const [dataFinal, setDataFinal] = useState<Date>(new Date());
   const [valor, setValor] = useState<string>("");
   const [metodo, setMetodo] = useState<string>("");
   const [descricao, setDescricao] = useState<string>("");
@@ -43,15 +34,19 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [numParcelas, setNumParcelas] = useState<string>("1");
+  const [jurosParcela, setJurosParcela] = useState<string>("");
 
   // Sub-modal states
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isMethodModalOpen, setIsMethodModalOpen] = useState(false);
+  const [showVencimentoWarning, setShowVencimentoWarning] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryUsage, setNewCategoryUsage] = useState("saida");
   const [newMethodName, setNewMethodName] = useState("");
   const [isSubmittingQuick, setIsSubmittingQuick] = useState(false);
   const [internalUsuarioId, setInternalUsuarioId] = useState<number | null>(null);
+  const [diaVencimento, setDiaVencimento] = useState<string | null>(null);
 
   const fetchCustomData = async () => {
     if (!user) return;
@@ -59,12 +54,13 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
     try {
       const { data: usuario } = await supabase
         .from("Usuarios")
-        .select("id")
+        .select("id, Dia_vencimento")
         .eq("id_auth", user.id)
         .maybeSingle();
 
       if (usuario) {
         setInternalUsuarioId(usuario.id);
+        setDiaVencimento(usuario.Dia_vencimento);
         const { data: customOptions } = await supabase
           .from("Opcoes")
           .select("*")
@@ -117,10 +113,8 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
 
       toast.success("Categoria adicionada!");
       
-      // Criar linha na tabela Planejamento se for Saída ou Entrada/Saída
       const normalizedUso = newCategoryUsage.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (normalizedUso === "saida" || normalizedUso === "entrada/saida") {
-        console.log("Criando planejamento automático para categoria:", newCategoryName);
         await supabase
           .from("Planejamento")
           .insert({
@@ -174,25 +168,29 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
     }
   };
 
-  const isPeriodMethod = metodo === "Crédito" || metodo === "Parcelado";
+  const isCreditoVista = metodo === "Crédito à vista" || metodo === "Crédito";
+  const isCreditoParcelado = metodo === "Crédito Parcelado" || metodo === "Parcelado";
+  const isCredito = isCreditoVista || isCreditoParcelado;
 
   const isFormValid = 
     tipo !== "" && 
     categoria !== "" && 
     valor !== "" && 
     metodo !== "" && 
-    (isPeriodMethod ? (data !== null && dataFinal !== null) : data !== null);
+    data !== null &&
+    (isCreditoParcelado ? (parseInt(numParcelas) > 0) : true);
 
-  const isFormDirty = tipo !== "saida" || categoria !== "" || valor !== "" || metodo !== "" || descricao !== "";
+  const isFormDirty = tipo !== "saida" || categoria !== "" || valor !== "" || metodo !== "" || descricao !== "" || (isCreditoParcelado && numParcelas !== "1") || jurosParcela !== "";
 
   const resetForm = () => {
     setTipo("saida");
     setCategoria("");
     setData(new Date());
-    setDataFinal(new Date());
     setValor("");
     setMetodo("");
     setDescricao("");
+    setNumParcelas("1");
+    setJurosParcela("");
   };
 
   const handleClose = () => {
@@ -212,6 +210,11 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
   const handleSave = async () => {
     if (!isFormValid) {
       toast.error("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+
+    if (isCredito && !diaVencimento) {
+      setShowVencimentoWarning(true);
       return;
     }
 
@@ -237,13 +240,15 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
         metodo_pagamento: metodo,
         descricao: descricao || "",
         id_usuario: usuario.id,
+        data_inicio: format(data, "yyyy-MM-dd")
       };
 
-      if (isPeriodMethod) {
-        payload.data_inicio = format(data, "yyyy-MM-dd");
-        payload.data_fim = format(dataFinal, "yyyy-MM-dd");
-      } else {
-        payload.data_inicio = format(data, "yyyy-MM-dd");
+      if (isCreditoParcelado) {
+        payload.metodo_pagamento = "Crédito Parcelado";
+        payload.numero_parcelas = parseInt(numParcelas);
+        payload.juros_parcela = jurosParcela ? parseFloat(jurosParcela.replace(",", ".")) : 0;
+      } else if (isCreditoVista) {
+        payload.metodo_pagamento = "Crédito à vista";
       }
 
       const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
@@ -291,7 +296,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
 
               <div className="grid gap-2">
                 <Label htmlFor="valor" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {metodo === "Crédito" ? "Valor da parcela" : "Valor"}
+                  {isCreditoParcelado ? "Valor da parcela" : "Valor"}
                 </Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">{getCurrencySymbol(moeda)}</span>
@@ -347,9 +352,13 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
                     <SelectValue placeholder="Selecione o método" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {paymentMethods.map((m) => (
-                      <SelectItem key={m.id} value={m.Nome}>{m.Nome}</SelectItem>
-                    ))}
+                    <SelectItem value="Crédito à vista">Crédito à vista</SelectItem>
+                    <SelectItem value="Crédito Parcelado">Crédito Parcelado</SelectItem>
+                    {paymentMethods
+                      .filter(m => m.Nome !== "Crédito" && m.Nome !== "Parcelado" && m.Nome !== "Crédito à vista" && m.Nome !== "Crédito Parcelado")
+                      .map((m) => (
+                        <SelectItem key={m.id} value={m.Nome}>{m.Nome}</SelectItem>
+                      ))}
                     <SelectItem value="ADD_NEW_METHOD" className="text-primary font-bold border-t border-border mt-1 pt-2">
                       + Adicionar Método
                     </SelectItem>
@@ -357,62 +366,53 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
                 </Select>
               </div>
 
-              {isPeriodMethod ? (
+              {isCreditoParcelado && (
                 <>
                   <div className="grid gap-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data Inicial</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent align="start" side="left" className="w-auto p-0 rounded-2xl border-border shadow-xl">
-                        <Calendar mode="single" selected={data} onSelect={(date) => date && setData(date)} locale={ptBR} initialFocus className="rounded-2xl" />
-                      </PopoverContent>
-                    </Popover>
+                    <Label htmlFor="numParcelas" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Número de parcelas</Label>
+                    <Input
+                      id="numParcelas"
+                      type="number"
+                      min="1"
+                      placeholder="Ex: 12"
+                      value={numParcelas}
+                      onChange={(e) => setNumParcelas(e.target.value)}
+                      className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
+                    />
                   </div>
                   <div className="grid gap-2">
-                    <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data Final</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!dataFinal && "text-muted-foreground"}`}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dataFinal ? format(dataFinal, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent align="start" side="left" className="w-auto p-0 rounded-2xl border-border shadow-xl">
-                        <Calendar mode="single" selected={dataFinal} onSelect={(date) => date && setDataFinal(date)} locale={ptBR} initialFocus className="rounded-2xl" />
-                      </PopoverContent>
-                    </Popover>
+                    <Label htmlFor="jurosParcela" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Juros por parcela</Label>
+                    <Input
+                      id="jurosParcela"
+                      placeholder="0,00"
+                      value={jurosParcela}
+                      onChange={(e) => setJurosParcela(e.target.value)}
+                      className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">Preencha apenas se houver juros na compra parcelada.</p>
                   </div>
                 </>
-              ) : (
-                <div className="grid gap-2">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Data</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" side="left" className="w-auto p-0 rounded-2xl border-border shadow-xl">
-                      <Calendar mode="single" selected={data} onSelect={(date) => date && setData(date)} locale={ptBR} initialFocus className="rounded-2xl" />
-                    </PopoverContent>
-                  </Popover>
-                </div>
               )}
+
+              <div className="grid gap-2">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {isCreditoParcelado ? "Data inicial da compra" : isCreditoVista ? "Data da transação" : "Data"}
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`h-11 w-full justify-start text-left font-normal rounded-xl border-border bg-muted/30 hover:bg-muted/50 focus:ring-primary/20 ${!data && "text-muted-foreground"}`}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {data ? format(data, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="left" className="w-auto p-0 rounded-2xl border-border shadow-xl">
+                    <Calendar mode="single" selected={data} onSelect={(date) => date && setData(date)} locale={ptBR} initialFocus className="rounded-2xl" />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="descricao" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Descrição</Label>
@@ -567,6 +567,31 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Alerta de Vencimento Faltando */}
+      <AlertDialog open={showVencimentoWarning} onOpenChange={setShowVencimentoWarning}>
+        <AlertDialogContent className="rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Vencimento da fatura necessário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para cadastrar compras no crédito corretamente, você precisa informar ao menos o dia de vencimento da sua fatura. Isso ajuda o sistema a calcular em qual mês a compra será cobrada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowVencimentoWarning(false);
+                onClose();
+                window.location.href = "/personalization";
+              }} 
+              className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Ir para Configurações
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
