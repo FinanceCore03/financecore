@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/personalization")({
   head: () => ({
@@ -50,7 +51,7 @@ function SettingsPage() {
   useEffect(() => {
     async function fetchUserData() {
       if (!user) return;
-      const { data: usuario } = await supabase.from("Usuarios").select("id, dia_otimo, dia_vencimento").eq("id_auth", user.id).maybeSingle();
+      const { data: usuario } = await supabase.from("Usuarios").select("*").eq("id_auth", user.id).maybeSingle() as any;
       if (usuario) {
         setUsuarioId(usuario.id);
         setBestPurchaseDay(usuario.dia_otimo?.toString() || "");
