@@ -25,6 +25,7 @@ interface AddTransactionModalProps {
 
 export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTransactionModalProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tipo, setTipo] = useState<string>("saida");
   const [categoria, setCategoria] = useState<string>("");
   const [data, setData] = useState<Date>(new Date());
