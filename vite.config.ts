@@ -7,6 +7,9 @@ import { nitro } from "nitro/vite";
 export default defineConfig({
   plugins: [
     tanstackStart({
+      spa: {
+        enabled: true,
+      },
       server: {
         entry: "src/server.ts",
       },
@@ -18,3 +21,4 @@ export default defineConfig({
     }),
   ],
 });
+
