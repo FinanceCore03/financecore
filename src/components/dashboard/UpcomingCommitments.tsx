@@ -13,11 +13,12 @@ interface Commitment {
 
 interface UpcomingCommitmentsProps {
   transactions: any[];
+  creditTransactions?: any[];
   subscriptions: any[];
   moeda: string;
 }
 
-export function UpcomingCommitments({ transactions, subscriptions, moeda }: UpcomingCommitmentsProps) {
+export function UpcomingCommitments({ transactions, creditTransactions = [], subscriptions, moeda }: UpcomingCommitmentsProps) {
   const [showAll, setShowAll] = useState(false);
 
   const commitments = React.useMemo(() => {
@@ -35,7 +36,11 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
 
     const nextMonthTransactionsTotal = transactions.reduce((acc, tx) => {
       const isSaida = normalize(tx.tipo) === "saida";
-      if (!isSaida) return acc;
+      const metodo = normalize(tx.metodo_pagamento || "");
+      const isCredito = metodo.includes("credito");
+
+      // Only process common transactions (NOT credit)
+      if (!isSaida || isCredito) return acc;
 
       const startStr = tx.data_inicio;
       if (!startStr) return acc;
@@ -45,22 +50,29 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
       const endStr = tx.data_fim;
       const end = endStr ? new Date(endStr.split('-')[0], parseInt(endStr.split('-')[1]) - 1, parseInt(endStr.split('-')[2])) : null;
 
-      const metodo = normalize(tx.metodo_pagamento || "");
-      const isCredito = metodo.includes("credito");
-
       const isNextMonth = start >= nextMonth && start <= endOfNextMonth;
-      const isCurrentMonthCredito = isCredito && start.getMonth() === currentMonth && start.getFullYear() === currentYear;
       const overlapsNextMonth = start <= endOfNextMonth && (end && end >= nextMonth);
 
-      if (isNextMonth || isCurrentMonthCredito || overlapsNextMonth) {
+      if (isNextMonth || overlapsNextMonth) {
         return acc + parseFloat(tx.valor || "0");
+      }
+      return acc;
+    }, 0);
+
+    const nextMonthCreditTotal = creditTransactions.reduce((acc, ctx) => {
+      if (!ctx.data_vencimento) return acc;
+      const [y, m, d] = ctx.data_vencimento.split('-').map(Number);
+      const start = new Date(y, m - 1, d);
+
+      if (start >= nextMonth && start <= endOfNextMonth) {
+        return acc + parseFloat(ctx.valor || "0");
       }
       return acc;
     }, 0);
 
     const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
     const nextMonthSubsTotal = activeSubscriptions.reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
-    const faturaTotal = nextMonthTransactionsTotal + nextMonthSubsTotal;
+    const faturaTotal = nextMonthTransactionsTotal + nextMonthCreditTotal + nextMonthSubsTotal;
 
     if (faturaTotal > 0) {
       list.push({
@@ -100,7 +112,7 @@ export function UpcomingCommitments({ transactions, subscriptions, moeda }: Upco
       });
 
     return list.sort((a, b) => a.priority - b.priority);
-  }, [transactions, subscriptions, moeda]);
+  }, [transactions, creditTransactions, subscriptions, moeda]);
 
   const displayedCommitments = showAll ? commitments : commitments.slice(0, 5);
 

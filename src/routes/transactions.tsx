@@ -33,6 +33,7 @@ export const Route = createFileRoute("/transactions")({
 function TransactionsPage() {
   const { isPrivate, togglePrivacy } = usePrivacy();
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState("Todas");
@@ -65,7 +66,7 @@ function TransactionsPage() {
         setUsuarioId(usuario.id);
         setMoeda(usuario.Moeda || "Real");
         
-        const [transacoesRes, assinaturasRes] = await Promise.all([
+        const [transacoesRes, assinaturasRes, creditoRes] = await Promise.all([
           supabase
             .from("Transacoes")
             .select("*")
@@ -73,6 +74,10 @@ function TransactionsPage() {
             .order("data_inicio", { ascending: false }),
           supabase
             .from("Assinaturas")
+            .select("*")
+            .eq("id_usuario", usuario.id),
+          supabase
+            .from("Transacoes_Credito")
             .select("*")
             .eq("id_usuario", usuario.id)
         ]);
@@ -82,6 +87,9 @@ function TransactionsPage() {
         }
         if (assinaturasRes.data) {
           setSubscriptions(assinaturasRes.data);
+        }
+        if (creditoRes.data) {
+          setCreditTransactions(creditoRes.data);
         }
       }
     }
@@ -213,18 +221,38 @@ function TransactionsPage() {
     let periodEntradas = 0;
     let periodSaidas = 0;
 
+    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
       const isEntrada = tx.tipo === "entrada";
+      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
       
-      if (isEntrada) totalAccount += val;
-      else totalAccount -= val;
+      // Update overall balance only if not credit
+      if (!isCreditMethod) {
+        if (isEntrada) totalAccount += val;
+        else totalAccount -= val;
+      }
 
       if (tx.data_inicio) {
         const txDate = parseISOAsLocal(tx.data_inicio);
-        if (txDate && matchPeriod(txDate)) {
+        // Only count in period totals if not credit
+        if (txDate && matchPeriod(txDate) && !isCreditMethod) {
           if (isEntrada) periodEntradas += val;
           else periodSaidas += val;
+        }
+      }
+    });
+
+    creditTransactions.forEach(ctx => {
+      const val = parseFloat(ctx.valor || "0");
+      // Credit transactions are always expenses (saida)
+      totalAccount -= val;
+
+      if (ctx.data_vencimento) {
+        const ctxDate = parseISOAsLocal(ctx.data_vencimento);
+        if (ctxDate && matchPeriod(ctxDate)) {
+          periodSaidas += val;
         }
       }
     });
@@ -238,20 +266,36 @@ function TransactionsPage() {
     });
 
     return { totalAccount, periodEntradas, periodSaidas };
-  }, [transactions, subscriptions, periodFilter, dateRange]);
+  }, [transactions, creditTransactions, subscriptions, periodFilter, dateRange]);
 
   const distributionData = useMemo(() => {
     const categoriesMap: Record<string, number> = {};
     let totalExps = 0;
+    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     filteredTransactions
       .filter(tx => tx.tipo === "saida")
       .forEach(tx => {
-        const cat = tx.categoria || "Outros";
-        const val = parseFloat(tx.valor || "0");
-        categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
-        totalExps += val;
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        if (!isCreditMethod) {
+          const cat = tx.categoria || "Outros";
+          const val = parseFloat(tx.valor || "0");
+          categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
+          totalExps += val;
+        }
       });
+
+    creditTransactions.forEach(ctx => {
+      if (ctx.data_vencimento) {
+        const ctxDate = parseISOAsLocal(ctx.data_vencimento);
+        if (ctxDate && matchPeriod(ctxDate)) {
+          const cat = ctx.categoria || "Outros";
+          const val = parseFloat(ctx.valor || "0");
+          categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
+          totalExps += val;
+        }
+      }
+    });
 
     subscriptions.forEach(sub => {
       if (matchSubscriptionPeriod(sub)) {
@@ -270,7 +314,7 @@ function TransactionsPage() {
       amount: value,
       color: colors[i % colors.length]
     })).sort((a, b) => b.amount - a.amount);
-  }, [filteredTransactions, subscriptions, periodFilter, dateRange]);
+  }, [filteredTransactions, creditTransactions, subscriptions, periodFilter, dateRange]);
 
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
   

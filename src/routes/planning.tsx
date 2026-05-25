@@ -95,7 +95,7 @@ const categoryColors: Record<string, string> = {
 };
 
 function PlanningPage() {
-  const { transactions, loading: dashboardLoading, usuarioId: contextUsuarioId, user: contextUser, moeda } = useDashboardData();
+  const { transactions, creditTransactions, loading: dashboardLoading, usuarioId: contextUsuarioId, user: contextUser, moeda } = useDashboardData();
   const { user: authUser } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [dbBudgets, setDbBudgets] = useState<any[]>([]);
@@ -194,12 +194,14 @@ function PlanningPage() {
     const currentYear = now.getFullYear();
 
     const spendingByCategory: Record<string, number> = {};
+    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
     transactions.forEach(tx => {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
       
-      if (normalizedTipo === "saida") {
+      if (normalizedTipo === "saida" && !isCreditMethod) {
         const cat = tx.categoria || "Outros";
 
         if (tx.data_inicio) {
@@ -208,6 +210,17 @@ function PlanningPage() {
             const val = parseFloat(tx.valor || "0");
             spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
           }
+        }
+      }
+    });
+
+    creditTransactions?.forEach(ctx => {
+      if (ctx.data_vencimento) {
+        const [year, month] = ctx.data_vencimento.split('-').map(Number);
+        if (month - 1 === currentMonth && year === currentYear) {
+          const cat = ctx.categoria || "Outros";
+          const val = parseFloat(ctx.valor || "0");
+          spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
         }
       }
     });
@@ -261,7 +274,7 @@ function PlanningPage() {
       totalSpent,
       difference
     };
-  }, [transactions, dbBudgets]);
+  }, [transactions, creditTransactions, dbBudgets]);
 
   const handleBudgetChange = async (id: number, value: number) => {
     // Ensure minimum value is 0

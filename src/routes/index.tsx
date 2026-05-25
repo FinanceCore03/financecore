@@ -27,8 +27,9 @@ function Dashboard() {
   const { 
     transactions, 
     loading, 
+    creditTransactions,
     stats, 
-    chartData, 
+    chartData,
     categoriesData,
     usuarioId,
     moeda,
@@ -107,7 +108,7 @@ function Dashboard() {
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
               <AnimatedItem className="xl:col-span-2">
-                <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
+                <SpendingChart data={chartData} moeda={moeda} transactions={transactions} creditTransactions={creditTransactions} />
               </AnimatedItem>
               <AnimatedItem>
                 <TopExpenses categories={categoriesData.list} moeda={moeda} />
@@ -116,12 +117,13 @@ function Dashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <AnimatedItem>
-                <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} subscriptions={subscriptions} />
+                <PlanningCard usuarioId={usuarioId} moeda={moeda} transactions={transactions} creditTransactions={creditTransactions} subscriptions={subscriptions} />
               </AnimatedItem>
               <AnimatedItem>
                 <MonthlyAlerts 
                   transactions={transactions} 
-                  subscriptions={subscriptions} 
+                  creditTransactions={creditTransactions}
+                  subscriptions={subscriptions}
                   planning={planning} 
                   stats={stats} 
                   moeda={moeda} 
@@ -130,7 +132,8 @@ function Dashboard() {
               <AnimatedItem>
                 <UpcomingCommitments 
                   transactions={transactions} 
-                  subscriptions={subscriptions} 
+                  creditTransactions={creditTransactions}
+                  subscriptions={subscriptions}
                   moeda={moeda} 
                 />
               </AnimatedItem>

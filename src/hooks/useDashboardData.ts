@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useDashboardData() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
@@ -41,7 +42,7 @@ export function useDashboardData() {
           setMoeda(usuario.Moeda || "Real");
 
           // 2. Fetch all transactions and subscriptions for this user
-          const [transacoesRes, assinaturasRes] = await Promise.all([
+          const [transacoesRes, assinaturasRes, creditoRes] = await Promise.all([
             supabase
               .from("Transacoes")
               .select("*")
@@ -49,6 +50,10 @@ export function useDashboardData() {
               .order("data_inicio", { ascending: false }),
             supabase
               .from("Assinaturas")
+              .select("*")
+              .eq("id_usuario", usuario.id),
+            supabase
+              .from("Transacoes_Credito")
               .select("*")
               .eq("id_usuario", usuario.id)
           ]);
@@ -71,6 +76,7 @@ export function useDashboardData() {
           });
           
           setTransactions(normalized);
+          setCreditTransactions(creditoRes.data || []);
           setSubscriptions(assinaturasRes.data || []);
         } else {
           console.warn("Usuário não encontrado na tabela Usuarios para id_auth:", user.id);
@@ -126,6 +132,9 @@ export function useDashboardData() {
 
     const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
     
+    // Normalize string to avoid accent issues
+    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
       
@@ -136,8 +145,14 @@ export function useDashboardData() {
       const isEntrada = normalizedTipo === "entrada";
       const isSaida = normalizedTipo === "saida";
       
-      if (isEntrada) totalBalance += val;
-      else if (isSaida) totalBalance -= val;
+      const metodo = normalizeStr(tx.metodo_pagamento);
+      const isCreditMethod = metodo.includes("credito");
+
+      // Only count in balance/expenses if it's NOT a credit transaction
+      if (!isCreditMethod) {
+        if (isEntrada) totalBalance += val;
+        else if (isSaida) totalBalance -= val;
+      }
 
       const dateStr = tx.data_inicio;
       if (dateStr) {
@@ -147,14 +162,39 @@ export function useDashboardData() {
         const txMonth = txDate.getMonth();
         const txYear = txDate.getFullYear();
 
-        updateSparkline(txDate, val, isEntrada);
+        // Only count in monthly/sparkline if it's NOT a credit transaction
+        if (!isCreditMethod) {
+          updateSparkline(txDate, val, isEntrada);
 
-        if (txMonth === currentMonth && txYear === currentYear) {
-          if (isEntrada) monthIncome += val;
-          else if (isSaida) monthExpenses += val;
-        } else if (txMonth === lastMonth && txYear === lastMonthYear) {
-          if (isEntrada) prevMonthIncome += val;
-          else if (isSaida) prevMonthExpenses += val;
+          if (txMonth === currentMonth && txYear === currentYear) {
+            if (isEntrada) monthIncome += val;
+            else if (isSaida) monthExpenses += val;
+          } else if (txMonth === lastMonth && txYear === lastMonthYear) {
+            if (isEntrada) prevMonthIncome += val;
+            else if (isSaida) prevMonthExpenses += val;
+          }
+        }
+      }
+    });
+
+    // Add Credit Transactions from Transacoes_Credito
+    creditTransactions.forEach(ctx => {
+      const val = parseFloat(ctx.valor || "0");
+      const dateStr = ctx.data_vencimento;
+      if (dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const ctxDate = new Date(year, month - 1, day);
+        const ctxMonth = ctxDate.getMonth();
+        const ctxYear = ctxDate.getFullYear();
+
+        // Credit transactions are always expenses (saida)
+        totalBalance -= val;
+        updateSparkline(ctxDate, val, false);
+
+        if (ctxMonth === currentMonth && ctxYear === currentYear) {
+          monthExpenses += val;
+        } else if (ctxMonth === lastMonth && ctxYear === lastMonthYear) {
+          prevMonthExpenses += val;
         }
       }
     });
@@ -215,7 +255,7 @@ export function useDashboardData() {
         available: last6Months.map(m => ({ value: m.income - m.expenses }))
       }
     };
-  }, [transactions, user]);
+  }, [transactions, creditTransactions, user]);
 
   const chartData = useMemo(() => {
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -229,10 +269,19 @@ export function useDashboardData() {
     // If not, we might need to fetch them.
     // Looking at Transactions component, it seems subscriptions are a category in transactions.
     
+    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     return months.map((m, i) => {
       const monthTransactions = transactions.filter(tx => {
         if (!tx.data_inicio) return false;
         const [year, month] = tx.data_inicio.split('-').map(Number);
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        return (month - 1) === i && year === currentYear && !isCreditMethod;
+      });
+
+      const monthCreditTransactions = creditTransactions.filter(ctx => {
+        if (!ctx.data_vencimento) return false;
+        const [year, month] = ctx.data_vencimento.split('-').map(Number);
         return (month - 1) === i && year === currentYear;
       });
 
@@ -252,24 +301,30 @@ export function useDashboardData() {
         })
         .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
+      const creditExpenses = monthCreditTransactions
+        .reduce((sum, ctx) => sum + parseFloat(ctx.valor || "0"), 0);
+
       // Include subscriptions in expenses for chart
       const subscriptionTotal = subscriptions
         .filter(sub => sub.status !== false)
         .reduce((sum, sub) => sum + parseFloat(sub.valor || "0"), 0);
 
-      return { m, income, expenses: expenses + subscriptionTotal };
+      return { m, income, expenses: expenses + creditExpenses + subscriptionTotal };
     });
-  }, [transactions, subscriptions]);
+  }, [transactions, creditTransactions, subscriptions]);
 
   const categoriesData = useMemo(() => {
     const categoriesMap: Record<string, number> = {};
     let totalExps = 0;
 
+    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
     transactions
       .filter(tx => {
         const rawTipo = (tx.tipo || "").toLowerCase();
         const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        return normalizedTipo === "saida";
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        return normalizedTipo === "saida" && !isCreditMethod;
       })
       .forEach(tx => {
         const cat = tx.categoria || "Outros";
@@ -277,6 +332,13 @@ export function useDashboardData() {
         categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
         totalExps += val;
       });
+
+    creditTransactions.forEach(ctx => {
+      const cat = ctx.categoria || "Outros";
+      const val = parseFloat(ctx.valor || "0");
+      categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
+      totalExps += val;
+    });
 
     // Include subscriptions as "Assinatura" category
     const subscriptionTotal = subscriptions
@@ -311,10 +373,11 @@ export function useDashboardData() {
       list: sortedCats,
       total: totalExps
     };
-  }, [transactions]);
+  }, [transactions, creditTransactions, subscriptions]);
 
   return {
     transactions,
+    creditTransactions,
     loading,
     stats,
     chartData,

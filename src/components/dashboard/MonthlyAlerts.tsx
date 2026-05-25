@@ -11,13 +11,14 @@ interface Alert {
 
 interface MonthlyAlertsProps {
   transactions: any[];
+  creditTransactions?: any[];
   subscriptions: any[];
   planning: any[];
   stats: any;
   moeda: string;
 }
 
-export function MonthlyAlerts({ transactions, subscriptions, planning, stats, moeda }: MonthlyAlertsProps) {
+export function MonthlyAlerts({ transactions, creditTransactions = [], subscriptions, planning, stats, moeda }: MonthlyAlertsProps) {
   const [showAll, setShowAll] = useState(false);
 
   const alerts = React.useMemo(() => {
@@ -44,7 +45,11 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
     
     const nextMonthTransactions = transactions.reduce((acc, tx) => {
       const isSaida = normalize(tx.tipo) === "saida";
-      if (!isSaida) return acc;
+      const metodo = normalize(tx.metodo_pagamento || "");
+      const isCredito = metodo.includes("credito");
+
+      // Only process common transactions (NOT credit)
+      if (!isSaida || isCredito) return acc;
 
       const startStr = tx.data_inicio;
       if (!startStr) return acc;
@@ -54,22 +59,29 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
       const endStr = tx.data_fim;
       const end = endStr ? new Date(endStr.split('-')[0], parseInt(endStr.split('-')[1]) - 1, parseInt(endStr.split('-')[2])) : null;
 
-      const metodo = normalize(tx.metodo_pagamento || "");
-      const isCredito = metodo.includes("credito");
-
       const isNextMonth = start >= nextMonth && start <= endOfNextMonth;
-      const isCurrentMonthCredito = isCredito && start.getMonth() === currentMonth && start.getFullYear() === currentYear;
       const overlapsNextMonth = start <= endOfNextMonth && (end && end >= nextMonth);
 
-      if (isNextMonth || isCurrentMonthCredito || overlapsNextMonth) {
+      if (isNextMonth || overlapsNextMonth) {
         return acc + parseFloat(tx.valor || "0");
+      }
+      return acc;
+    }, 0);
+
+    const nextMonthCredit = creditTransactions.reduce((acc, ctx) => {
+      if (!ctx.data_vencimento) return acc;
+      const [y, m, d] = ctx.data_vencimento.split('-').map(Number);
+      const start = new Date(y, m - 1, d);
+
+      if (start >= nextMonth && start <= endOfNextMonth) {
+        return acc + parseFloat(ctx.valor || "0");
       }
       return acc;
     }, 0);
 
     const activeSubscriptions = subscriptions.filter(sub => sub.status !== false);
     const nextMonthSubs = activeSubscriptions.reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
-    const faturaProximoMes = nextMonthTransactions + nextMonthSubs;
+    const faturaProximoMes = nextMonthTransactions + nextMonthCredit + nextMonthSubs;
 
     let incomeForComparison = stats.monthIncome;
     if (incomeForComparison === 0) {
@@ -99,11 +111,23 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
     const spendingByCategory: Record<string, number> = {};
     transactions.forEach(tx => {
       const isSaida = normalize(tx.tipo) === "saida";
-      if (isSaida && tx.data_inicio) {
+      const isCredito = normalize(tx.metodo_pagamento || "").includes("credito");
+      
+      if (isSaida && !isCredito && tx.data_inicio) {
         const [y, m] = tx.data_inicio.split('-').map(Number);
         if (m - 1 === currentMonth && y === currentYear) {
           const cat = tx.categoria || "Outros";
           spendingByCategory[cat] = (spendingByCategory[cat] || 0) + parseFloat(tx.valor || "0");
+        }
+      }
+    });
+
+    creditTransactions.forEach(ctx => {
+      if (ctx.data_vencimento) {
+        const [y, m] = ctx.data_vencimento.split('-').map(Number);
+        if (m - 1 === currentMonth && y === currentYear) {
+          const cat = ctx.categoria || "Outros";
+          spendingByCategory[cat] = (spendingByCategory[cat] || 0) + parseFloat(ctx.valor || "0");
         }
       }
     });
@@ -156,7 +180,7 @@ export function MonthlyAlerts({ transactions, subscriptions, planning, stats, mo
     });
 
     return list.sort((a, b) => a.priority - b.priority);
-  }, [transactions, subscriptions, planning, stats, moeda]);
+  }, [transactions, creditTransactions, subscriptions, planning, stats, moeda]);
 
   const displayedAlerts = showAll ? alerts : alerts.slice(0, 6);
 

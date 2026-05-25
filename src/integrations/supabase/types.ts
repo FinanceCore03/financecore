@@ -191,9 +191,7 @@ export type Database = {
         Row: {
           categoria: string | null
           created_at: string
-          data_fim: string | null
-          data_inicio: string | null
-          data_transacao: string | null
+          data_vencimento: string | null
           descricao: string | null
           id: number
           id_usuario: number | null
@@ -206,9 +204,7 @@ export type Database = {
         Insert: {
           categoria?: string | null
           created_at?: string
-          data_fim?: string | null
-          data_inicio?: string | null
-          data_transacao?: string | null
+          data_vencimento?: string | null
           descricao?: string | null
           id?: number
           id_usuario?: number | null
@@ -221,9 +217,7 @@ export type Database = {
         Update: {
           categoria?: string | null
           created_at?: string
-          data_fim?: string | null
-          data_inicio?: string | null
-          data_transacao?: string | null
+          data_vencimento?: string | null
           descricao?: string | null
           id?: number
           id_usuario?: number | null

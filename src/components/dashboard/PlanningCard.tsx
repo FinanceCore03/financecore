@@ -9,10 +9,11 @@ interface PlanningCardProps {
   usuarioId: number | null;
   moeda: string;
   transactions: any[];
+  creditTransactions?: any[];
   subscriptions: any[];
 }
 
-export function PlanningCard({ usuarioId, moeda, transactions, subscriptions }: PlanningCardProps) {
+export function PlanningCard({ usuarioId, moeda, transactions, creditTransactions = [], subscriptions }: PlanningCardProps) {
   const { data: budgets = [], isLoading } = useQuery({
     queryKey: ["planning", usuarioId],
     queryFn: async () => {
@@ -34,12 +35,14 @@ export function PlanningCard({ usuarioId, moeda, transactions, subscriptions }: 
     const currentYear = now.getFullYear();
 
     const spendingByCategory: Record<string, number> = {};
+    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
     transactions.forEach(tx => {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
       
-      if (normalizedTipo === "saida") {
+      if (normalizedTipo === "saida" && !isCreditMethod) {
         const cat = tx.categoria || "Outros";
         if (tx.data_inicio) {
           const [year, month] = tx.data_inicio.split('-').map(Number);
@@ -47,6 +50,17 @@ export function PlanningCard({ usuarioId, moeda, transactions, subscriptions }: 
             const val = parseFloat(tx.valor || "0");
             spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
           }
+        }
+      }
+    });
+
+    creditTransactions.forEach(ctx => {
+      if (ctx.data_vencimento) {
+        const [year, month] = ctx.data_vencimento.split('-').map(Number);
+        if (month - 1 === currentMonth && year === currentYear) {
+          const cat = ctx.categoria || "Outros";
+          const val = parseFloat(ctx.valor || "0");
+          spendingByCategory[cat] = (spendingByCategory[cat] || 0) + val;
         }
       }
     });
@@ -78,7 +92,7 @@ export function PlanningCard({ usuarioId, moeda, transactions, subscriptions }: 
         isOver: remaining < 0
       };
     }).sort((a, b) => b.percentage - a.percentage);
-  }, [budgets, transactions]);
+  }, [budgets, transactions, creditTransactions, subscriptions]);
 
   if (isLoading) {
     return (
