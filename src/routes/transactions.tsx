@@ -32,6 +32,7 @@ export const Route = createFileRoute("/transactions")({
 
 function TransactionsPage() {
   const { isPrivate, togglePrivacy } = usePrivacy();
+  const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const [transactions, setTransactions] = useState<any[]>([]);
   const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
@@ -226,7 +227,8 @@ function TransactionsPage() {
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
       const isEntrada = tx.tipo === "entrada";
-      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+      const metodo = normalizeStr(tx.metodo_pagamento);
+      const isCreditMethod = metodo.includes("credito à vista") || metodo.includes("crédito à vista") || metodo.includes("credito parcelado") || metodo.includes("crédito parcelado");
       
       // Update overall balance only if not credit
       if (!isCreditMethod) {
@@ -276,7 +278,8 @@ function TransactionsPage() {
     filteredTransactions
       .filter(tx => tx.tipo === "saida")
       .forEach(tx => {
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        const metodo = normalizeStr(tx.metodo_pagamento);
+        const isCreditMethod = metodo.includes("credito à vista") || metodo.includes("crédito à vista") || metodo.includes("credito parcelado") || metodo.includes("crédito parcelado");
         if (!isCreditMethod) {
           const cat = tx.categoria || "Outros";
           const val = parseFloat(tx.valor || "0");
@@ -621,6 +624,11 @@ function TransactionsPage() {
                             <td className="py-4 px-4 text-muted-foreground max-w-[200px] truncate">{tx.descricao || "—"}</td>
                             <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
                               {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
+                              {(normalizeStr(tx.metodo_pagamento).includes("credito à vista") || normalizeStr(tx.metodo_pagamento).includes("crédito à vista") || normalizeStr(tx.metodo_pagamento).includes("credito parcelado") || normalizeStr(tx.metodo_pagamento).includes("crédito parcelado")) && (
+                                <div className="text-[10px] text-muted-foreground font-normal mt-0.5 opacity-70">
+                                  Impacto via fatura
+                                </div>
+                              )}
                             </td>
                             <td className="py-4 px-4 text-muted-foreground">{tx.metodo_pagamento || "—"}</td>
                             <td className="py-4 px-4 text-center">

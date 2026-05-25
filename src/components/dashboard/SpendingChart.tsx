@@ -42,7 +42,8 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const monthTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [txYear, txMonth] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const metodo = normalizeStr(tx.metodo_pagamento);
+          const isCredit = metodo.includes("credito à vista") || metodo.includes("crédito à vista") || metodo.includes("credito parcelado") || metodo.includes("crédito parcelado");
           return (txMonth - 1) === mIdx && txYear === year && !isCredit;
         });
 
@@ -78,7 +79,8 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const weekTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [year, month, day] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const metodo = normalizeStr(tx.metodo_pagamento);
+          const isCredit = metodo.includes("credito à vista") || metodo.includes("crédito à vista") || metodo.includes("credito parcelado") || metodo.includes("crédito parcelado");
           return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay && !isCredit;
         });
 
@@ -113,7 +115,8 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const dateStr = d.toISOString().split('T')[0];
         
         const dayTransactions = transactions.filter(tx => {
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const metodo = normalizeStr(tx.metodo_pagamento);
+          const isCredit = metodo.includes("credito à vista") || metodo.includes("crédito à vista") || metodo.includes("credito parcelado") || metodo.includes("crédito parcelado");
           return tx.data_inicio === dateStr && !isCredit;
         });
 
