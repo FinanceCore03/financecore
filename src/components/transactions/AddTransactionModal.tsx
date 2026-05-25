@@ -181,9 +181,10 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
     valor !== "" && 
     metodo !== "" && 
     data !== null &&
-    (isCreditoParcelado ? (parseInt(numParcelas) > 0) : true);
+    (isCreditoParcelado ? (parseInt(numParcelas) > 0) : true) &&
+    (!semJuros ? jurosParcela !== "" : true);
 
-  const isFormDirty = tipo !== "saida" || categoria !== "" || valor !== "" || metodo !== "" || descricao !== "" || (isCreditoParcelado && numParcelas !== "1") || jurosParcela !== "";
+  const isFormDirty = tipo !== "saida" || categoria !== "" || valor !== "" || metodo !== "" || descricao !== "" || (isCreditoParcelado && numParcelas !== "1") || jurosParcela !== "" || !semJuros;
 
   const resetForm = () => {
     setTipo("saida");
