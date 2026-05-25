@@ -187,6 +187,62 @@ export type Database = {
           },
         ]
       }
+      Transacoes_Credito: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          data_transacao: string | null
+          descricao: string | null
+          id: number
+          id_usuario: number | null
+          juros_parcela: string | null
+          metodo_pagamento: string | null
+          numero_parcelas: string | null
+          tipo: string | null
+          valor: string | null
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_transacao?: string | null
+          descricao?: string | null
+          id?: number
+          id_usuario?: number | null
+          juros_parcela?: string | null
+          metodo_pagamento?: string | null
+          numero_parcelas?: string | null
+          tipo?: string | null
+          valor?: string | null
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          data_transacao?: string | null
+          descricao?: string | null
+          id?: number
+          id_usuario?: number | null
+          juros_parcela?: string | null
+          metodo_pagamento?: string | null
+          numero_parcelas?: string | null
+          tipo?: string | null
+          valor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Transacoes_Credito_id_usuario_fkey"
+            columns: ["id_usuario"]
+            isOneToOne: false
+            referencedRelation: "Usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Usuarios: {
         Row: {
           Dia_otimo: string | null
