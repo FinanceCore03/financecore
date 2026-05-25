@@ -108,7 +108,7 @@ function Dashboard() {
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
               <AnimatedItem className="xl:col-span-2">
-                <SpendingChart data={chartData} moeda={moeda} transactions={transactions} />
+                <SpendingChart data={chartData} moeda={moeda} transactions={transactions} creditTransactions={creditTransactions} />
               </AnimatedItem>
               <AnimatedItem>
                 <TopExpenses categories={categoriesData.list} moeda={moeda} />
