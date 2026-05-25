@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ interface AddTransactionModalProps {
 
 export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTransactionModalProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tipo, setTipo] = useState<string>("saida");
   const [categoria, setCategoria] = useState<string>("");
   const [data, setData] = useState<Date>(new Date());
@@ -596,8 +598,9 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
               onClick={() => {
                 setShowVencimentoWarning(false);
                 onClose();
-                window.location.href = "/personalization";
+                navigate({ to: "/personalization" });
               }} 
+
               className="h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
             >
               Ir para Configurações
