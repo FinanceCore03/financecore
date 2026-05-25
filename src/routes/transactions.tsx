@@ -32,6 +32,7 @@ export const Route = createFileRoute("/transactions")({
 
 function TransactionsPage() {
   const { isPrivate, togglePrivacy } = usePrivacy();
+  const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const [transactions, setTransactions] = useState<any[]>([]);
   const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
