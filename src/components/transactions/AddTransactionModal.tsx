@@ -257,15 +257,32 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error(`Erro no webhook: ${response.statusText}`);
+      if (!response.ok) {
+        // Tentar ler o erro do corpo da resposta, caso o n8n envie status != 200
+        try {
+          const errorData = await response.json();
+          if (
+            errorData.success === false && 
+            (errorData.erro === "DIA_VENCIMENTO_NAO_CADASTRADO" || 
+             (errorData.mensagem && errorData.mensagem.includes("Dia vencimento não cadastrado")))
+          ) {
+            setShowVencimentoWarning(true);
+            return;
+          }
+          throw new Error(errorData.mensagem || response.statusText);
+        } catch (e: any) {
+          if (e.message) throw e;
+          throw new Error(`Erro no webhook: ${response.statusText}`);
+        }
+      }
 
       const result = await response.json();
 
       // Regra obrigatória no frontend: Verificar retorno do webhook
       if (
-        result.success === false || 
-        result.erro === "DIA_VENCIMENTO_NAO_CADASTRADO" || 
-        (result.mensagem && result.mensagem.includes("Dia vencimento não cadastrado"))
+        result.success === false && 
+        (result.erro === "DIA_VENCIMENTO_NAO_CADASTRADO" || 
+         (result.mensagem && result.mensagem.includes("Dia vencimento não cadastrado")))
       ) {
         setShowVencimentoWarning(true);
         return;
