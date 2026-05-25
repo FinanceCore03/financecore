@@ -251,9 +251,10 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
       if (isCreditoParcelado) {
         payload.metodo_pagamento = "Crédito Parcelado";
         payload.numero_parcelas = parseInt(numParcelas);
-        payload.juros_parcela = jurosParcela ? parseFloat(jurosParcela.replace(",", ".")) : 0;
+        payload.juros = semJuros ? 0 : (jurosParcela ? parseFloat(jurosParcela.replace(",", ".")) : 0);
       } else if (isCreditoVista) {
         payload.metodo_pagamento = "Crédito à vista";
+        payload.juros = semJuros ? 0 : (jurosParcela ? parseFloat(jurosParcela.replace(",", ".")) : 0);
       }
 
       const response = await fetch("https://autowebhook.dudaclientes.site/webhook/Transacoes", {
