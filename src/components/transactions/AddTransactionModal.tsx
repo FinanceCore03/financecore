@@ -259,6 +259,18 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
 
       if (!response.ok) throw new Error(`Erro no webhook: ${response.statusText}`);
 
+      const result = await response.json();
+
+      // Regra obrigatória no frontend: Verificar retorno do webhook
+      if (
+        result.success === false || 
+        result.erro === "DIA_VENCIMENTO_NAO_CADASTRADO" || 
+        (result.mensagem && result.mensagem.includes("Dia vencimento não cadastrado"))
+      ) {
+        setShowVencimentoWarning(true);
+        return;
+      }
+
       toast.success("Transação salva com sucesso!");
       resetForm();
       onSuccess();
