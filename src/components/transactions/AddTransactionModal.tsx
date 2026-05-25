@@ -583,7 +583,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
               onClick={() => {
                 setShowVencimentoWarning(false);
                 onClose();
-                window.location.href = "/personalization";
+                window.location.href = "/configuracoes";
               }} 
               className="h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
             >
