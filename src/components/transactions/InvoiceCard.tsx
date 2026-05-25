@@ -55,6 +55,10 @@ export function InvoiceCard({ transactions, creditTransactions = [], subscriptio
     return txTotal + creditTotal + subsTotal;
   })();
 
+  const now = new Date();
+  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
   const scheduledCount = transactions.filter(tx => {
     if (tx.tipo !== "saida") return false;
     
