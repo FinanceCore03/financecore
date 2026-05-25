@@ -38,6 +38,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [numParcelas, setNumParcelas] = useState<string>("1");
   const [jurosParcela, setJurosParcela] = useState<string>("");
+  const [semJuros, setSemJuros] = useState(true);
 
   // Sub-modal states
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
