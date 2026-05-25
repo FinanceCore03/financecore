@@ -386,31 +386,52 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
               </div>
 
               {isCreditoParcelado && (
-                <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="numParcelas" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Número de parcelas</Label>
-                    <Input
-                      id="numParcelas"
-                      type="number"
-                      min="1"
-                      placeholder="Ex: 12"
-                      value={numParcelas}
-                      onChange={(e) => setNumParcelas(e.target.value)}
-                      className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
-                    />
+                <div className="grid gap-2">
+                  <Label htmlFor="numParcelas" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Número de parcelas</Label>
+                  <Input
+                    id="numParcelas"
+                    type="number"
+                    min="1"
+                    placeholder="Ex: 12"
+                    value={numParcelas}
+                    onChange={(e) => setNumParcelas(e.target.value)}
+                    className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
+                  />
+                </div>
+              )}
+
+              {isCredito && (
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="jurosParcela" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Juros</Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSemJuros(!semJuros);
+                        if (!semJuros) setJurosParcela("");
+                      }}
+                      className={`text-[10px] px-2 py-1 rounded-md transition-colors ${
+                        semJuros 
+                          ? "bg-primary/10 text-primary font-bold" 
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {semJuros ? "✓ Sem juros" : "Com juros"}
+                    </button>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="jurosParcela" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Juros por parcela</Label>
+                  {!semJuros && (
                     <Input
                       id="jurosParcela"
                       placeholder="0,00"
                       value={jurosParcela}
                       onChange={(e) => setJurosParcela(e.target.value)}
-                      className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20"
+                      className="h-11 rounded-xl border-border bg-muted/30 focus:ring-primary/20 animate-in fade-in slide-in-from-top-1"
                     />
-                    <p className="text-[10px] text-muted-foreground italic">Preencha apenas se houver juros na compra parcelada.</p>
-                  </div>
-                </>
+                  )}
+                  <p className="text-[10px] text-muted-foreground italic">
+                    {semJuros ? "A transação não possui juros." : "Informe o valor total de juros."}
+                  </p>
+                </div>
               )}
 
               <div className="grid gap-2">
