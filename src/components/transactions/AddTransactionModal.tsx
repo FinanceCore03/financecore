@@ -195,6 +195,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
     setDescricao("");
     setNumParcelas("1");
     setJurosParcela("");
+    setSemJuros(true);
   };
 
   const handleClose = () => {
