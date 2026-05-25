@@ -213,7 +213,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
       return;
     }
 
-    if (isCredito && !diaVencimento) {
+    if (isCredito && (!diaVencimento || diaVencimento === "indefinido")) {
       setShowVencimentoWarning(true);
       return;
     }
