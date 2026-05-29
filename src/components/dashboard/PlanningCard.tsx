@@ -40,7 +40,7 @@ export function PlanningCard({ usuarioId, moeda, transactions, creditTransaction
     transactions.forEach(tx => {
       const rawTipo = (tx.tipo || "").toLowerCase();
       const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
       
       if (normalizedTipo === "saida" && !isCreditMethod) {
         const cat = tx.categoria || "Outros";
