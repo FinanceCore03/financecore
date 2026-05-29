@@ -126,7 +126,7 @@ function TransactionsPage() {
       const timer = setTimeout(() => {
         setHighlightedId(null);
         // Also clear URL param to avoid re-triggering on reload
-        navigate({ search: { highlight: undefined }, replace: true });
+        navigate({ search: (prev: any) => ({ ...prev, highlight: undefined }), replace: true });
       }, 3000);
       
       return () => clearTimeout(timer);
