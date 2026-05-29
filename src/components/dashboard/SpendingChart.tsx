@@ -78,7 +78,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const weekTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [year, month, day] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
           return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay && !isCredit;
         });
 
