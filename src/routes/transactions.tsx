@@ -114,11 +114,19 @@ function TransactionsPage() {
       setHighlightedId(searchParams.highlight);
       setExpandedTxId(searchParams.highlight);
       
+      // Scroll to the highlighted transaction
+      setTimeout(() => {
+        const element = document.getElementById(`tx-${searchParams.highlight}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+
       // Reset highlight after animation
       const timer = setTimeout(() => {
         setHighlightedId(null);
         // Also clear URL param to avoid re-triggering on reload
-        navigate({ search: (prev: any) => ({ ...prev, highlight: undefined }), replace: true });
+        navigate({ search: { highlight: undefined }, replace: true });
       }, 3000);
       
       return () => clearTimeout(timer);
@@ -654,8 +662,9 @@ function TransactionsPage() {
                           return (
                             <Fragment key={tx.id}>
                               <tr 
+                                id={`tx-${tx.id}`}
                                 onClick={() => isCredit && setExpandedTxId(isExpanded ? null : tx.id)}
-                                className={`text-sm hover:bg-muted/30 transition-all duration-500 ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''} ${highlightedId === tx.id ? 'bg-blue-50/80 ring-1 ring-blue-100/50' : ''}`}
+                                className={`text-sm hover:bg-muted/30 transition-all duration-500 ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''} ${highlightedId === tx.id ? 'highlight-row ring-1 ring-blue-200/50' : ''}`}
                               >
                                 <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
                                 <td className="py-4 px-4 text-muted-foreground">

@@ -2,6 +2,17 @@
 @source "../src";
 @import "tw-animate-css";
 
+@keyframes pulse-blue-light {
+  0% { background-color: transparent; }
+  20% { background-color: rgba(219, 234, 254, 0.6); }
+  80% { background-color: rgba(219, 234, 254, 0.6); }
+  100% { background-color: transparent; }
+}
+
+.highlight-row {
+  animation: pulse-blue-light 3s ease-in-out;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
