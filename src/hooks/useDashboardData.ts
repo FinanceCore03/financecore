@@ -147,6 +147,7 @@ export function useDashboardData() {
       
       const metodo = normalizeStr(tx.metodo_pagamento);
       const isCreditMethod = metodo.includes("credito");
+      const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
       // Only count in balance/expenses if it's NOT a credit transaction
       if (!isCreditMethod) {
@@ -162,15 +163,22 @@ export function useDashboardData() {
         const txMonth = txDate.getMonth();
         const txYear = txDate.getFullYear();
 
-        // Only count in monthly/sparkline if it's NOT a credit transaction
+        // Only count in monthly/sparkline if it's NOT a credit transaction AND NOT Saldo Anterior for income
         if (!isCreditMethod) {
-          updateSparkline(txDate, val, isEntrada);
+          // If it's Saldo Anterior, we don't count it as monthly income
+          const shouldCountAsIncome = isEntrada && !isSaldoAnterior;
+          
+          if (shouldCountAsIncome) {
+            updateSparkline(txDate, val, true);
+          } else if (isSaida) {
+            updateSparkline(txDate, val, false);
+          }
 
           if (txMonth === currentMonth && txYear === currentYear) {
-            if (isEntrada) monthIncome += val;
+            if (shouldCountAsIncome) monthIncome += val;
             else if (isSaida) monthExpenses += val;
           } else if (txMonth === lastMonth && txYear === lastMonthYear) {
-            if (isEntrada) prevMonthIncome += val;
+            if (shouldCountAsIncome) prevMonthIncome += val;
             else if (isSaida) prevMonthExpenses += val;
           }
         }
@@ -289,7 +297,8 @@ export function useDashboardData() {
         .filter(tx => {
           const rawTipo = (tx.tipo || "").toLowerCase();
           const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-          return normalizedTipo === "entrada";
+          const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
+          return normalizedTipo === "entrada" && !isSaldoAnterior;
         })
         .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 

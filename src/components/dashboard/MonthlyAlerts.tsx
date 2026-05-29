@@ -88,7 +88,8 @@ export function MonthlyAlerts({ transactions, creditTransactions = [], subscript
       const threeMonthsAgo = new Date(currentYear, currentMonth - 3, 1);
       const recentIncomes = transactions.filter(tx => {
         const isEntrada = normalize(tx.tipo) === "entrada";
-        if (!isEntrada || !tx.data_inicio) return false;
+        const isSaldoAnterior = normalize(tx.categoria) === "saldo anterior";
+        if (!isEntrada || isSaldoAnterior || !tx.data_inicio) return false;
         const [y, m, d] = tx.data_inicio.split('-').map(Number);
         const date = new Date(y, m - 1, d);
         return date >= threeMonthsAgo && date < new Date(currentYear, currentMonth, 1);
