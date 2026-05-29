@@ -629,24 +629,7 @@ function TransactionsPage() {
                             <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
                               {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
                             </td>
-                             <td className="py-4 px-4 text-muted-foreground">
-                                <div>{tx.metodo_pagamento || "—"}</div>
-                                {(tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado") && (
-                                  <div className="text-[10px] text-muted-foreground/60 mt-0.5">
-                                    {(() => {
-                                      const creditInfo = creditTransactions.find(ctx => ctx.id_transacao === tx.id);
-                                      if (!creditInfo) return null;
-                                      
-                                      const parcelas = tx.metodo_pagamento === "Crédito à vista" ? "1x" : `${creditInfo.numero_parcelas || 1}x`;
-                                      const juros = (!creditInfo.juros_parcela || creditInfo.juros_parcela === "0" || creditInfo.juros_parcela === 0) 
-                                        ? "Sem juros" 
-                                        : `juros ${creditInfo.juros_parcela}%`;
-                                        
-                                      return `${parcelas} • ${juros}`;
-                                    })()}
-                                  </div>
-                                )}
-                              </td>
+                            <td className="py-4 px-4 text-muted-foreground">{tx.metodo_pagamento || "—"}</td>
                             <td className="py-4 px-4 text-center">
                               <button onClick={() => setDeleteTarget(tx)} className="p-1 text-muted-foreground hover:text-danger transition-colors"><Trash2 size={16}/></button>
                             </td>
