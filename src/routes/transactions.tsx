@@ -226,7 +226,7 @@ function TransactionsPage() {
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
       const isEntrada = tx.tipo === "entrada";
-      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
       
       // Update overall balance only if not credit
