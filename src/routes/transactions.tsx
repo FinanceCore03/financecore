@@ -629,7 +629,18 @@ function TransactionsPage() {
                             <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
                               {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
                             </td>
-                            <td className="py-4 px-4 text-muted-foreground">{tx.metodo_pagamento || "—"}</td>
+                            <td className="py-4 px-4 text-muted-foreground">
+                              <div className="flex flex-col">
+                                <span>{tx.metodo_pagamento || "—"}</span>
+                                {(tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado") && (
+                                  <span className="text-[10px] text-slate-400 mt-0.5">
+                                    {tx.metodo_pagamento === "Crédito à vista" ? "1x" : `${creditTransactions.filter(ctx => ctx.id_transacao === tx.id).length}x`}
+                                    {" • "}
+                                    {(!tx.juros || parseFloat(tx.juros) === 0) ? "Sem juros" : `juros ${tx.juros}%`}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td className="py-4 px-4 text-center">
                               <button onClick={() => setDeleteTarget(tx)} className="p-1 text-muted-foreground hover:text-danger transition-colors"><Trash2 size={16}/></button>
                             </td>
