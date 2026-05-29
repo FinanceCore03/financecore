@@ -19,6 +19,7 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
   const [loading, setLoading] = useState(true);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [view, setView] = useState<'main' | 'month-list' | 'month-details'>('main');
+  const [animating, setAnimating] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
   const navigate = useNavigate();
 
