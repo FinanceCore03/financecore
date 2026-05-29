@@ -316,7 +316,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
 
               <div className="grid gap-2">
                 <Label htmlFor="valor" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {isCreditoParcelado ? "Valor da parcela" : "Valor"}
+                  {isCredito ? "Valor Total" : "Valor"}
                 </Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">{getCurrencySymbol(moeda)}</span>
