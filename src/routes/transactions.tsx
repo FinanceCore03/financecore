@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, EyeOff } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
 import { SubscriptionsCard } from "@/components/transactions/SubscriptionsCard";
@@ -48,6 +48,7 @@ function TransactionsPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [expandedTxId, setExpandedTxId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -619,33 +620,102 @@ function TransactionsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {paginatedTransactions.map((tx) => (
-                          <tr key={tx.id} className="text-sm hover:bg-muted/30 transition">
-                            <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
-                            <td className="py-4 px-4 text-muted-foreground">
-                              {tx.data_fim && tx.data_fim !== tx.data_inicio ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
-                            </td>
-                            <td className="py-4 px-4 text-muted-foreground max-w-[200px] truncate">{tx.descricao || "—"}</td>
-                            <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
-                              {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
-                            </td>
-                            <td className="py-4 px-4 text-muted-foreground">
-                              <div className="flex flex-col">
-                                <span>{tx.metodo_pagamento || "—"}</span>
-                                {(tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado") && (
-                                  <span className="text-[10px] text-slate-400 mt-0.5">
-                                    {tx.metodo_pagamento === "Crédito à vista" ? "1x" : `${creditTransactions.filter(ctx => ctx.id_transacao === tx.id).length}x`}
-                                    {" • "}
-                                    {(!tx.juros || tx.juros === 0 || tx.juros === "0") ? "Sem juros" : `juros ${tx.juros}%`}
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-4 px-4 text-center">
-                              <button onClick={() => setDeleteTarget(tx)} className="p-1 text-muted-foreground hover:text-danger transition-colors"><Trash2 size={16}/></button>
-                            </td>
-                          </tr>
-                        ))}
+                        {paginatedTransactions.map((tx) => {
+                          const isCredit = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
+                          const isExpanded = expandedTxId === tx.id;
+                          const relatedInstallments = creditTransactions
+                            .filter(ctx => ctx.id_transacao === tx.id)
+                            .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime());
+
+                          return (
+                            <Fragment key={tx.id}>
+                              <tr 
+                                onClick={() => isCredit && setExpandedTxId(isExpanded ? null : tx.id)}
+                                className={`text-sm hover:bg-muted/30 transition-colors ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''}`}
+                              >
+                                <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
+                                <td className="py-4 px-4 text-muted-foreground">
+                                  {tx.data_fim && tx.data_fim !== tx.data_inicio ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
+                                </td>
+                                <td className="py-4 px-4 text-muted-foreground max-w-[200px] truncate">{tx.descricao || "—"}</td>
+                                <td className={`py-4 px-4 font-semibold ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
+                                  {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
+                                </td>
+                                <td className="py-4 px-4 text-muted-foreground">
+                                  <div className="flex flex-col">
+                                    <div className="flex items-center gap-1.5">
+                                      <span>{tx.metodo_pagamento || "—"}</span>
+                                      {isCredit && (
+                                        <ChevronDown className={`size-3 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                      )}
+                                    </div>
+                                    {isCredit && (
+                                      <span className="text-[10px] text-slate-400 mt-0.5">
+                                        {tx.metodo_pagamento === "Crédito à vista" ? "1x" : `${relatedInstallments.length}x`}
+                                        {" • "}
+                                        {(!tx.juros || tx.juros === 0 || tx.juros === "0") ? "Sem juros" : `juros ${tx.juros}%`}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="py-4 px-4 text-center">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteTarget(tx);
+                                    }} 
+                                    className="p-1 text-muted-foreground hover:text-danger transition-colors"
+                                  >
+                                    <Trash2 size={16}/>
+                                  </button>
+                                </td>
+                              </tr>
+                              {isCredit && (
+                                <tr>
+                                  <td colSpan={6} className="p-0 border-none">
+                                    <div className={`overflow-hidden transition-all duration-350 ease-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                      <div className="bg-muted/20 px-4 py-3 mx-4 mb-3 rounded-xl border border-border/50">
+                                        <div className="space-y-2">
+                                          {relatedInstallments.length > 0 ? (
+                                            relatedInstallments.map((ctx, idx) => {
+                                              const dueDate = parseISOAsLocal(ctx.data_vencimento);
+                                              const isOverdue = dueDate && dueDate < startOfDay(new Date());
+                                              return (
+                                                <div key={ctx.id} className="flex items-center justify-between text-[11px] py-1.5 border-b border-border/30 last:border-0">
+                                                  <div className="flex items-center gap-4">
+                                                    <span className="text-muted-foreground font-medium w-16">
+                                                      {ctx.numero_parcela ? `Parcela ${ctx.numero_parcela}` : `Item ${idx + 1}`}
+                                                    </span>
+                                                    <span className="text-slate-500">
+                                                      Vencimento: <span className="text-foreground">{formatDisplayDate(ctx.data_vencimento)}</span>
+                                                    </span>
+                                                    <span className="text-slate-500">
+                                                      Valor: <span className="text-foreground font-semibold">{formatCurrency(ctx.valor, effectiveMoeda)}</span>
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-background/50 border border-border/50">
+                                                    <div className={`size-1.5 rounded-full ${isOverdue ? 'bg-danger shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`} />
+                                                    <span className={`font-medium ${isOverdue ? 'text-danger' : 'text-success'}`}>
+                                                      {isOverdue ? 'Vencida' : 'A vencer'}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              );
+                                            })
+                                          ) : (
+                                            <div className="text-xs text-muted-foreground text-center py-2">
+                                              Nenhuma parcela encontrada para esta transação.
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </Fragment>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
