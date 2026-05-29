@@ -254,6 +254,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
         payload.juros = semJuros ? 0 : (jurosParcela ? parseFloat(jurosParcela.replace(",", ".")) : 0);
       } else if (isCreditoVista) {
         payload.metodo_pagamento = "Crédito à vista";
+        payload.numero_parcelas = 1;
         payload.juros = semJuros ? 0 : (jurosParcela ? parseFloat(jurosParcela.replace(",", ".")) : 0);
       }
 
