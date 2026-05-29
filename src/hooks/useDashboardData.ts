@@ -332,7 +332,7 @@ export function useDashboardData() {
       .filter(tx => {
         const rawTipo = (tx.tipo || "").toLowerCase();
         const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
         return normalizedTipo === "saida" && !isCreditMethod;
       })
       .forEach(tx => {
