@@ -113,7 +113,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const dateStr = d.toISOString().split('T')[0];
         
         const dayTransactions = transactions.filter(tx => {
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
           return tx.data_inicio === dateStr && !isCredit;
         });
 
