@@ -112,7 +112,7 @@ export function MonthlyAlerts({ transactions, creditTransactions = [], subscript
     const spendingByCategory: Record<string, number> = {};
     transactions.forEach(tx => {
       const isSaida = normalize(tx.tipo) === "saida";
-      const isCredito = normalize(tx.metodo_pagamento || "").includes("credito");
+      const isCredito = normalize(tx.metodo_pagamento || "").includes("credito") || normalize(tx.metodo_pagamento || "").includes("parcelado");
       
       if (isSaida && !isCredito && tx.data_inicio) {
         const [y, m] = tx.data_inicio.split('-').map(Number);
