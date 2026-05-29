@@ -42,7 +42,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const monthTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [txYear, txMonth] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
           return (txMonth - 1) === mIdx && txYear === year && !isCredit;
         });
 
