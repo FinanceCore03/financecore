@@ -21,13 +21,13 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
       if (user) {
         const { data: usuario } = await supabase
           .from("Usuarios")
-          .select("id, dia_vencimento")
+          .select("id, Dia_vencimento")
           .eq("id_auth", user.id)
           .maybeSingle();
 
         if (usuario) {
-          if (usuario.dia_vencimento) {
-            setDiaVencimento(parseInt(usuario.dia_vencimento));
+          if (usuario.Dia_vencimento) {
+            setDiaVencimento(parseInt(usuario.Dia_vencimento));
           }
           const { data } = await supabase
             .from("Transacoes_Credito")
