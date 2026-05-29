@@ -636,7 +636,7 @@ function TransactionsPage() {
                                   <span className="text-[10px] text-slate-400 mt-0.5">
                                     {tx.metodo_pagamento === "Crédito à vista" ? "1x" : `${creditTransactions.filter(ctx => ctx.id_transacao === tx.id).length}x`}
                                     {" • "}
-                                    {(!tx.juros || parseFloat(tx.juros) === 0) ? "Sem juros" : `juros ${tx.juros}%`}
+                                    {(!tx.juros || tx.juros === 0 || tx.juros === "0") ? "Sem juros" : `juros ${tx.juros}%`}
                                   </span>
                                 )}
                               </div>
