@@ -644,9 +644,11 @@ function TransactionsPage() {
                                 <td className="py-4 px-4 text-muted-foreground">
                                   <div className="flex flex-col">
                                     <div className="flex items-center gap-1.5">
-                                      <span>{tx.metodo_pagamento || "—"}</span>
+                                      <span className="text-foreground font-medium">{tx.metodo_pagamento || "—"}</span>
                                       {isCredit && (
-                                        <ChevronDown className={`size-3 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                                        <div className="bg-slate-100 p-0.5 rounded-md">
+                                          <ChevronRight className={`size-3 text-slate-500 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                                        </div>
                                       )}
                                     </div>
                                     {isCredit && (
@@ -673,31 +675,34 @@ function TransactionsPage() {
                               {isCredit && (
                                 <tr>
                                   <td colSpan={6} className="p-0 border-none">
-                                    <div className={`overflow-hidden transition-all duration-350 ease-out ${isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                                      <div className="bg-muted/20 px-4 py-3 mx-4 mb-3 rounded-xl border border-border/50">
-                                        <div className="space-y-2">
+                                    <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                      <div className="bg-muted/30 px-6 py-4 mx-4 mb-4 rounded-2xl border border-border/60 shadow-inner">
+                                        <div className="space-y-1">
                                           {relatedInstallments.length > 0 ? (
                                             relatedInstallments.map((ctx, idx) => {
                                               const dueDate = parseISOAsLocal(ctx.data_vencimento);
                                               const isOverdue = dueDate && dueDate < startOfDay(new Date());
                                               return (
-                                                <div key={ctx.id} className="flex items-center justify-between text-[11px] py-1.5 border-b border-border/30 last:border-0">
-                                                  <div className="flex items-center gap-4">
-                                                    <span className="text-muted-foreground font-medium w-16">
+                                                <div key={ctx.id} className="grid grid-cols-4 items-center text-[12px] py-3 border-b border-border/20 last:border-0 hover:bg-white/40 transition-colors px-2 rounded-lg">
+                                                  <div className="flex items-center gap-2">
+                                                    <div className="size-2 rounded-full bg-slate-300" />
+                                                    <span className="text-foreground font-semibold">
                                                       {ctx.numero_parcela ? `Parcela ${ctx.numero_parcela}` : `Item ${idx + 1}`}
                                                     </span>
-                                                    <span className="text-slate-500">
-                                                      Vencimento: <span className="text-foreground">{formatDisplayDate(ctx.data_vencimento)}</span>
-                                                    </span>
-                                                    <span className="text-slate-500">
-                                                      Valor: <span className="text-foreground font-semibold">{formatCurrency(ctx.valor, effectiveMoeda)}</span>
-                                                    </span>
                                                   </div>
-                                                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-background/50 border border-border/50">
-                                                    <div className={`size-1.5 rounded-full ${isOverdue ? 'bg-danger shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`} />
-                                                    <span className={`font-medium ${isOverdue ? 'text-danger' : 'text-success'}`}>
-                                                      {isOverdue ? 'Vencida' : 'A vencer'}
-                                                    </span>
+                                                  <div className="text-slate-500 flex items-center gap-1.5">
+                                                    <CalendarIcon className="size-3 text-slate-400" />
+                                                    <span>Vencimento: <span className="text-foreground font-medium">{formatDisplayDate(ctx.data_vencimento)}</span></span>
+                                                  </div>
+                                                  <div className="text-slate-500 flex items-center gap-1.5">
+                                                    <Wallet className="size-3 text-slate-400" />
+                                                    <span>Valor: <span className="text-foreground font-bold">{formatCurrency(ctx.valor, effectiveMoeda)}</span></span>
+                                                  </div>
+                                                  <div className="flex justify-start">
+                                                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-tight ${isOverdue ? 'bg-danger/10 text-danger border border-danger/20' : 'bg-success/10 text-success border border-success/20'}`}>
+                                                      <div className={`size-1.5 rounded-full animate-pulse ${isOverdue ? 'bg-danger shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`} />
+                                                      {isOverdue ? 'VENCIDA' : 'A VENCER'}
+                                                    </div>
                                                   </div>
                                                 </div>
                                               );
