@@ -172,7 +172,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
   };
 
   const isCreditoVista = metodo === "Crédito à vista" || metodo === "Crédito";
-  const isCreditoParcelado = metodo.toLowerCase().includes("parcelado");
+  const isCreditoParcelado = metodo ? metodo.toLowerCase().includes("parcelado") : false;
   const isCredito = isCreditoVista || isCreditoParcelado;
 
   const isFormValid = 
