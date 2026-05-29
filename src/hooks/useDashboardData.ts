@@ -283,7 +283,7 @@ export function useDashboardData() {
       const monthTransactions = transactions.filter(tx => {
         if (!tx.data_inicio) return false;
         const [year, month] = tx.data_inicio.split('-').map(Number);
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
         return (month - 1) === i && year === currentYear && !isCreditMethod;
       });
 
