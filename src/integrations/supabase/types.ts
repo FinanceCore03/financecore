@@ -196,8 +196,8 @@ export type Database = {
           id: number
           id_transacao: number | null
           id_usuario: number | null
-          juros_parcela: string | null
           metodo_pagamento: string | null
+          numero_parcela: number | null
           tipo: string | null
           valor: string | null
         }
@@ -209,8 +209,8 @@ export type Database = {
           id?: number
           id_transacao?: number | null
           id_usuario?: number | null
-          juros_parcela?: string | null
           metodo_pagamento?: string | null
+          numero_parcela?: number | null
           tipo?: string | null
           valor?: string | null
         }
@@ -222,8 +222,8 @@ export type Database = {
           id?: number
           id_transacao?: number | null
           id_usuario?: number | null
-          juros_parcela?: string | null
           metodo_pagamento?: string | null
+          numero_parcela?: number | null
           tipo?: string | null
           valor?: string | null
         }
