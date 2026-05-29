@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, EyeOff } from "lucide-react";
@@ -22,6 +22,11 @@ import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 
 export const Route = createFileRoute("/transactions")({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      highlight: (search.highlight as number) || undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Transações — Financeiro Core" },
@@ -32,6 +37,9 @@ export const Route = createFileRoute("/transactions")({
 
 function TransactionsPage() {
   const { isPrivate, togglePrivacy } = usePrivacy();
+  const searchParams = useSearch({ from: '/transactions' });
+  const navigate = useNavigate();
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
@@ -100,6 +108,30 @@ function TransactionsPage() {
   useEffect(() => {
     fetchTransactions();
   }, []);
+
+  useEffect(() => {
+    if (searchParams.highlight) {
+      setHighlightedId(searchParams.highlight);
+      setExpandedTxId(searchParams.highlight);
+      
+      // Scroll to the highlighted transaction
+      setTimeout(() => {
+        const element = document.getElementById(`tx-${searchParams.highlight}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+
+      // Reset highlight after animation
+      const timer = setTimeout(() => {
+        setHighlightedId(null);
+        // Also clear URL param to avoid re-triggering on reload
+        navigate({ search: {} as any, replace: true });
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams.highlight, navigate]);
 
   const confirmDelete = async () => {
     if (!deleteTarget || !usuarioId || isDeleting) return;
@@ -630,8 +662,9 @@ function TransactionsPage() {
                           return (
                             <Fragment key={tx.id}>
                               <tr 
+                                id={`tx-${tx.id}`}
                                 onClick={() => isCredit && setExpandedTxId(isExpanded ? null : tx.id)}
-                                className={`text-sm hover:bg-muted/30 transition-colors ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''}`}
+                                className={`text-sm hover:bg-muted/30 transition-all duration-500 ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''} ${highlightedId === tx.id ? 'highlight-row ring-1 ring-blue-200/50' : ''}`}
                               >
                                 <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
                                 <td className="py-4 px-4 text-muted-foreground">

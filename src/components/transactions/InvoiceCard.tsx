@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { startOfDay } from "date-fns";
+import { useNavigate } from "@tanstack/react-router";
 
 interface InvoiceCardProps {
   transactions: any[];
@@ -19,6 +20,7 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [view, setView] = useState<'main' | 'month-list' | 'month-details'>('main');
   const [selectedMonth, setSelectedMonth] = useState<{ month: number; year: number } | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -244,10 +246,20 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
                       const displayDate = tx.data_vencimento.split('-').reverse().join('/');
                       
                       return (
-                        <div key={tx.id} className="py-4 border-b border-border/40 last:border-0">
+                        <div 
+                          key={tx.id} 
+                          onClick={() => {
+                            setIsDetailsOpen(false);
+                            navigate({ 
+                              to: '/transactions', 
+                              search: { highlight: tx.id_transacao } 
+                            });
+                          }}
+                          className="p-4 rounded-2xl border border-transparent hover:border-border/60 hover:bg-muted/30 transition-all cursor-pointer group"
+                        >
                           <div className="flex justify-between items-start mb-1">
                             <div className="text-sm font-medium text-foreground">
-                              {tx.descricao || "Sem descrição"}
+                              {tx.categoria || "Sem categoria"}
                               {tx.numero_parcela && <span className="text-xs text-muted-foreground ml-2">Parcela {tx.numero_parcela}</span>}
                             </div>
                             <div className="text-sm font-semibold text-foreground">
