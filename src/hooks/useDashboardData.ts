@@ -146,7 +146,7 @@ export function useDashboardData() {
       const isSaida = normalizedTipo === "saida";
       
       const metodo = normalizeStr(tx.metodo_pagamento);
-      const isCreditMethod = metodo.includes("credito");
+      const isCreditMethod = metodo.includes("credito") || metodo.includes("parcelado");
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
       // Only count in balance/expenses if it's NOT a credit transaction
