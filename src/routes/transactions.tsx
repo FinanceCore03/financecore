@@ -665,7 +665,7 @@ function TransactionsPage() {
 
               <div className="w-full lg:w-80 space-y-6">
                 <AnimatedItem>
-                  <InvoiceCard transactions={transactions} subscriptions={subscriptions} moeda={effectiveMoeda} />
+                  <InvoiceCard transactions={transactions} moeda={effectiveMoeda} />
                 </AnimatedItem>
                 
                 <AnimatedItem>
