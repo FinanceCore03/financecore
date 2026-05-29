@@ -1,5 +1,7 @@
 import { Calendar } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InvoiceCardProps {
   transactions: any[];
@@ -8,73 +10,55 @@ interface InvoiceCardProps {
   moeda: string;
 }
 
-export function InvoiceCard({ transactions, creditTransactions = [], subscriptions = [], moeda }: InvoiceCardProps) {
-  // Logic to calculate next month's scheduled value
-  const nextMonthTotal = (() => {
-    const now = new Date();
-    // Start of next month
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    // End of next month
-    const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
+  const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const txTotal = transactions.reduce((acc, tx) => {
-      if (tx.tipo !== "saida") return acc;
-      
-      const metodo = (tx.metodo_pagamento || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const isCredito = metodo.includes("credito") || metodo.includes("parcelado");
+  useEffect(() => {
+    const fetchCredit = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: usuario } = await supabase
+          .from("Usuarios")
+          .select("id")
+          .eq("id_auth", user.id)
+          .maybeSingle();
 
-      // Ignore credit transactions here
-      if (isCredito) return acc;
-
-      const start = tx.data_inicio ? new Date(tx.data_inicio) : null;
-      const end = tx.data_fim ? new Date(tx.data_fim) : null;
-      if (!start) return acc;
-
-      const isActiveNextMonth = start <= endOfNextMonth && (!end || end >= nextMonth);
-
-      if (isActiveNextMonth) {
-        return acc + parseFloat(tx.valor || "0");
+        if (usuario) {
+          const { data } = await supabase
+            .from("Transacoes_Credito")
+            .select("*")
+            .eq("id_usuario", usuario.id);
+          setCreditTransactions(data || []);
+        }
       }
-      
-      return acc;
-    }, 0);
-
-    const creditTotal = creditTransactions.reduce((acc, ctx) => {
-      const start = ctx.data_vencimento ? new Date(ctx.data_vencimento) : null;
-      if (!start) return acc;
-
-      if (start >= nextMonth && start <= endOfNextMonth) {
-        return acc + parseFloat(ctx.valor || "0");
-      }
-      return acc;
-    }, 0);
-
-    const activeSubs = subscriptions.filter(sub => sub.status !== false);
-    const subsTotal = activeSubs.reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
-
-    return txTotal + creditTotal + subsTotal;
-  })();
+      setLoading(false);
+    };
+    fetchCredit();
+  }, []);
 
   const now = new Date();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
 
-  const scheduledCount = transactions.filter(tx => {
-    if (tx.tipo !== "saida") return false;
-    
-    const metodo = (tx.metodo_pagamento || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (metodo.includes("credito") || metodo.includes("parcelado")) return false;
+  // Fatura card should show sum of installments FOR THE CURRENT MONTH from Transacoes_Credito
+  const currentMonthTotal = creditTransactions.reduce((acc, ctx) => {
+    if (!ctx.data_vencimento) return acc;
+    const [year, month] = ctx.data_vencimento.split('-').map(Number);
+    // ctx.data_vencimento is YYYY-MM-DD
+    if ((month - 1) === currentMonth && year === currentYear) {
+      return acc + parseFloat(ctx.valor || "0");
+    }
+    return acc;
+  }, 0);
 
-    const start = tx.data_inicio ? new Date(tx.data_inicio) : null;
-    const end = tx.data_fim ? new Date(tx.data_fim) : null;
+  const currentMonthCount = creditTransactions.filter(ctx => {
+    if (!ctx.data_vencimento) return false;
+    const [year, month] = ctx.data_vencimento.split('-').map(Number);
+    return (month - 1) === currentMonth && year === currentYear;
+  }).length;
 
-    return start && start <= endOfNextMonth && (!end || end >= nextMonth);
-  }).length + 
-  creditTransactions.filter(ctx => {
-    const start = ctx.data_vencimento ? new Date(ctx.data_vencimento) : null;
-    return start && start >= nextMonth && start <= endOfNextMonth;
-  }).length + 
-  subscriptions.filter(sub => sub.status !== false).length;
+  if (loading) return null;
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
@@ -83,16 +67,16 @@ export function InvoiceCard({ transactions, creditTransactions = [], subscriptio
       </div>
       <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Fatura</div>
       <div className="text-2xl font-bold tracking-tight text-[#1A1A1A]">
-        {formatCurrency(nextMonthTotal, moeda)}
+        {formatCurrency(currentMonthTotal, moeda)}
       </div>
       <div className="text-[11px] text-muted-foreground font-medium mt-2">
-        {nextMonthTotal > 0 
-          ? `Gasto programado para o próximo mês`
-          : "Nenhum gasto programado para o próximo mês"}
+        {currentMonthTotal > 0 
+          ? `Total de faturas para este mês`
+          : "Nenhuma fatura para este mês"}
       </div>
-      {scheduledCount > 0 && (
+      {currentMonthCount > 0 && (
         <div className="text-[10px] text-primary font-bold mt-1 bg-primary/5 inline-block px-2 py-0.5 rounded-md">
-          {scheduledCount} {scheduledCount === 1 ? 'item programado' : 'itens programados'}
+          {currentMonthCount} {currentMonthCount === 1 ? 'parcela' : 'parcelas'} este mês
         </div>
       )}
     </div>
