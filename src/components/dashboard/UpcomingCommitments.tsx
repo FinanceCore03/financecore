@@ -37,7 +37,7 @@ export function UpcomingCommitments({ transactions, creditTransactions = [], sub
     const nextMonthTransactionsTotal = transactions.reduce((acc, tx) => {
       const isSaida = normalize(tx.tipo) === "saida";
       const metodo = normalize(tx.metodo_pagamento || "");
-      const isCredito = metodo.includes("credito");
+      const isCredito = metodo.includes("credito") || metodo.includes("parcelado");
 
       // Only process common transactions (NOT credit)
       if (!isSaida || isCredito) return acc;

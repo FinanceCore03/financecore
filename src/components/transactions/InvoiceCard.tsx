@@ -21,7 +21,7 @@ export function InvoiceCard({ transactions, creditTransactions = [], subscriptio
       if (tx.tipo !== "saida") return acc;
       
       const metodo = (tx.metodo_pagamento || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const isCredito = metodo.includes("credito");
+      const isCredito = metodo.includes("credito") || metodo.includes("parcelado");
 
       // Ignore credit transactions here
       if (isCredito) return acc;
@@ -63,7 +63,7 @@ export function InvoiceCard({ transactions, creditTransactions = [], subscriptio
     if (tx.tipo !== "saida") return false;
     
     const metodo = (tx.metodo_pagamento || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (metodo.includes("credito")) return false;
+    if (metodo.includes("credito") || metodo.includes("parcelado")) return false;
 
     const start = tx.data_inicio ? new Date(tx.data_inicio) : null;
     const end = tx.data_fim ? new Date(tx.data_fim) : null;

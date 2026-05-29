@@ -146,7 +146,7 @@ export function useDashboardData() {
       const isSaida = normalizedTipo === "saida";
       
       const metodo = normalizeStr(tx.metodo_pagamento);
-      const isCreditMethod = metodo.includes("credito");
+      const isCreditMethod = metodo.includes("credito") || metodo.includes("parcelado");
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
       // Only count in balance/expenses if it's NOT a credit transaction
@@ -283,7 +283,7 @@ export function useDashboardData() {
       const monthTransactions = transactions.filter(tx => {
         if (!tx.data_inicio) return false;
         const [year, month] = tx.data_inicio.split('-').map(Number);
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
         return (month - 1) === i && year === currentYear && !isCreditMethod;
       });
 
@@ -332,7 +332,7 @@ export function useDashboardData() {
       .filter(tx => {
         const rawTipo = (tx.tipo || "").toLowerCase();
         const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
         return normalizedTipo === "saida" && !isCreditMethod;
       })
       .forEach(tx => {

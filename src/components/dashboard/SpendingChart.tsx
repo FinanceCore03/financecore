@@ -42,7 +42,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const monthTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [txYear, txMonth] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
           return (txMonth - 1) === mIdx && txYear === year && !isCredit;
         });
 
@@ -78,7 +78,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const weekTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [year, month, day] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
           return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay && !isCredit;
         });
 
@@ -113,7 +113,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const dateStr = d.toISOString().split('T')[0];
         
         const dayTransactions = transactions.filter(tx => {
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito");
+          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
           return tx.data_inicio === dateStr && !isCredit;
         });
 
