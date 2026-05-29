@@ -71,7 +71,7 @@ export function AddTransactionModal({ isOpen, onClose, onSuccess, moeda }: AddTr
 
         if (customOptions) {
           const cats = customOptions
-            .filter(opt => (opt.Tipo || "").toLowerCase() === "categoria" && opt.id_usuario !== null);
+            .filter(opt => (opt.Tipo || "").toLowerCase() === "categoria" && (opt.id_usuario !== null || opt.Padrao === true));
           setCategories(cats);
 
           const standardMethods = customOptions
