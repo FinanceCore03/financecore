@@ -277,7 +277,7 @@ function TransactionsPage() {
     filteredTransactions
       .filter(tx => tx.tipo === "saida")
       .forEach(tx => {
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
         if (!isCreditMethod) {
           const cat = tx.categoria || "Outros";
           const val = parseFloat(tx.valor || "0");
