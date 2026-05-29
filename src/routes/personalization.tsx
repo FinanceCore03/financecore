@@ -302,7 +302,7 @@ function SettingsPage() {
                           onChange={(e) => setBestPurchaseDay(e.target.value)}
                           className="h-11"
                         />
-                        <p className="text-[11px] text-muted-foreground italic">Esse campo não é obrigatório.</p>
+                        <p id="best-purchase-day-desc" className="text-[11px] text-muted-foreground italic">Esse campo não é obrigatório.</p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="due-day" className="text-sm font-medium">Dia de vencimento da fatura <span className="text-danger">*</span></Label>
@@ -316,7 +316,7 @@ function SettingsPage() {
                           onChange={(e) => setDueDay(e.target.value)}
                           className="h-11"
                         />
-                        <p className="text-[11px] text-muted-foreground italic">Esse campo deve ser obrigatório.</p>
+                        <p id="due-day-desc" className="text-[11px] text-muted-foreground italic">Esse campo deve ser obrigatório.</p>
                       </div>
                     </div>
 
