@@ -194,10 +194,10 @@ export type Database = {
           data_vencimento: string | null
           descricao: string | null
           id: number
+          id_transacao: number | null
           id_usuario: number | null
           juros_parcela: string | null
           metodo_pagamento: string | null
-          numero_parcelas: string | null
           tipo: string | null
           valor: string | null
         }
@@ -207,10 +207,10 @@ export type Database = {
           data_vencimento?: string | null
           descricao?: string | null
           id?: number
+          id_transacao?: number | null
           id_usuario?: number | null
           juros_parcela?: string | null
           metodo_pagamento?: string | null
-          numero_parcelas?: string | null
           tipo?: string | null
           valor?: string | null
         }
@@ -220,14 +220,21 @@ export type Database = {
           data_vencimento?: string | null
           descricao?: string | null
           id?: number
+          id_transacao?: number | null
           id_usuario?: number | null
           juros_parcela?: string | null
           metodo_pagamento?: string | null
-          numero_parcelas?: string | null
           tipo?: string | null
           valor?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "Transacoes_Credito_id_transacao_fkey"
+            columns: ["id_transacao"]
+            isOneToOne: false
+            referencedRelation: "Transacoes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "Transacoes_Credito_id_usuario_fkey"
             columns: ["id_usuario"]
