@@ -21,7 +21,7 @@ export function InvoiceCard({ transactions, creditTransactions = [], subscriptio
       if (tx.tipo !== "saida") return acc;
       
       const metodo = (tx.metodo_pagamento || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const isCredito = metodo.includes("credito");
+      const isCredito = metodo.includes("credito") || metodo.includes("parcelado");
 
       // Ignore credit transactions here
       if (isCredito) return acc;
