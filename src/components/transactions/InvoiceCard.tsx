@@ -82,12 +82,6 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
     }, 0);
   }, [creditTransactions, invoiceTarget]);
 
-  const invoiceCount = creditTransactions.filter(ctx => {
-    if (!ctx.data_vencimento) return false;
-    const date = new Date(ctx.data_vencimento + 'T00:00:00');
-    return date.getMonth() === invoiceTarget.month && date.getFullYear() === invoiceTarget.year;
-  }).length;
-
   const monthsList = useMemo(() => {
     const months: { month: number; year: number; total: number; label: string }[] = [];
     const now = new Date();
@@ -164,7 +158,13 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
             <div className="flex items-center gap-2 mb-2">
               {view !== 'main' && (
                 <button 
-                  onClick={() => setView(view === 'month-details' ? 'month-list' : 'main')}
+                  onClick={() => {
+                    setAnimating(true);
+                    setTimeout(() => {
+                      setView(view === 'month-details' ? 'month-list' : 'main');
+                      setAnimating(false);
+                    }, 150);
+                  }}
                   className="p-1 hover:bg-muted rounded-full transition-colors mr-1"
                 >
                   <ChevronLeft className="size-5" />
@@ -176,13 +176,17 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
             </div>
           </DialogHeader>
 
-          <div className="p-6 pt-2 max-h-[70vh] overflow-y-auto custom-scrollbar">
+          <div className={`p-6 pt-2 max-h-[70vh] overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${animating ? 'opacity-0 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
             {view === 'main' && (
               <div className="space-y-4">
                 <button 
                   onClick={() => {
-                    setSelectedMonth(invoiceTarget);
-                    setView('month-details');
+                    setAnimating(true);
+                    setTimeout(() => {
+                      setSelectedMonth(invoiceTarget);
+                      setView('month-details');
+                      setAnimating(false);
+                    }, 150);
                   }}
                   className="w-full flex items-center justify-between p-4 bg-primary/5 hover:bg-primary/10 rounded-2xl border border-primary/10 transition-colors group"
                 >
@@ -197,7 +201,13 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
                 </button>
 
                 <button 
-                  onClick={() => setView('month-list')}
+                  onClick={() => {
+                    setAnimating(true);
+                    setTimeout(() => {
+                      setView('month-list');
+                      setAnimating(false);
+                    }, 150);
+                  }}
                   className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 rounded-2xl border border-border/50 transition-colors group"
                 >
                   <div className="text-left">
@@ -215,8 +225,12 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
                   <button 
                     key={`${m.year}-${m.month}`}
                     onClick={() => {
-                      setSelectedMonth({ month: m.month, year: m.year });
-                      setView('month-details');
+                      setAnimating(true);
+                      setTimeout(() => {
+                        setSelectedMonth({ month: m.month, year: m.year });
+                        setView('month-details');
+                        setAnimating(false);
+                      }, 150);
                     }}
                     className="w-full flex items-center justify-between p-4 hover:bg-muted/50 rounded-2xl border border-transparent hover:border-border/50 transition-all group"
                   >
@@ -231,16 +245,16 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
             )}
 
             {view === 'month-details' && (
-              <div className="space-y-1">
-                <div className="bg-muted/20 p-4 rounded-2xl mb-4 flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider">Total da Fatura</div>
+              <div className="space-y-2">
+                <div className="bg-muted/40 p-5 rounded-2xl mb-2 flex items-center justify-between border border-border/40">
+                  <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Total da Fatura</div>
                   <div className="text-lg font-bold text-foreground">
                     {formatCurrency(selectedMonthTransactions.reduce((acc, t) => acc + parseFloat(t.valor || 0), 0), moeda)}
                   </div>
                 </div>
 
                 {selectedMonthTransactions.length > 0 ? (
-                  <div className="space-y-0">
+                  <div className="space-y-2 bg-muted/30 p-2 rounded-[24px] border border-border/30">
                     {selectedMonthTransactions.map((tx, idx) => {
                       const dueDate = new Date(tx.data_vencimento + 'T00:00:00');
                       const isOverdue = dueDate < startOfDay(new Date());
@@ -256,12 +270,12 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
                               search: { highlight: tx.id_transacao } 
                             });
                           }}
-                          className="p-4 rounded-2xl border border-transparent hover:border-border/60 hover:bg-muted/30 transition-all cursor-pointer group"
+                          className="p-4 rounded-2xl bg-card border border-border/40 hover:border-border/80 hover:shadow-sm transition-all cursor-pointer group"
                         >
-                          <div className="flex justify-between items-start mb-1">
+                          <div className="flex justify-between items-start mb-2">
                             <div className="text-sm font-medium text-foreground">
                               {tx.categoria || "Sem categoria"}
-                              {tx.numero_parcela && <span className="text-xs text-muted-foreground ml-2">Parcela {tx.numero_parcela}</span>}
+                              {tx.numero_parcela && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-md text-muted-foreground ml-2 font-normal">Parcela {tx.numero_parcela}</span>}
                             </div>
                             <div className="text-sm font-semibold text-foreground">
                               {formatCurrency(tx.valor, moeda)}
@@ -269,12 +283,12 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
                           </div>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                              <span className="flex items-center gap-1">
+                              <span className="flex items-center gap-1.5 opacity-80">
                                 <CalendarIcon className="size-3" />
                                 {displayDate}
                               </span>
                             </div>
-                            <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight ${isOverdue ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-tight ${isOverdue ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
                               <div className={`size-1 rounded-full ${isOverdue ? 'bg-danger' : 'bg-success'}`} />
                               {isOverdue ? 'Vencida' : 'A vencer'}
                             </div>
