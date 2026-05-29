@@ -12,19 +12,23 @@ interface InvoiceCardProps {
 
 export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
   const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
+  const [diaVencimento, setDiaVencimento] = useState<number>(19); // Default fallback
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchCredit = async () => {
+    const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: usuario } = await supabase
           .from("Usuarios")
-          .select("id")
+          .select("id, dia_vencimento")
           .eq("id_auth", user.id)
           .maybeSingle();
 
         if (usuario) {
+          if (usuario.dia_vencimento) {
+            setDiaVencimento(parseInt(usuario.dia_vencimento));
+          }
           const { data } = await supabase
             .from("Transacoes_Credito")
             .select("*")
@@ -34,31 +38,51 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
       }
       setLoading(false);
     };
-    fetchCredit();
+    fetchData();
   }, []);
 
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const getNextInvoiceDate = () => {
+    const now = new Date();
+    const todayDay = now.getDate();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
-  // Fatura card should show sum of installments FOR THE CURRENT MONTH from Transacoes_Credito
-  const currentMonthTotal = creditTransactions.reduce((acc, ctx) => {
+    // If today is past the due date, look at the next month's invoice
+    if (todayDay > diaVencimento) {
+      const nextDate = new Date(currentYear, currentMonth + 1, 1);
+      return {
+        month: nextDate.getMonth(),
+        year: nextDate.getFullYear()
+      };
+    }
+
+    // Otherwise, it's the current month's invoice
+    return {
+      month: currentMonth,
+      year: currentYear
+    };
+  };
+
+  const invoiceTarget = getNextInvoiceDate();
+
+  const invoiceTotal = creditTransactions.reduce((acc, ctx) => {
     if (!ctx.data_vencimento) return acc;
     const [year, month] = ctx.data_vencimento.split('-').map(Number);
-    // ctx.data_vencimento is YYYY-MM-DD
-    if ((month - 1) === currentMonth && year === currentYear) {
+    if ((month - 1) === invoiceTarget.month && year === invoiceTarget.year) {
       return acc + parseFloat(ctx.valor || "0");
     }
     return acc;
   }, 0);
 
-  const currentMonthCount = creditTransactions.filter(ctx => {
+  const invoiceCount = creditTransactions.filter(ctx => {
     if (!ctx.data_vencimento) return false;
     const [year, month] = ctx.data_vencimento.split('-').map(Number);
-    return (month - 1) === currentMonth && year === currentYear;
+    return (month - 1) === invoiceTarget.month && year === invoiceTarget.year;
   }).length;
 
   if (loading) return null;
+
+  const isNextMonth = invoiceTarget.month !== new Date().getMonth();
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
@@ -67,16 +91,16 @@ export function InvoiceCard({ transactions, moeda }: InvoiceCardProps) {
       </div>
       <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">Fatura</div>
       <div className="text-2xl font-bold tracking-tight text-[#1A1A1A]">
-        {formatCurrency(currentMonthTotal, moeda)}
+        {formatCurrency(invoiceTotal, moeda)}
       </div>
       <div className="text-[11px] text-muted-foreground font-medium mt-2">
-        {currentMonthTotal > 0 
-          ? `Total de faturas para este mês`
-          : "Nenhuma fatura para este mês"}
+        {invoiceTotal > 0 
+          ? `Gasto programado para a próxima fatura`
+          : "Nenhuma fatura programada"}
       </div>
-      {currentMonthCount > 0 && (
+      {invoiceCount > 0 && (
         <div className="text-[10px] text-primary font-bold mt-1 bg-primary/5 inline-block px-2 py-0.5 rounded-md">
-          {currentMonthCount} {currentMonthCount === 1 ? 'parcela' : 'parcelas'} este mês
+          {invoiceCount} {invoiceCount === 1 ? 'parcela' : 'parcelas'} {isNextMonth ? 'no próximo mês' : 'este mês'}
         </div>
       )}
     </div>
