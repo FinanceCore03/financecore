@@ -227,6 +227,7 @@ function TransactionsPage() {
       const val = parseFloat(tx.valor || "0");
       const isEntrada = tx.tipo === "entrada";
       const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito");
+      const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
       
       // Update overall balance only if not credit
       if (!isCreditMethod) {
@@ -236,10 +237,10 @@ function TransactionsPage() {
 
       if (tx.data_inicio) {
         const txDate = parseISOAsLocal(tx.data_inicio);
-        // Only count in period totals if not credit
+        // Only count in period totals if not credit AND not Saldo Anterior for income
         if (txDate && matchPeriod(txDate) && !isCreditMethod) {
-          if (isEntrada) periodEntradas += val;
-          else periodSaidas += val;
+          if (isEntrada && !isSaldoAnterior) periodEntradas += val;
+          else if (tx.tipo === "saida") periodSaidas += val;
         }
       }
     });
