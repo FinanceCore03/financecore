@@ -676,37 +676,42 @@ function TransactionsPage() {
                                 <tr>
                                   <td colSpan={6} className="p-0 border-none">
                                     <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                                      <div className="bg-muted/30 px-6 py-4 mx-4 mb-4 rounded-2xl border border-border/60 shadow-inner">
-                                        <div className="space-y-1">
+                                      <div className="bg-white px-6 py-4 mx-4 mb-4 rounded-2xl border border-border/60 shadow-sm">
+                                        <div className="space-y-0">
                                           {relatedInstallments.length > 0 ? (
-                                            relatedInstallments.map((ctx, idx) => {
-                                              const dueDate = parseISOAsLocal(ctx.data_vencimento);
-                                              const isOverdue = dueDate && dueDate < startOfDay(new Date());
-                                              return (
-                                                <div key={ctx.id} className="grid grid-cols-4 items-center text-[12px] py-3 border-b border-border/20 last:border-0 hover:bg-white/40 transition-colors px-2 rounded-lg">
-                                                  <div className="flex items-center gap-2">
-                                                    <div className="size-2 rounded-full bg-slate-300" />
-                                                    <span className="text-foreground font-semibold">
-                                                      {ctx.numero_parcela ? `Parcela ${ctx.numero_parcela}` : `Item ${idx + 1}`}
-                                                    </span>
-                                                  </div>
-                                                  <div className="text-slate-500 flex items-center gap-1.5">
-                                                    <CalendarIcon className="size-3 text-slate-400" />
-                                                    <span>Vencimento: <span className="text-foreground font-medium">{formatDisplayDate(ctx.data_vencimento)}</span></span>
-                                                  </div>
-                                                  <div className="text-slate-500 flex items-center gap-1.5">
-                                                    <Wallet className="size-3 text-slate-400" />
-                                                    <span>Valor: <span className="text-foreground font-bold">{formatCurrency(ctx.valor, effectiveMoeda)}</span></span>
-                                                  </div>
-                                                  <div className="flex justify-start">
-                                                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-tight ${isOverdue ? 'bg-danger/10 text-danger border border-danger/20' : 'bg-success/10 text-success border border-success/20'}`}>
-                                                      <div className={`size-1.5 rounded-full animate-pulse ${isOverdue ? 'bg-danger shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]'}`} />
-                                                      {isOverdue ? 'VENCIDA' : 'A VENCER'}
+                                            <>
+                                              <div className="grid grid-cols-4 items-center text-[11px] text-muted-foreground uppercase tracking-wider py-2 px-2 border-b border-border mb-1">
+                                                <div>Parcela</div>
+                                                <div>Data de Vencimento</div>
+                                                <div>Valor</div>
+                                                <div>Vencimento</div>
+                                              </div>
+                                              {relatedInstallments.map((ctx, idx) => {
+                                                const dueDate = parseISOAsLocal(ctx.data_vencimento);
+                                                const isOverdue = dueDate && dueDate < startOfDay(new Date());
+                                                return (
+                                                  <div key={ctx.id} className="grid grid-cols-4 items-center text-[12px] py-4 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors px-2">
+                                                    <div className="flex items-center gap-2">
+                                                      <span className="text-foreground">
+                                                        {ctx.numero_parcela ? `Parcela ${ctx.numero_parcela}` : `Item ${idx + 1}`}
+                                                      </span>
+                                                    </div>
+                                                    <div className="text-muted-foreground">
+                                                      {formatDisplayDate(ctx.data_vencimento)}
+                                                    </div>
+                                                    <div className="text-foreground">
+                                                      {formatCurrency(ctx.valor, effectiveMoeda)}
+                                                    </div>
+                                                    <div className="flex justify-start">
+                                                      <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] tracking-tight ${isOverdue ? 'bg-danger/10 text-danger border border-danger/10' : 'bg-success/10 text-success border border-success/10'}`}>
+                                                        <div className={`size-1.5 rounded-full ${isOverdue ? 'bg-danger' : 'bg-success'}`} />
+                                                        {isOverdue ? 'Vencida' : 'A vencer'}
+                                                      </div>
                                                     </div>
                                                   </div>
-                                                </div>
-                                              );
-                                            })
+                                                );
+                                              })}
+                                            </>
                                           ) : (
                                             <div className="text-xs text-muted-foreground text-center py-2">
                                               Nenhuma parcela encontrada para esta transação.
