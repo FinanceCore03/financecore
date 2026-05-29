@@ -226,7 +226,7 @@ function TransactionsPage() {
     transactions.forEach(tx => {
       const val = parseFloat(tx.valor || "0");
       const isEntrada = tx.tipo === "entrada";
-      const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
+      const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
       
       // Update overall balance only if not credit
@@ -245,9 +245,11 @@ function TransactionsPage() {
       }
     });
 
+    // Transacoes_Credito SHOULD NOT enter Saídas or Total Account cards in this context
+    // It is used only for the Invoice Card
+    /* 
     creditTransactions.forEach(ctx => {
       const val = parseFloat(ctx.valor || "0");
-      // Credit transactions are always expenses (saida)
       totalAccount -= val;
 
       if (ctx.data_vencimento) {
@@ -257,6 +259,7 @@ function TransactionsPage() {
         }
       }
     });
+    */
 
     subscriptions.forEach(sub => {
       if (matchSubscriptionPeriod(sub)) {
@@ -277,7 +280,7 @@ function TransactionsPage() {
     filteredTransactions
       .filter(tx => tx.tipo === "saida")
       .forEach(tx => {
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
+        const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
         if (!isCreditMethod) {
           const cat = tx.categoria || "Outros";
           const val = parseFloat(tx.valor || "0");
@@ -286,6 +289,8 @@ function TransactionsPage() {
         }
       });
 
+    // Distribution should NOT include credit transactions from Transacoes_Credito
+    /*
     creditTransactions.forEach(ctx => {
       if (ctx.data_vencimento) {
         const ctxDate = parseISOAsLocal(ctx.data_vencimento);
@@ -297,6 +302,7 @@ function TransactionsPage() {
         }
       }
     });
+    */
 
     subscriptions.forEach(sub => {
       if (matchSubscriptionPeriod(sub)) {

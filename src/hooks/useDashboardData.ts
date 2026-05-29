@@ -145,8 +145,8 @@ export function useDashboardData() {
       const isEntrada = normalizedTipo === "entrada";
       const isSaida = normalizedTipo === "saida";
       
-      const metodo = normalizeStr(tx.metodo_pagamento);
-      const isCreditMethod = metodo.includes("credito") || metodo.includes("parcelado");
+      const metodo = (tx.metodo_pagamento || "");
+      const isCreditMethod = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
       // Only count in balance/expenses if it's NOT a credit transaction
@@ -283,7 +283,7 @@ export function useDashboardData() {
       const monthTransactions = transactions.filter(tx => {
         if (!tx.data_inicio) return false;
         const [year, month] = tx.data_inicio.split('-').map(Number);
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
+        const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
         return (month - 1) === i && year === currentYear && !isCreditMethod;
       });
 
@@ -332,7 +332,7 @@ export function useDashboardData() {
       .filter(tx => {
         const rawTipo = (tx.tipo || "").toLowerCase();
         const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const isCreditMethod = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
+        const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
         return normalizedTipo === "saida" && !isCreditMethod;
       })
       .forEach(tx => {
@@ -342,12 +342,9 @@ export function useDashboardData() {
         totalExps += val;
       });
 
-    creditTransactions.forEach(ctx => {
-      const cat = ctx.categoria || "Outros";
-      const val = parseFloat(ctx.valor || "0");
-      categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
-      totalExps += val;
-    });
+    // Transacoes_Credito SHOULD NOT enter Saídas, Economia, or Categories Distribution
+    // It should only be used for Fatura card (which is handled separately in some components)
+    // Removed the following loop that was adding credit transactions to categories and totalExps
 
     // Include subscriptions as "Assinatura" category
     const subscriptionTotal = subscriptions
