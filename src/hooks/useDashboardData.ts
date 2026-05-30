@@ -163,6 +163,9 @@ export function useDashboardData() {
         const txMonth = txDate.getMonth();
         const txYear = txDate.getFullYear();
 
+        // Check if date is in the current month/year
+        const isCurrentPeriod = txMonth === currentMonth && txYear === currentYear;
+
         // Only count in monthly/sparkline if it's NOT a credit transaction AND NOT Saldo Anterior for income
         if (!isCreditMethod) {
           const shouldCountAsIncome = isEntrada && !isSaldoAnterior;
@@ -173,7 +176,7 @@ export function useDashboardData() {
             updateSparkline(txDate, val, false);
           }
 
-          if (txMonth === currentMonth && txYear === currentYear) {
+          if (isCurrentPeriod) {
             if (shouldCountAsIncome) monthIncome += val;
             else if (isSaida) monthExpenses += val;
           } else if (txMonth === lastMonth && txYear === lastMonthYear) {
@@ -305,12 +308,23 @@ export function useDashboardData() {
 
     const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
     transactions
       .filter(tx => {
         const rawTipo = (tx.tipo || "").toLowerCase();
         const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
-        return normalizedTipo === "saida" && !isCreditMethod;
+        
+        // Filter by current period
+        const dateStr = tx.data_inicio;
+        if (!dateStr) return false;
+        const [year, month] = dateStr.split('-').map(Number);
+        const isCurrentPeriod = (month - 1) === currentMonth && year === currentYear;
+
+        return normalizedTipo === "saida" && !isCreditMethod && isCurrentPeriod;
       })
       .forEach(tx => {
         const cat = tx.categoria || "Outros";
