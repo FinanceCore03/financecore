@@ -149,10 +149,16 @@ export function useDashboardData() {
       const isCreditMethod = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
-      // Only count in balance if it's NOT a credit transaction
+      // Saldo Geral/Total em Conta now purely period-based
       if (!isCreditMethod) {
-        if (isEntrada) totalBalance += val;
-        else if (isSaida) totalBalance -= val;
+        const dateStr = tx.data_inicio;
+        if (dateStr) {
+          const [year, month] = dateStr.split('-').map(Number);
+          if ((month - 1) === currentMonth && year === currentYear) {
+            if (isEntrada) totalBalance += val;
+            else if (isSaida) totalBalance -= val;
+          }
+        }
       }
 
       const dateStr = tx.data_inicio;
@@ -190,7 +196,8 @@ export function useDashboardData() {
     // Subscriptions count as expenses and affect overall balance
     activeSubscriptions.forEach(sub => {
       const val = parseFloat(sub.valor || "0");
-      totalBalance -= val; // Subscriptions are always expenses
+      // Subscriptions affect current month only in this logic
+      totalBalance -= val; 
 
       // For month calculations, assuming they occur every month if active
       monthExpenses += val;
