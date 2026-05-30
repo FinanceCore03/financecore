@@ -3,7 +3,7 @@ import { formatCurrency } from "@/lib/currency";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { startOfDay } from "date-fns";
+import { startOfDay, format } from "date-fns";
 import { useNavigate } from "@tanstack/react-router";
 
 interface InvoiceCardProps {
