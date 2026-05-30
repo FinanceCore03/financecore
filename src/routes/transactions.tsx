@@ -262,37 +262,21 @@ function TransactionsPage() {
       const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
       
+      const txDate = tx.data_inicio ? parseISOAsLocal(tx.data_inicio) : null;
+      
       // Update overall balance only if not credit
       if (!isCreditMethod) {
         if (isEntrada) totalAccount += val;
         else totalAccount -= val;
       }
 
-      if (tx.data_inicio) {
-        const txDate = parseISOAsLocal(tx.data_inicio);
-        // Only count in period totals if not credit AND not Saldo Anterior for income
-        if (txDate && matchPeriod(txDate) && !isCreditMethod) {
-          if (isEntrada && !isSaldoAnterior) periodEntradas += val;
-          else if (tx.tipo === "saida") periodSaidas += val;
-        }
+      // Only count in period totals if not credit AND not Saldo Anterior for income
+      // AND must be within current period
+      if (txDate && matchPeriod(txDate) && !isCreditMethod) {
+        if (isEntrada && !isSaldoAnterior) periodEntradas += val;
+        else if (tx.tipo === "saida") periodSaidas += val;
       }
     });
-
-    // Transacoes_Credito SHOULD NOT enter Saídas or Total Account cards in this context
-    // It is used only for the Invoice Card
-    /* 
-    creditTransactions.forEach(ctx => {
-      const val = parseFloat(ctx.valor || "0");
-      totalAccount -= val;
-
-      if (ctx.data_vencimento) {
-        const ctxDate = parseISOAsLocal(ctx.data_vencimento);
-        if (ctxDate && matchPeriod(ctxDate)) {
-          periodSaidas += val;
-        }
-      }
-    });
-    */
 
     subscriptions.forEach(sub => {
       if (matchSubscriptionPeriod(sub)) {

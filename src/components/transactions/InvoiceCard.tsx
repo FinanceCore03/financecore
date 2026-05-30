@@ -13,7 +13,7 @@ interface InvoiceCardProps {
   moeda: string;
 }
 
-export function InvoiceCard({ moeda }: InvoiceCardProps) {
+export function InvoiceCard({ moeda, transactions, subscriptions: propsSubscriptions }: InvoiceCardProps) {
   const [creditTransactions, setCreditTransactions] = useState<any[]>([]);
   const [diaVencimento, setDiaVencimento] = useState<number>(19);
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,7 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [transactions]); // Update when transactions change (e.g. after deletion)
 
   const getNextInvoiceDate = () => {
     const now = new Date();
@@ -72,7 +72,7 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
   const invoiceTarget = getNextInvoiceDate();
 
   const invoiceTotal = useMemo(() => {
-    return creditTransactions.reduce((acc, ctx) => {
+    const creditTotal = creditTransactions.reduce((acc, ctx) => {
       if (!ctx.data_vencimento) return acc;
       const date = new Date(ctx.data_vencimento + 'T00:00:00');
       if (date.getMonth() === invoiceTarget.month && date.getFullYear() === invoiceTarget.year) {
@@ -80,7 +80,13 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
       }
       return acc;
     }, 0);
-  }, [creditTransactions, invoiceTarget]);
+
+    const subscriptionsTotal = (propsSubscriptions || [])
+      .filter(sub => sub.status !== false)
+      .reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
+
+    return creditTotal + subscriptionsTotal;
+  }, [creditTransactions, invoiceTarget, propsSubscriptions]);
 
   const monthsList = useMemo(() => {
     const months: { month: number; year: number; total: number; label: string }[] = [];
@@ -91,7 +97,7 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
       const m = date.getMonth();
       const y = date.getFullYear();
       
-      const total = creditTransactions.reduce((acc, ctx) => {
+      const creditTotal = creditTransactions.reduce((acc, ctx) => {
         if (!ctx.data_vencimento) return acc;
         const d = new Date(ctx.data_vencimento + 'T00:00:00');
         if (d.getMonth() === m && d.getFullYear() === y) {
@@ -99,6 +105,12 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
         }
         return acc;
       }, 0);
+
+      const subscriptionsTotal = (propsSubscriptions || [])
+        .filter(sub => sub.status !== false)
+        .reduce((acc, sub) => acc + parseFloat(sub.valor || "0"), 0);
+
+      const total = creditTotal + subscriptionsTotal;
 
       if (total > 0 || i < 3) {
         const label = date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
@@ -115,14 +127,31 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
 
   const selectedMonthTransactions = useMemo(() => {
     if (!selectedMonth) return [];
-    return creditTransactions
+    
+    const creditOnMonth = creditTransactions
       .filter(ctx => {
         if (!ctx.data_vencimento) return false;
         const d = new Date(ctx.data_vencimento + 'T00:00:00');
         return d.getMonth() === selectedMonth.month && d.getFullYear() === selectedMonth.year;
       })
+      .map(tx => ({ ...tx, isSubscription: false }));
+
+    const subsOnMonth = (propsSubscriptions || [])
+      .filter(sub => sub.status !== false)
+      .map(sub => ({
+        id: `sub-${sub.id}`,
+        id_transacao: null,
+        categoria: "Assinatura",
+        valor: sub.valor,
+        data_vencimento: format(new Date(selectedMonth.year, selectedMonth.month, parseInt(sub.dia_cobranca || "1")), "yyyy-MM-dd"),
+        numero_parcela: null,
+        isSubscription: true,
+        nome: sub.nome || sub.descricao
+      }));
+
+    return [...creditOnMonth, ...subsOnMonth]
       .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime());
-  }, [creditTransactions, selectedMonth]);
+  }, [creditTransactions, selectedMonth, propsSubscriptions]);
 
   if (loading) return null;
 
@@ -263,18 +292,19 @@ export function InvoiceCard({ moeda }: InvoiceCardProps) {
                       return (
                         <div 
                           key={tx.id} 
-                          onClick={() => {
-                            setIsDetailsOpen(false);
-                            navigate({ 
-                              to: '/transactions', 
-                              search: { highlight: tx.id_transacao } 
-                            });
-                          }}
-                          className="p-4 rounded-2xl bg-card border border-border/40 hover:border-border/80 hover:shadow-sm transition-all cursor-pointer group"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="text-sm font-medium text-foreground">
-                              {tx.categoria || "Sem categoria"}
+                            onClick={() => {
+                              if (tx.isSubscription) return;
+                              setIsDetailsOpen(false);
+                              navigate({ 
+                                to: '/transactions', 
+                                search: { highlight: tx.id_transacao } 
+                              });
+                            }}
+                            className={`p-4 rounded-2xl bg-card border border-border/40 hover:border-border/80 hover:shadow-sm transition-all group ${tx.isSubscription ? 'cursor-default' : 'cursor-pointer'}`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="text-sm font-medium text-foreground">
+                                {tx.isSubscription ? (tx.nome || "Assinatura") : (tx.categoria || "Sem categoria")}
                               {tx.numero_parcela && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-md text-muted-foreground ml-2 font-normal">Parcela {tx.numero_parcela}</span>}
                             </div>
                             <div className="text-sm font-semibold text-foreground">
