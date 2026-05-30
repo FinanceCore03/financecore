@@ -149,10 +149,16 @@ export function useDashboardData() {
       const isCreditMethod = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
-      // Only count in balance if it's NOT a credit transaction
+      // Saldo Geral/Total em Conta now purely period-based
       if (!isCreditMethod) {
-        if (isEntrada) totalBalance += val;
-        else if (isSaida) totalBalance -= val;
+        const dateStr = tx.data_inicio;
+        if (dateStr) {
+          const [year, month] = dateStr.split('-').map(Number);
+          if ((month - 1) === currentMonth && year === currentYear) {
+            if (isEntrada) totalBalance += val;
+            else if (isSaida) totalBalance -= val;
+          }
+        }
       }
 
       const dateStr = tx.data_inicio;
@@ -162,6 +168,9 @@ export function useDashboardData() {
         const txDate = new Date(year, month - 1, day);
         const txMonth = txDate.getMonth();
         const txYear = txDate.getFullYear();
+
+        // Check if date is in the current month/year
+        const isCurrentPeriod = txMonth === currentMonth && txYear === currentYear;
 
         // Only count in monthly/sparkline if it's NOT a credit transaction AND NOT Saldo Anterior for income
         if (!isCreditMethod) {
@@ -173,7 +182,7 @@ export function useDashboardData() {
             updateSparkline(txDate, val, false);
           }
 
-          if (txMonth === currentMonth && txYear === currentYear) {
+          if (isCurrentPeriod) {
             if (shouldCountAsIncome) monthIncome += val;
             else if (isSaida) monthExpenses += val;
           } else if (txMonth === lastMonth && txYear === lastMonthYear) {
@@ -187,7 +196,8 @@ export function useDashboardData() {
     // Subscriptions count as expenses and affect overall balance
     activeSubscriptions.forEach(sub => {
       const val = parseFloat(sub.valor || "0");
-      totalBalance -= val; // Subscriptions are always expenses
+      // Subscriptions affect current month only in this logic
+      totalBalance -= val; 
 
       // For month calculations, assuming they occur every month if active
       monthExpenses += val;
@@ -305,12 +315,23 @@ export function useDashboardData() {
 
     const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
     transactions
       .filter(tx => {
         const rawTipo = (tx.tipo || "").toLowerCase();
         const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
-        return normalizedTipo === "saida" && !isCreditMethod;
+        
+        // Filter by current period
+        const dateStr = tx.data_inicio;
+        if (!dateStr) return false;
+        const [year, month] = dateStr.split('-').map(Number);
+        const isCurrentPeriod = (month - 1) === currentMonth && year === currentYear;
+
+        return normalizedTipo === "saida" && !isCreditMethod && isCurrentPeriod;
       })
       .forEach(tx => {
         const cat = tx.categoria || "Outros";

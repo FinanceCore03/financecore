@@ -265,7 +265,8 @@ function TransactionsPage() {
       const txDate = tx.data_inicio ? parseISOAsLocal(tx.data_inicio) : null;
       
       // Update overall balance only if not credit
-      if (!isCreditMethod) {
+      // This is now purely period-based for Total em Conta too
+      if (!isCreditMethod && txDate && matchPeriod(txDate)) {
         if (isEntrada) totalAccount += val;
         else totalAccount -= val;
       }
@@ -672,7 +673,7 @@ function TransactionsPage() {
                                       <span className="text-[10px] text-slate-400 mt-0.5">
                                         {tx.metodo_pagamento === "Crédito à vista" ? "1x" : `${relatedInstallments.length}x`}
                                         {" • "}
-                                        {(!tx.juros || tx.juros === 0 || tx.juros === "0") ? "Sem juros" : `juros ${tx.juros}%`}
+                                        {(!tx.Juros || tx.Juros === 0 || tx.Juros === "0") ? "Sem juros" : `juros ${tx.Juros}%`}
                                       </span>
                                     )}
                                   </div>
