@@ -149,7 +149,7 @@ export function useDashboardData() {
       const isCreditMethod = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
-      // Only count in balance/expenses if it's NOT a credit transaction
+      // Only count in balance if it's NOT a credit transaction
       if (!isCreditMethod) {
         if (isEntrada) totalBalance += val;
         else if (isSaida) totalBalance -= val;
@@ -165,7 +165,6 @@ export function useDashboardData() {
 
         // Only count in monthly/sparkline if it's NOT a credit transaction AND NOT Saldo Anterior for income
         if (!isCreditMethod) {
-          // If it's Saldo Anterior, we don't count it as monthly income
           const shouldCountAsIncome = isEntrada && !isSaldoAnterior;
           
           if (shouldCountAsIncome) {
@@ -185,29 +184,7 @@ export function useDashboardData() {
       }
     });
 
-    // Add Credit Transactions from Transacoes_Credito
-    creditTransactions.forEach(ctx => {
-      const val = parseFloat(ctx.valor || "0");
-      const dateStr = ctx.data_vencimento;
-      if (dateStr) {
-        const [year, month, day] = dateStr.split('-').map(Number);
-        const ctxDate = new Date(year, month - 1, day);
-        const ctxMonth = ctxDate.getMonth();
-        const ctxYear = ctxDate.getFullYear();
-
-        // Credit transactions are always expenses (saida)
-        totalBalance -= val;
-        updateSparkline(ctxDate, val, false);
-
-        if (ctxMonth === currentMonth && ctxYear === currentYear) {
-          monthExpenses += val;
-        } else if (ctxMonth === lastMonth && ctxYear === lastMonthYear) {
-          prevMonthExpenses += val;
-        }
-      }
-    });
-
-    // Include active subscriptions in current month expenses
+    // Subscriptions count as expenses and affect overall balance
     activeSubscriptions.forEach(sub => {
       const val = parseFloat(sub.valor || "0");
       totalBalance -= val; // Subscriptions are always expenses
