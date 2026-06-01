@@ -203,6 +203,10 @@ function TransactionsPage() {
       // Outros filtros
       if (categoriaFilter !== "Todas" && tx.categoria !== categoriaFilter) return false;
       if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
+      
+      // Assinatura NUNCA deve entrar como Saída nas listas e totais de transações normais
+      if (tx.categoria === "Assinatura") return false;
+
       return true;
     });
   }, [transactions, selectedMonth, categoriaFilter, metodoFilter]);
@@ -220,19 +224,20 @@ function TransactionsPage() {
       const val = parseFloat(tx.valor || "0");
       const isEntrada = tx.tipo === "entrada";
       const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
+      const isAssinatura = tx.categoria === "Assinatura";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
       
       const txDate = tx.data_inicio ? parseISOAsLocal(tx.data_inicio) : null;
       if (!txDate) return;
 
       // 1. Total em Conta: Acumulado até o último dia do mês selecionado
-      if (!isCreditMethod && txDate <= lastDayOfMonth) {
+      if (!isCreditMethod && !isAssinatura && txDate <= lastDayOfMonth) {
         if (isEntrada) totalAccount += val;
         else totalAccount -= val;
       }
 
       // 2. Entradas e Saídas: Apenas o mês selecionado
-      if (isSameMonth(txDate, selectedMonth) && !isCreditMethod) {
+      if (isSameMonth(txDate, selectedMonth) && !isCreditMethod && !isAssinatura) {
         if (isEntrada && !isSaldoAnterior) {
           periodEntradas += val;
         } else if (tx.tipo === "saida") {
@@ -241,19 +246,16 @@ function TransactionsPage() {
       }
     });
 
+    // Assinaturas ativas NUNCA entram como Saída normal, apenas no card Fatura
+    // (A lógica do InvoiceCard já busca assinaturas independentemente)
+    /*
     subscriptions.forEach(sub => {
-      // Assinaturas entram na fatura (InvoiceCard) mas para o saldo em conta
-      // e saídas do mês elas devem ser contabilizadas se ativas
       if (sub.status !== false) {
-        // Como o usuário pediu para assinaturas entrarem na Fatura e respeitarem o mês
-        // Vou assumir que elas ocorrem mensalmente se estiverem ativas.
         periodSaidas += parseFloat(sub.valor || "0");
-        
-        // Para o saldo acumulado (Total em Conta), as assinaturas são mais complexas
-        // pois dependem de quando começaram. Mas seguindo a lógica do app:
         totalAccount -= parseFloat(sub.valor || "0");
       }
     });
+    */
 
     return { totalAccount, periodEntradas, periodSaidas };
   }, [transactions, creditTransactions, subscriptions, selectedMonth]);
@@ -289,6 +291,7 @@ function TransactionsPage() {
     });
     */
 
+    /*
     subscriptions.forEach(sub => {
       if (sub.status !== false) {
         const cat = "Assinatura";
@@ -297,6 +300,7 @@ function TransactionsPage() {
         totalExps += val;
       }
     });
+    */
 
     const colors = ["var(--primary)", "#8E9196", "#D3E4FD", "#FDE1D3", "#FEC6A1", "#E5DEFF"];
 
@@ -371,26 +375,26 @@ function TransactionsPage() {
           <main className="flex-1 px-8 py-8 space-y-6">
             <AnimatedItem>
               <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50">
                     <button 
                       onClick={() => setSelectedMonth(prev => subMonths(prev, 1))}
-                      className="p-1 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                      className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronLeft className="size-4" />
                     </button>
                     
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted rounded-xl transition-colors text-sm font-medium">
+                        <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-sm font-bold text-slate-900 group">
                           <span className="capitalize">{format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}</span>
-                          <ChevronDown className="size-3 text-muted-foreground" />
+                          <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent align="start" className="w-64 p-2 rounded-2xl border-border shadow-xl bg-white">
-                        <div className="grid grid-cols-3 gap-1">
+                      <PopoverContent align="center" className="w-64 p-3 rounded-3xl border-border shadow-2xl bg-white animate-in fade-in zoom-in duration-200">
+                        <div className="grid grid-cols-3 gap-1.5">
                           {Array.from({ length: 12 }).map((_, i) => {
                             const monthDate = new Date(selectedMonth.getFullYear(), i, 1);
                             const isSelected = i === selectedMonth.getMonth();
@@ -398,24 +402,24 @@ function TransactionsPage() {
                               <button
                                 key={i}
                                 onClick={() => setSelectedMonth(monthDate)}
-                                className={`py-2 text-xs rounded-lg transition-colors capitalize ${isSelected ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted text-muted-foreground'}`}
+                                className={`py-2.5 text-xs rounded-xl transition-all capitalize font-medium ${isSelected ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'hover:bg-muted text-muted-foreground hover:text-slate-900'}`}
                               >
                                 {format(monthDate, "MMM", { locale: ptBR })}
                               </button>
                             );
                           })}
                         </div>
-                        <div className="mt-2 pt-2 border-t border-border flex items-center justify-between px-1">
+                        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between px-1">
                           <button 
                             onClick={() => setSelectedMonth(prev => subMonths(prev, 12))}
-                            className="p-1 hover:bg-muted rounded-lg"
+                            className="p-1.5 hover:bg-muted rounded-xl transition-colors"
                           >
                             <ChevronLeft className="size-4" />
                           </button>
-                          <span className="text-sm font-bold">{selectedMonth.getFullYear()}</span>
+                          <span className="text-sm font-black tracking-tight text-slate-900">{selectedMonth.getFullYear()}</span>
                           <button 
                             onClick={() => setSelectedMonth(prev => addMonths(prev, 12))}
-                            className="p-1 hover:bg-muted rounded-lg"
+                            className="p-1.5 hover:bg-muted rounded-xl transition-colors"
                           >
                             <ChevronRight className="size-4" />
                           </button>
@@ -425,7 +429,7 @@ function TransactionsPage() {
 
                     <button 
                       onClick={() => setSelectedMonth(prev => addMonths(prev, 1))}
-                      className="p-1 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                      className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronRight className="size-4" />
                     </button>

@@ -43,7 +43,8 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
           if (!tx.data_inicio) return false;
           const [txYear, txMonth] = tx.data_inicio.split('-').map(Number);
           const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
-          return (txMonth - 1) === mIdx && txYear === year && !isCredit;
+          const isAssinatura = tx.categoria === "Assinatura";
+          return (txMonth - 1) === mIdx && txYear === year && !isCredit && !isAssinatura;
         });
 
         const monthCreditTransactions = creditTransactions.filter(ctx => {
@@ -79,7 +80,8 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
           if (!tx.data_inicio) return false;
           const [year, month, day] = tx.data_inicio.split('-').map(Number);
           const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
-          return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay && !isCredit;
+          const isAssinatura = tx.categoria === "Assinatura";
+          return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay && !isCredit && !isAssinatura;
         });
 
         const weekCreditTransactions = creditTransactions.filter(ctx => {
@@ -114,7 +116,8 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         
         const dayTransactions = transactions.filter(tx => {
           const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
-          return tx.data_inicio === dateStr && !isCredit;
+          const isAssinatura = tx.categoria === "Assinatura";
+          return tx.data_inicio === dateStr && !isCredit && !isAssinatura;
         });
 
         const dayCreditTransactions = creditTransactions.filter(ctx => ctx.data_vencimento === dateStr);
@@ -202,22 +205,38 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
               tickLine={false} 
               tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }} 
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+              domain={[0, 'auto']}
+              allowDataOverflow={false}
             />
             <Tooltip
-              contentStyle={{ 
-                borderRadius: 16, 
-                border: "none", 
-                backgroundColor: "white",
-                boxShadow: "0 10px 30px -5px rgba(0,0,0,0.1)",
-                padding: "12px 16px"
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="bg-white p-4 rounded-2xl shadow-2xl border border-border/50 animate-in fade-in zoom-in duration-200 min-w-[150px]">
+                      <div className="space-y-3">
+                        {payload.map((entry: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="size-2 rounded-full" 
+                                style={{ backgroundColor: entry.name === "income" ? "#10b981" : "#f43f5e" }} 
+                              />
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                {entry.name === "income" ? "Entradas" : "Saídas"}
+                              </span>
+                            </div>
+                            <span className="font-bold text-slate-900 text-sm">
+                              {fmt(entry.value)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
               }}
               cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }}
-              formatter={(v: any, name: any) => [
-                <span className="font-bold text-slate-900" key="val">{fmt(v as number)}</span>, 
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider" key="name">{name === "income" ? "Entradas" : "Saídas"}</span>
-              ]}
-              labelStyle={{ display: 'none' }}
-              itemStyle={{ padding: '4px 0' }}
             />
             <Area 
               type="monotone" 

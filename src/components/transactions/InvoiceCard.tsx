@@ -217,14 +217,14 @@ export function InvoiceCard({ moeda, transactions, subscriptions: propsSubscript
                       setAnimating(false);
                     }, 150);
                   }}
-                  className="w-full flex items-center justify-between p-4 bg-primary/5 hover:bg-primary/10 rounded-2xl border border-primary/10 transition-colors group"
+                  className="w-full flex items-center justify-between p-4 bg-white hover:bg-primary/5 rounded-2xl border border-border hover:border-primary/20 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all group active:scale-[0.99]"
                 >
                   <div className="text-left">
-                    <div className="text-sm font-bold text-primary">Este mês</div>
-                    <div className="text-xs text-muted-foreground">Próxima fatura válida</div>
+                    <div className="text-sm font-bold text-primary group-hover:scale-105 transition-transform origin-left">Este mês</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">Próxima fatura válida</div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="text-sm font-bold text-primary">{formatCurrency(invoiceTotal, moeda)}</div>
+                    <div className="text-sm font-black text-primary">{formatCurrency(invoiceTotal, moeda)}</div>
                     <ChevronRight className="size-4 text-primary group-hover:translate-x-1 transition-transform" />
                   </div>
                 </button>
@@ -237,11 +237,11 @@ export function InvoiceCard({ moeda, transactions, subscriptions: propsSubscript
                       setAnimating(false);
                     }, 150);
                   }}
-                  className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 rounded-2xl border border-border/50 transition-colors group"
+                  className="w-full flex items-center justify-between p-4 bg-white hover:bg-muted/30 rounded-2xl border border-border shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] transition-all group active:scale-[0.99]"
                 >
                   <div className="text-left">
-                    <div className="text-sm font-bold text-foreground">Outro mês</div>
-                    <div className="text-xs text-muted-foreground">Ver faturas futuras</div>
+                    <div className="text-sm font-bold text-slate-700">Outro mês</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">Ver faturas futuras</div>
                   </div>
                   <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                 </button>
