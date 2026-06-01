@@ -357,6 +357,10 @@ function TransactionsPage() {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   }, [currentPage]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMonth, categoriaFilter, metodoFilter, tipoFilter, periodFilter, dateRange]);
+
   const handleResetFilters = () => {
     setCategoriaFilter("Todas");
     setMetodoFilter("Todos");
