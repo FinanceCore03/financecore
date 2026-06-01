@@ -755,7 +755,7 @@ function TransactionsPage() {
                                     <Trash2 size={16}/>
                                   </button>
                                 </td>
-                              </tr>
+                              </motion.tr>
                               {isCredit && (
                                 <tr>
                                   <td colSpan={6} className="p-0 border-none">
