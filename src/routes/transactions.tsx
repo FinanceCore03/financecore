@@ -708,10 +708,15 @@ function TransactionsPage() {
                           return (
                             <Fragment key={tx.id}>
                               <motion.tr 
+                                key={tx.id}
+                                id={`tx-${tx.id}`}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ duration: 0.2 }}
+                                onClick={() => isCredit && setExpandedTxId(isExpanded ? null : tx.id)}
+                                className={`text-sm hover:bg-muted/30 transition-all duration-500 ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''} ${highlightedId === tx.id ? 'highlight-row ring-1 ring-blue-200/50' : ''}`}
+                              >
                                 <td className="py-4 px-4 font-medium">{tx.categoria || "Geral"}</td>
                                 <td className="py-4 px-4 text-muted-foreground">
                                   {tx.data_fim && tx.data_fim !== tx.data_inicio ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
