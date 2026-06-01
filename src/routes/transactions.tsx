@@ -921,17 +921,81 @@ function TransactionsPage() {
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent className="rounded-2xl">
+        <AlertDialogContent className="rounded-[2rem] p-8 border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir?</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza que deseja excluir esta transação?</AlertDialogDescription>
+            <AlertDialogTitle className="text-xl font-bold tracking-tight">Excluir Transação?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              Esta ação não pode ser desfeita. A transação será removida permanentemente de sua conta.
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-danger text-white">Excluir</AlertDialogAction>
+          <AlertDialogFooter className="mt-6 gap-3">
+            <AlertDialogCancel className="rounded-xl font-bold border-border/50 hover:bg-muted/50">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="rounded-xl font-bold bg-danger hover:bg-danger/90 shadow-lg shadow-danger/20"
+            >
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
+        <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-[2rem] overflow-hidden" align="center">
+          <div className="flex flex-col md:flex-row bg-white">
+            <div className="p-4 border-r border-border/40 space-y-1 min-w-[180px] bg-muted/5">
+              {[
+                "Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses", "Personalizado"
+              ].map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setPeriodFilter(opt);
+                    if (opt !== "Personalizado") setIsPeriodOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${periodFilter === opt ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50 text-muted-foreground'}`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <div className="p-4 flex flex-col items-center">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(range) => {
+                  setDateRange(range);
+                  if (range?.from && range?.to) {
+                    setPeriodFilter("Personalizado");
+                  }
+                }}
+                locale={ptBR}
+                className="rounded-xl border-none"
+              />
+              <div className="mt-4 w-full flex justify-end gap-3 px-4 pb-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsPeriodOpen(false)}
+                  className="rounded-xl font-bold text-xs"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (dateRange?.from) {
+                      setPeriodFilter("Personalizado");
+                    }
+                    setIsPeriodOpen(false);
+                  }}
+                  className="rounded-xl font-bold text-xs px-6 shadow-lg shadow-primary/20"
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
