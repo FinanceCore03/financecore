@@ -21,56 +21,69 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
   const [period, setPeriod] = useState("Mês");
   const fmt = (n: number) => formatCurrency(n, moeda);
 
+  const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
   const chartData = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
-    const normalizeStr = (str: string) => (str || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
     if (period === "Anual") {
-      return annualData;
+      // Re-calculate annual data to exclude subscriptions and credit
+      const monthsShort = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      return monthsShort.map((m, i) => {
+        const monthTransactions = transactions.filter(tx => {
+          if (!tx.data_inicio) return false;
+          const [year, month] = tx.data_inicio.split('-').map(Number);
+          const metodo = tx.metodo_pagamento || "";
+          const isCredit = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
+          const isAssinatura = tx.categoria === "Assinatura";
+          return (month - 1) === i && year === currentYear && !isCredit && !isAssinatura;
+        });
+
+        const income = monthTransactions
+          .filter(tx => normalizeStr(tx.tipo) === "entrada" && normalizeStr(tx.categoria) !== "saldo anterior")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        const expenses = monthTransactions
+          .filter(tx => normalizeStr(tx.tipo) === "saida")
+          .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
+
+        return { m, income, expenses };
+      });
     }
 
     if (period === "3 meses") {
-      const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+      const monthsShort = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
       const last3 = [];
       for (let i = 2; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const d = new Date(currentYear, currentMonth - i, 1);
         const mIdx = d.getMonth();
         const year = d.getFullYear();
         
         const monthTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [txYear, txMonth] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
+          const metodo = tx.metodo_pagamento || "";
+          const isCredit = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
           const isAssinatura = tx.categoria === "Assinatura";
           return (txMonth - 1) === mIdx && txYear === year && !isCredit && !isAssinatura;
         });
 
-        const monthCreditTransactions = creditTransactions.filter(ctx => {
-          if (!ctx.data_vencimento) return false;
-          const [ctxYear, ctxMonth] = ctx.data_vencimento.split('-').map(Number);
-          return (ctxMonth - 1) === mIdx && ctxYear === year;
-        });
-
         const income = monthTransactions
-          .filter(tx => tx.tipo === "entrada")
+          .filter(tx => normalizeStr(tx.tipo) === "entrada" && normalizeStr(tx.categoria) !== "saldo anterior")
           .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
         const commonExpenses = monthTransactions
-          .filter(tx => tx.tipo === "saida")
+          .filter(tx => normalizeStr(tx.tipo) === "saida")
           .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
-        const creditExpenses = monthCreditTransactions
-          .reduce((sum, ctx) => sum + parseFloat(ctx.valor || "0"), 0);
-
-        last3.push({ m: months[mIdx], income, expenses: commonExpenses + creditExpenses });
+        last3.push({ m: monthsShort[mIdx], income, expenses: commonExpenses });
       }
       return last3;
     }
 
     if (period === "Mês") {
-      // Group by week of the current month
       const weeks = [];
       for (let i = 0; i < 4; i++) {
         const startDay = i * 7 + 1;
@@ -79,35 +92,26 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const weekTransactions = transactions.filter(tx => {
           if (!tx.data_inicio) return false;
           const [year, month, day] = tx.data_inicio.split('-').map(Number);
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
+          const metodo = tx.metodo_pagamento || "";
+          const isCredit = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
           const isAssinatura = tx.categoria === "Assinatura";
           return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay && !isCredit && !isAssinatura;
         });
 
-        const weekCreditTransactions = creditTransactions.filter(ctx => {
-          if (!ctx.data_vencimento) return false;
-          const [year, month, day] = ctx.data_vencimento.split('-').map(Number);
-          return (month - 1) === currentMonth && year === currentYear && day >= startDay && day <= endDay;
-        });
-
         const income = weekTransactions
-          .filter(tx => tx.tipo === "entrada")
+          .filter(tx => normalizeStr(tx.tipo) === "entrada" && normalizeStr(tx.categoria) !== "saldo anterior")
           .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
         const commonExpenses = weekTransactions
-          .filter(tx => tx.tipo === "saida")
+          .filter(tx => normalizeStr(tx.tipo) === "saida")
           .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
-        const creditExpenses = weekCreditTransactions
-          .reduce((sum, ctx) => sum + parseFloat(ctx.valor || "0"), 0);
-
-        weeks.push({ m: `Semana ${i + 1}`, income, expenses: commonExpenses + creditExpenses });
+        weeks.push({ m: `Semana ${i + 1}`, income, expenses: commonExpenses });
       }
       return weeks;
     }
 
     if (period === "Semana") {
-      // Last 7 days
       const last7Days = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now);
@@ -115,38 +119,40 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         const dateStr = d.toISOString().split('T')[0];
         
         const dayTransactions = transactions.filter(tx => {
-          const isCredit = normalizeStr(tx.metodo_pagamento).includes("credito") || normalizeStr(tx.metodo_pagamento).includes("parcelado");
+          const metodo = tx.metodo_pagamento || "";
+          const isCredit = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
           const isAssinatura = tx.categoria === "Assinatura";
           return tx.data_inicio === dateStr && !isCredit && !isAssinatura;
         });
 
-        const dayCreditTransactions = creditTransactions.filter(ctx => ctx.data_vencimento === dateStr);
-
         const income = dayTransactions
-          .filter(tx => tx.tipo === "entrada")
+          .filter(tx => normalizeStr(tx.tipo) === "entrada" && normalizeStr(tx.categoria) !== "saldo anterior")
           .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
 
         const commonExpenses = dayTransactions
-          .filter(tx => tx.tipo === "saida")
+          .filter(tx => normalizeStr(tx.tipo) === "saida")
           .reduce((sum, tx) => sum + parseFloat(tx.valor || "0"), 0);
-
-        const creditExpenses = dayCreditTransactions
-          .reduce((sum, ctx) => sum + parseFloat(ctx.valor || "0"), 0);
 
         last7Days.push({ 
           m: d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', ''), 
           income, 
-          expenses: commonExpenses + creditExpenses
+          expenses: commonExpenses
         });
       }
       return last7Days;
     }
 
     return annualData;
-  }, [period, annualData, transactions, creditTransactions]);
+  }, [period, annualData, transactions]);
+
+  const yDomain = useMemo(() => {
+    const maxVal = Math.max(...chartData.map(d => Math.max(d.income, d.expenses)), 0);
+    if (maxVal === 0) return [0, 1000];
+    return [0, Math.ceil(maxVal * 1.2)];
+  }, [chartData]);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-full flex flex-col">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-[450px] flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h3 className="text-lg font-bold tracking-tight text-slate-900">Fluxo de Caixa</h3>
@@ -179,9 +185,9 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
         </div>
       </div>
 
-      <div className="h-[300px] w-full flex-1">
+      <div className="w-full flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 5, right: 10, bottom: 0, left: -10 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
             <defs>
               <linearGradient id="gradIncome" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#10b981" stopOpacity={0.12} />
@@ -205,7 +211,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
               tickLine={false} 
               tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }} 
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
-              domain={[0, 'auto']}
+              domain={yDomain}
               allowDataOverflow={false}
             />
             <Tooltip
@@ -219,10 +225,10 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
                             <div className="flex items-center gap-2">
                               <div 
                                 className="size-2 rounded-full" 
-                                style={{ backgroundColor: entry.name === "income" ? "#10b981" : "#f43f5e" }} 
+                                style={{ backgroundColor: entry.dataKey === "income" ? "#10b981" : "#f43f5e" }} 
                               />
                               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                {entry.name === "income" ? "Entradas" : "Saídas"}
+                                {entry.dataKey === "income" ? "Entradas" : "Saídas"}
                               </span>
                             </div>
                             <span className="font-bold text-slate-900 text-sm">
@@ -241,7 +247,6 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
             <Area 
               type="monotone" 
               dataKey="income" 
-              name="income"
               stroke="#10b981" 
               strokeWidth={2} 
               fill="url(#gradIncome)" 
@@ -253,7 +258,6 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
             <Area 
               type="monotone" 
               dataKey="expenses" 
-              name="expenses"
               stroke="#f43f5e" 
               strokeWidth={2} 
               fill="url(#gradExpenses)" 
