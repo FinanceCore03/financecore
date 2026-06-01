@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopBar } from "@/components/dashboard/TopBar";
-import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, EyeOff } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, EyeOff, CalendarDays } from "lucide-react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTransactionModal } from "@/components/transactions/AddTransactionModal";
@@ -11,7 +11,7 @@ import { InvoiceCard } from "@/components/transactions/InvoiceCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, isWithinInterval, startOfDay, endOfDay, isSameDay, isSameMonth, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
+import { format, isWithinInterval, startOfDay, endOfDay, isSameDay, isSameMonth, startOfMonth, endOfMonth, addMonths, subMonths, isSameWeek, isToday, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,6 +21,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { PageTransition, AnimatedItem } from "@/components/PageTransition";
 import { usePrivacy } from "@/contexts/PrivacyContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 export const Route = createFileRoute("/transactions")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -46,7 +49,7 @@ function TransactionsPage() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
-  const [periodFilter, setPeriodFilter] = useState("Todas");
+  const [periodFilter, setPeriodFilter] = useState<string>("Este mês");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -54,6 +57,7 @@ function TransactionsPage() {
   const [moeda, setMoeda] = useState<string>("Real");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("Todas");
   const [metodoFilter, setMetodoFilter] = useState<string>("Todos");
+  const [tipoFilter, setTipoFilter] = useState<string>("Todas");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
@@ -197,19 +201,45 @@ function TransactionsPage() {
       const txDate = parseISOAsLocal(tx.data_inicio);
       if (!txDate) return false;
       
-      // Mês selecionado
-      if (!isSameMonth(txDate, selectedMonth)) return false;
+      // Filtro de Período (Prioritário se não for "Este mês" padrão ou se for Personalizado)
+      if (periodFilter !== "Todas") {
+        const today = new Date();
+        if (periodFilter === "Hoje") {
+          if (!isToday(txDate)) return false;
+        } else if (periodFilter === "Esta semana") {
+          if (!isSameWeek(txDate, today, { weekStartsOn: 0 })) return false;
+        } else if (periodFilter === "Este mês") {
+          if (!isSameMonth(txDate, selectedMonth)) return false;
+        } else if (periodFilter === "Últimos 3 meses") {
+          const threeMonthsAgo = subDays(today, 90);
+          if (txDate < threeMonthsAgo || txDate > today) return false;
+        } else if (periodFilter === "Personalizado" && dateRange?.from) {
+          const from = startOfDay(dateRange.from);
+          const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+          if (txDate < from || txDate > to) return false;
+        }
+      } else {
+        // Se for "Todas", ainda respeitamos o selectedMonth se o usuário não mudou nada? 
+        // Na verdade, se o usuário selecionou "Todas", deve mostrar tudo ignorando o mês?
+        // O pedido diz: "navegar por mês... ou usar a opção Personalizado".
+        // Vamos manter a lógica do selectedMonth como fallback se for "Todas" mas selectedMonth estiver ativo.
+        if (!isSameMonth(txDate, selectedMonth)) return false;
+      }
       
       // Outros filtros
       if (categoriaFilter !== "Todas" && tx.categoria !== categoriaFilter) return false;
       if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
+      if (tipoFilter !== "Todas") {
+        if (tipoFilter === "Entradas" && tx.tipo !== "entrada") return false;
+        if (tipoFilter === "Saídas" && tx.tipo !== "saida") return false;
+      }
       
       // Assinatura NUNCA deve entrar como Saída nas listas e totais de transações normais
       if (tx.categoria === "Assinatura") return false;
 
       return true;
     });
-  }, [transactions, selectedMonth, categoriaFilter, metodoFilter]);
+  }, [transactions, selectedMonth, categoriaFilter, metodoFilter, tipoFilter, periodFilter, dateRange]);
 
   const totals = useMemo(() => {
     let totalAccount = 0;
@@ -329,7 +359,15 @@ function TransactionsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedMonth, categoriaFilter, metodoFilter]);
+  }, [selectedMonth, categoriaFilter, metodoFilter, tipoFilter, periodFilter, dateRange]);
+
+  const handleResetFilters = () => {
+    setCategoriaFilter("Todas");
+    setMetodoFilter("Todos");
+    setTipoFilter("Todas");
+    setPeriodFilter("Este mês");
+    setDateRange(undefined);
+  };
 
   const availableCategories = useMemo(() => {
     const set = new Set<string>();
@@ -377,10 +415,15 @@ function TransactionsPage() {
               <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-4">
                   <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
-                  
-                  <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50">
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 p-1 bg-white/50 backdrop-blur-sm rounded-2xl border border-border/40 shadow-sm">
                     <button 
-                      onClick={() => setSelectedMonth(prev => subMonths(prev, 1))}
+                      onClick={() => {
+                        setSelectedMonth(prev => subMonths(prev, 1));
+                        setPeriodFilter("Este mês");
+                      }}
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronLeft className="size-4" />
@@ -389,59 +432,83 @@ function TransactionsPage() {
                     <Popover>
                       <PopoverTrigger asChild>
                         <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-sm font-bold text-slate-900 group">
-                          <span className="capitalize">{format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}</span>
+                          <span className="capitalize">
+                            {periodFilter === "Personalizado" && dateRange?.from 
+                              ? `${format(dateRange.from, "dd/MM")} - ${dateRange.to ? format(dateRange.to, "dd/MM") : ""}`
+                              : format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+                          </span>
                           <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent align="center" className="w-64 p-3 rounded-3xl border-border shadow-2xl bg-white animate-in fade-in zoom-in duration-200">
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {Array.from({ length: 12 }).map((_, i) => {
-                            const monthDate = new Date(selectedMonth.getFullYear(), i, 1);
-                            const isSelected = i === selectedMonth.getMonth();
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => setSelectedMonth(monthDate)}
-                                className={`py-2.5 text-xs rounded-xl transition-all capitalize font-medium ${isSelected ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'hover:bg-muted text-muted-foreground hover:text-slate-900'}`}
-                              >
-                                {format(monthDate, "MMM", { locale: ptBR })}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between px-1">
-                          <button 
-                            onClick={() => setSelectedMonth(prev => subMonths(prev, 12))}
-                            className="p-1.5 hover:bg-muted rounded-xl transition-colors"
-                          >
-                            <ChevronLeft className="size-4" />
-                          </button>
-                          <span className="text-sm font-black tracking-tight text-slate-900">{selectedMonth.getFullYear()}</span>
-                          <button 
-                            onClick={() => setSelectedMonth(prev => addMonths(prev, 12))}
-                            className="p-1.5 hover:bg-muted rounded-xl transition-colors"
-                          >
-                            <ChevronRight className="size-4" />
-                          </button>
+                      <PopoverContent align="center" className="w-[320px] p-0 rounded-3xl border-border shadow-2xl bg-white overflow-hidden">
+                        <div className="p-4">
+                          <div className="grid grid-cols-3 gap-1.5 mb-4">
+                            {Array.from({ length: 12 }).map((_, i) => {
+                              const monthDate = new Date(selectedMonth.getFullYear(), i, 1);
+                              const isSelected = i === selectedMonth.getMonth() && periodFilter === "Este mês";
+                              return (
+                                <button
+                                  key={i}
+                                  onClick={() => {
+                                    setSelectedMonth(monthDate);
+                                    setPeriodFilter("Este mês");
+                                  }}
+                                  className={`py-2 text-xs rounded-xl transition-all capitalize font-medium ${isSelected ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20' : 'hover:bg-muted text-muted-foreground hover:text-slate-900'}`}
+                                >
+                                  {format(monthDate, "MMM", { locale: ptBR })}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          
+                          <div className="pt-3 border-t border-border/50 flex items-center justify-between px-1 mb-4">
+                            <button 
+                              onClick={() => setSelectedMonth(prev => subMonths(prev, 12))}
+                              className="p-1.5 hover:bg-muted rounded-xl transition-colors"
+                            >
+                              <ChevronLeft className="size-4" />
+                            </button>
+                            <span className="text-sm font-bold tracking-tight text-slate-900">{selectedMonth.getFullYear()}</span>
+                            <button 
+                              onClick={() => setSelectedMonth(prev => addMonths(prev, 12))}
+                              className="p-1.5 hover:bg-muted rounded-xl transition-colors"
+                            >
+                              <ChevronRight className="size-4" />
+                            </button>
+                          </div>
+
+                          <div className="pt-3 border-t border-border/50">
+                            <button 
+                              onClick={() => {
+                                setPeriodFilter("Personalizado");
+                                setIsPeriodOpen(true);
+                              }}
+                              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${periodFilter === "Personalizado" ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'}`}
+                            >
+                              <CalendarDays className="size-4" />
+                              Personalizado
+                            </button>
+                          </div>
                         </div>
                       </PopoverContent>
                     </Popover>
 
                     <button 
-                      onClick={() => setSelectedMonth(prev => addMonths(prev, 1))}
+                      onClick={() => {
+                        setSelectedMonth(prev => addMonths(prev, 1));
+                        setPeriodFilter("Este mês");
+                      }}
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronRight className="size-4" />
                     </button>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
+
                   <button 
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-2xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95"
                   >
-                    <Plus className="size-4" />
+                    <Plus className="size-4" strokeWidth={3} />
                     <span>Adicionar</span>
                   </button>
                 </div>
@@ -532,58 +599,90 @@ function TransactionsPage() {
                       </div>
                       <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                         <PopoverTrigger asChild>
-                          <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
-                            <Filter className="size-4 text-muted-foreground" />
+                          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border/50 rounded-2xl text-sm font-bold hover:bg-muted/50 transition-all shadow-sm active:scale-95">
+                            <Filter className="size-4 text-primary" />
                             <span>Filtrar</span>
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="w-80 rounded-2xl p-5 shadow-xl border-border bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
-                          <div className="space-y-4">
-                              <h4 className="font-bold text-sm">Filtros</h4>
+                        <PopoverContent align="end" className="w-[340px] rounded-[2rem] p-6 shadow-2xl border-border bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
+                          <div className="space-y-6">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-lg tracking-tight">Filtros</h4>
+                                <button 
+                                  onClick={handleResetFilters}
+                                  className="text-xs font-bold text-primary hover:underline"
+                                >
+                                  Limpar todos
+                                </button>
+                              </div>
                               
-                              <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Mês de Referência</label>
-                                <div className="flex items-center gap-2">
-                                  <button 
-                                    onClick={() => setSelectedMonth(prev => subMonths(prev, 1))}
-                                    className="p-2 border border-border rounded-xl hover:bg-muted"
-                                  >
-                                    <ChevronLeft className="size-4" />
-                                  </button>
-                                  <div className="flex-1 text-center font-medium capitalize py-2 bg-muted/30 rounded-xl">
-                                    {format(selectedMonth, "MMMM yyyy", { locale: ptBR })}
-                                  </div>
-                                  <button 
-                                    onClick={() => setSelectedMonth(prev => addMonths(prev, 1))}
-                                    className="p-2 border border-border rounded-xl hover:bg-muted"
-                                  >
-                                    <ChevronRight className="size-4" />
-                                  </button>
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Período</label>
+                                <Select value={periodFilter} onValueChange={(val) => {
+                                  setPeriodFilter(val);
+                                  if (val === "Personalizado") setIsPeriodOpen(true);
+                                }}>
+                                  <SelectTrigger className="w-full h-12 rounded-2xl border-border/60 bg-muted/20 px-4 font-medium transition-all focus:ring-primary/20">
+                                    <SelectValue placeholder="Selecione o período" />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-2xl border-border shadow-xl">
+                                    <SelectItem value="Todas" className="rounded-xl">Todas</SelectItem>
+                                    <SelectItem value="Hoje" className="rounded-xl">Hoje</SelectItem>
+                                    <SelectItem value="Esta semana" className="rounded-xl">Esta semana</SelectItem>
+                                    <SelectItem value="Este mês" className="rounded-xl">Este mês</SelectItem>
+                                    <SelectItem value="Últimos 3 meses" className="rounded-xl">Últimos 3 meses</SelectItem>
+                                    <SelectItem value="Personalizado" className="rounded-xl">Personalizado</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Tipo</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {["Todas", "Entradas", "Saídas"].map((t) => (
+                                    <button
+                                      key={t}
+                                      onClick={() => setTipoFilter(t)}
+                                      className={`py-2 text-xs font-bold rounded-xl border transition-all ${tipoFilter === t ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20' : 'bg-muted/20 border-transparent text-muted-foreground hover:bg-muted/40'}`}
+                                    >
+                                      {t}
+                                    </button>
+                                  ))}
                                 </div>
                               </div>
 
-                              <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Categoria</label>
-                                <select 
-                                  value={categoriaFilter} 
-                                  onChange={(e) => setCategoriaFilter(e.target.value)}
-                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm"
-                                >
-                                  <option value="Todas">Todas</option>
-                                  {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Categoria</label>
+                                <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+                                  <SelectTrigger className="w-full h-12 rounded-2xl border-border/60 bg-muted/20 px-4 font-medium transition-all focus:ring-primary/20">
+                                    <SelectValue placeholder="Todas as categorias" />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-2xl border-border shadow-xl max-h-[300px]">
+                                    <SelectItem value="Todas" className="rounded-xl">Todas</SelectItem>
+                                    {availableCategories.map(c => <SelectItem key={c} value={c} className="rounded-xl">{c}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
                               </div>
-                              <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Método</label>
-                                <select 
-                                  value={metodoFilter} 
-                                  onChange={(e) => setMetodoFilter(e.target.value)}
-                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm"
-                                >
-                                  <option value="Todos">Todos</option>
-                                  {availableMethods.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
+
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Método de Pagamento</label>
+                                <Select value={metodoFilter} onValueChange={setMetodoFilter}>
+                                  <SelectTrigger className="w-full h-12 rounded-2xl border-border/60 bg-muted/20 px-4 font-medium transition-all focus:ring-primary/20">
+                                    <SelectValue placeholder="Todos os métodos" />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-2xl border-border shadow-xl max-h-[300px]">
+                                    <SelectItem value="Todos" className="rounded-xl">Todos os métodos</SelectItem>
+                                    {availableMethods.map(m => <SelectItem key={m} value={m} className="rounded-xl">{m}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
                               </div>
+
+                              <Button 
+                                onClick={() => setIsFilterOpen(false)}
+                                className="w-full h-12 rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 mt-2"
+                              >
+                                Aplicar Filtros
+                              </Button>
                           </div>
                         </PopoverContent>
                       </Popover>
@@ -601,8 +700,9 @@ function TransactionsPage() {
                           <th className="text-center py-3 px-4">Ação</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border">
-                        {paginatedTransactions.map((tx) => {
+                       <tbody className="divide-y divide-border">
+                        <AnimatePresence mode="wait">
+                          {paginatedTransactions.map((tx) => {
                           const isCredit = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
                           const isExpanded = expandedTxId === tx.id;
                           const relatedInstallments = creditTransactions
@@ -611,8 +711,13 @@ function TransactionsPage() {
 
                           return (
                             <Fragment key={tx.id}>
-                              <tr 
+                              <motion.tr 
+                                key={tx.id}
                                 id={`tx-${tx.id}`}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                transition={{ duration: 0.2 }}
                                 onClick={() => isCredit && setExpandedTxId(isExpanded ? null : tx.id)}
                                 className={`text-sm hover:bg-muted/30 transition-all duration-500 ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''} ${highlightedId === tx.id ? 'highlight-row ring-1 ring-blue-200/50' : ''}`}
                               >
@@ -654,7 +759,7 @@ function TransactionsPage() {
                                     <Trash2 size={16}/>
                                   </button>
                                 </td>
-                              </tr>
+                              </motion.tr>
                               {isCredit && (
                                 <tr>
                                   <td colSpan={6} className="p-0 border-none">
@@ -707,8 +812,9 @@ function TransactionsPage() {
                                 </tr>
                               )}
                             </Fragment>
-                          );
-                        })}
+                            );
+                          })}
+                        </AnimatePresence>
                       </tbody>
                     </table>
                   </div>
@@ -774,7 +880,7 @@ function TransactionsPage() {
                               />
                             ))}
                           </Pie>
-                          <Tooltip 
+                          <RechartsTooltip 
                             formatter={(value: any) => formatCurrency(Number(value), effectiveMoeda)}
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                           />
@@ -826,17 +932,81 @@ function TransactionsPage() {
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent className="rounded-2xl">
+        <AlertDialogContent className="rounded-[2rem] p-8 border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir?</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza que deseja excluir esta transação?</AlertDialogDescription>
+            <AlertDialogTitle className="text-xl font-bold tracking-tight">Excluir Transação?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">
+              Esta ação não pode ser desfeita. A transação será removida permanentemente de sua conta.
+            </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-danger text-white">Excluir</AlertDialogAction>
+          <AlertDialogFooter className="mt-6 gap-3">
+            <AlertDialogCancel className="rounded-xl font-bold border-border/50 hover:bg-muted/50">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="rounded-xl font-bold bg-danger hover:bg-danger/90 shadow-lg shadow-danger/20"
+            >
+              {isDeleting ? "Excluindo..." : "Sim, excluir"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Popover open={isPeriodOpen} onOpenChange={setIsPeriodOpen}>
+        <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-[2rem] overflow-hidden" align="center">
+          <div className="flex flex-col md:flex-row bg-white">
+            <div className="p-4 border-r border-border/40 space-y-1 min-w-[180px] bg-muted/5">
+              {[
+                "Todas", "Hoje", "Esta semana", "Este mês", "Últimos 3 meses", "Personalizado"
+              ].map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setPeriodFilter(opt);
+                    if (opt !== "Personalizado") setIsPeriodOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${periodFilter === opt ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50 text-muted-foreground'}`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <div className="p-4 flex flex-col items-center">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={(range) => {
+                  setDateRange(range);
+                  if (range?.from && range?.to) {
+                    setPeriodFilter("Personalizado");
+                  }
+                }}
+                locale={ptBR}
+                className="rounded-xl border-none"
+              />
+              <div className="mt-4 w-full flex justify-end gap-3 px-4 pb-2">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsPeriodOpen(false)}
+                  className="rounded-xl font-bold text-xs"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (dateRange?.from) {
+                      setPeriodFilter("Personalizado");
+                    }
+                    setIsPeriodOpen(false);
+                  }}
+                  className="rounded-xl font-bold text-xs px-6 shadow-lg shadow-primary/20"
+                >
+                  Aplicar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
