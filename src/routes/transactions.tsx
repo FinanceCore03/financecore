@@ -185,57 +185,8 @@ function TransactionsPage() {
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
   };
 
-  const matchPeriod = (date: Date) => {
-    if (periodFilter === "Todas") return true;
-    
-    if (periodFilter === "Personalizado" && dateRange?.from) {
-      const from = startOfDay(dateRange.from);
-      const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
-      return date >= from && date <= to;
-    }
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    if (periodFilter === "Hoje") return isSameDay(date, today);
-    if (periodFilter === "Esta semana") {
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay());
-      return date >= startOfWeek;
-    }
-    if (periodFilter === "Este mês") {
-      return isSameMonth(date, today);
-    }
-    if (periodFilter === "Últimos 3 meses") {
-      const threeMonthsAgo = new Date(today);
-      threeMonthsAgo.setMonth(today.getMonth() - 3);
-      return date >= threeMonthsAgo;
-    }
-    return true;
-  };
-
   const matchSubscriptionPeriod = (sub: any) => {
     if (sub.status === false) return false;
-    if (periodFilter === "Todas") return true;
-
-    const now = new Date();
-    const diaCobranca = parseInt(sub.dia_cobranca);
-    if (isNaN(diaCobranca)) return true;
-    
-    if (periodFilter === "Hoje") {
-      return now.getDate() === diaCobranca;
-    }
-    
-    if (periodFilter === "Personalizado" && dateRange?.from) {
-      let check = new Date(dateRange.from);
-      const to = dateRange.to || dateRange.from;
-      while (check <= to) {
-        if (check.getDate() === diaCobranca) return true;
-        check.setDate(check.getDate() + 1);
-      }
-      return false;
-    }
-
     return true;
   };
 
@@ -324,12 +275,11 @@ function TransactionsPage() {
         }
       });
 
-    // Distribution should NOT include credit transactions from Transacoes_Credito
     /*
     creditTransactions.forEach(ctx => {
       if (ctx.data_vencimento) {
         const ctxDate = parseISOAsLocal(ctx.data_vencimento);
-        if (ctxDate && matchPeriod(ctxDate)) {
+        if (ctxDate && isSameMonth(ctxDate, selectedMonth)) {
           const cat = ctx.categoria || "Outros";
           const val = parseFloat(ctx.valor || "0");
           categoriesMap[cat] = (categoriesMap[cat] || 0) + val;
