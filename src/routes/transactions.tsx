@@ -49,7 +49,7 @@ function TransactionsPage() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
-  const [periodFilter, setPeriodFilter] = useState("Todas");
+  const [periodFilter, setPeriodFilter] = useState<string>("Este mês");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isPeriodOpen, setIsPeriodOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -57,6 +57,7 @@ function TransactionsPage() {
   const [moeda, setMoeda] = useState<string>("Real");
   const [categoriaFilter, setCategoriaFilter] = useState<string>("Todas");
   const [metodoFilter, setMetodoFilter] = useState<string>("Todos");
+  const [tipoFilter, setTipoFilter] = useState<string>("Todas");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
