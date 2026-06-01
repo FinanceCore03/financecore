@@ -375,7 +375,7 @@ function TransactionsPage() {
           <main className="flex-1 px-8 py-8 space-y-6">
             <AnimatedItem>
               <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
                   
                   <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50">
@@ -434,9 +434,6 @@ function TransactionsPage() {
                       <ChevronRight className="size-4" />
                     </button>
                   </div>
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -448,6 +445,7 @@ function TransactionsPage() {
                     <span>Adicionar</span>
                   </button>
                 </div>
+              </header>
               </header>
             </AnimatedItem>
 

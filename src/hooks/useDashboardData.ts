@@ -199,28 +199,12 @@ export function useDashboardData() {
       }
     });
 
-    // Subscriptions count as expenses and affect overall balance
+    // Assinaturas ativas NUNCA entram como Saída normal, apenas na Fatura
+    /*
     activeSubscriptions.forEach(sub => {
-      const val = parseFloat(sub.valor || "0");
-      // Subscriptions affect current month only in this logic
-      totalBalance -= val; 
-
-      // For month calculations, assuming they occur every month if active
-      monthExpenses += val;
-      
-      // Update sparklines for current month
-      const currentMonthIdx = last6Months.findIndex(item => item.month === currentMonth && item.year === currentYear);
-      if (currentMonthIdx !== -1) {
-        last6Months[currentMonthIdx].expenses += val;
-      }
-      
-      // Also update previous month for comparison
-      prevMonthExpenses += val;
-      const prevMonthIdx = last6Months.findIndex(item => item.month === lastMonth && item.year === lastMonthYear);
-      if (prevMonthIdx !== -1) {
-        last6Months[prevMonthIdx].expenses += val;
-      }
+      // ...
     });
+    */
 
     // Calculate cumulative balance for sparkline
     last6Months.forEach(m => {
