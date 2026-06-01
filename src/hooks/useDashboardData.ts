@@ -147,14 +147,20 @@ export function useDashboardData() {
       
       const metodo = (tx.metodo_pagamento || "");
       const isCreditMethod = metodo === "Crédito à vista" || metodo === "Crédito Parcelado";
+      const isAssinatura = tx.categoria === "Assinatura";
       const isSaldoAnterior = normalizeStr(tx.categoria) === "saldo anterior";
 
       // Saldo Geral/Total em Conta now purely period-based
-      if (!isCreditMethod) {
+      if (!isCreditMethod && !isAssinatura) {
         const dateStr = tx.data_inicio;
         if (dateStr) {
-          const [year, month] = dateStr.split('-').map(Number);
-          if ((month - 1) === currentMonth && year === currentYear) {
+          const [year, month, day] = dateStr.split('-').map(Number);
+          const txDate = new Date(year, month - 1, day);
+          
+          // Replicating Transactions.tsx logic for "Total em Conta" (accumulated until last day of current month)
+          const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+          
+          if (txDate <= lastDayOfMonth) {
             if (isEntrada) totalBalance += val;
             else if (isSaida) totalBalance -= val;
           }
@@ -172,8 +178,8 @@ export function useDashboardData() {
         // Check if date is in the current month/year
         const isCurrentPeriod = txMonth === currentMonth && txYear === currentYear;
 
-        // Only count in monthly/sparkline if it's NOT a credit transaction AND NOT Saldo Anterior for income
-        if (!isCreditMethod) {
+        // Only count in monthly/sparkline if it's NOT a credit transaction AND NOT Assinatura AND NOT Saldo Anterior for income
+        if (!isCreditMethod && !isAssinatura) {
           const shouldCountAsIncome = isEntrada && !isSaldoAnterior;
           
           if (shouldCountAsIncome) {
@@ -271,7 +277,8 @@ export function useDashboardData() {
         if (!tx.data_inicio) return false;
         const [year, month] = tx.data_inicio.split('-').map(Number);
         const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
-        return (month - 1) === i && year === currentYear && !isCreditMethod;
+        const isAssinatura = tx.categoria === "Assinatura";
+        return (month - 1) === i && year === currentYear && !isCreditMethod && !isAssinatura;
       });
 
       const monthCreditTransactions = creditTransactions.filter(ctx => {
@@ -300,12 +307,8 @@ export function useDashboardData() {
       const creditExpenses = monthCreditTransactions
         .reduce((sum, ctx) => sum + parseFloat(ctx.valor || "0"), 0);
 
-      // Include subscriptions in expenses for chart
-      const subscriptionTotal = subscriptions
-        .filter(sub => sub.status !== false)
-        .reduce((sum, sub) => sum + parseFloat(sub.valor || "0"), 0);
-
-      return { m, income, expenses: expenses + creditExpenses + subscriptionTotal };
+      // Assinaturas não entram em saídas comuns
+      return { m, income, expenses: expenses + creditExpenses };
     });
   }, [transactions, creditTransactions, subscriptions]);
 
@@ -324,6 +327,7 @@ export function useDashboardData() {
         const rawTipo = (tx.tipo || "").toLowerCase();
         const normalizedTipo = rawTipo.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const isCreditMethod = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
+        const isAssinatura = tx.categoria === "Assinatura";
         
         // Filter by current period
         const dateStr = tx.data_inicio;
@@ -331,7 +335,7 @@ export function useDashboardData() {
         const [year, month] = dateStr.split('-').map(Number);
         const isCurrentPeriod = (month - 1) === currentMonth && year === currentYear;
 
-        return normalizedTipo === "saida" && !isCreditMethod && isCurrentPeriod;
+        return normalizedTipo === "saida" && !isCreditMethod && !isAssinatura && isCurrentPeriod;
       })
       .forEach(tx => {
         const cat = tx.categoria || "Outros";
@@ -344,7 +348,8 @@ export function useDashboardData() {
     // It should only be used for Fatura card (which is handled separately in some components)
     // Removed the following loop that was adding credit transactions to categories and totalExps
 
-    // Include subscriptions as "Assinatura" category
+    // Assinaturas não entram em distribuição de gastos normal
+    /*
     const subscriptionTotal = subscriptions
       .filter(sub => sub.status !== false)
       .reduce((sum, sub) => sum + parseFloat(sub.valor || "0"), 0);
@@ -354,6 +359,7 @@ export function useDashboardData() {
       categoriesMap[cat] = (categoriesMap[cat] || 0) + subscriptionTotal;
       totalExps += subscriptionTotal;
     }
+    */
 
     const colors = [
       "oklch(0.62 0.18 290)", // primary
