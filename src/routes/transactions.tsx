@@ -869,7 +869,7 @@ function TransactionsPage() {
                               />
                             ))}
                           </Pie>
-                          <Tooltip 
+                          <RechartsTooltip 
                             formatter={(value: any) => formatCurrency(Number(value), effectiveMoeda)}
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                           />
