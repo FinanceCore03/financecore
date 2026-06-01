@@ -697,7 +697,7 @@ function TransactionsPage() {
                         </tr>
                       </thead>
                        <tbody className="divide-y divide-border">
-                        <AnimatePresence mode="popover">
+                        <AnimatePresence mode="wait">
                           {paginatedTransactions.map((tx) => {
                           const isCredit = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
                           const isExpanded = expandedTxId === tx.id;
