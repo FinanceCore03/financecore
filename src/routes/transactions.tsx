@@ -367,6 +367,8 @@ function TransactionsPage() {
     setTipoFilter("Todas");
     setPeriodFilter("Este mês");
     setDateRange(undefined);
+    setSelectedMonth(new Date());
+    setIsFilterOpen(false);
   };
 
   const availableCategories = useMemo(() => {
