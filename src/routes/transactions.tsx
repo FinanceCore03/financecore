@@ -595,58 +595,90 @@ function TransactionsPage() {
                       </div>
                       <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                         <PopoverTrigger asChild>
-                          <button className="flex items-center gap-2 px-3.5 py-2 bg-card border border-border rounded-xl text-sm font-medium hover:bg-muted/50 transition shadow-sm">
-                            <Filter className="size-4 text-muted-foreground" />
+                          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border/50 rounded-2xl text-sm font-bold hover:bg-muted/50 transition-all shadow-sm active:scale-95">
+                            <Filter className="size-4 text-primary" />
                             <span>Filtrar</span>
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="w-80 rounded-2xl p-5 shadow-xl border-border bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
-                          <div className="space-y-4">
-                              <h4 className="font-bold text-sm">Filtros</h4>
+                        <PopoverContent align="end" className="w-[340px] rounded-[2rem] p-6 shadow-2xl border-border bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
+                          <div className="space-y-6">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-bold text-lg tracking-tight">Filtros</h4>
+                                <button 
+                                  onClick={handleResetFilters}
+                                  className="text-xs font-bold text-primary hover:underline"
+                                >
+                                  Limpar todos
+                                </button>
+                              </div>
                               
-                              <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Mês de Referência</label>
-                                <div className="flex items-center gap-2">
-                                  <button 
-                                    onClick={() => setSelectedMonth(prev => subMonths(prev, 1))}
-                                    className="p-2 border border-border rounded-xl hover:bg-muted"
-                                  >
-                                    <ChevronLeft className="size-4" />
-                                  </button>
-                                  <div className="flex-1 text-center font-medium capitalize py-2 bg-muted/30 rounded-xl">
-                                    {format(selectedMonth, "MMMM yyyy", { locale: ptBR })}
-                                  </div>
-                                  <button 
-                                    onClick={() => setSelectedMonth(prev => addMonths(prev, 1))}
-                                    className="p-2 border border-border rounded-xl hover:bg-muted"
-                                  >
-                                    <ChevronRight className="size-4" />
-                                  </button>
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Período</label>
+                                <Select value={periodFilter} onValueChange={(val) => {
+                                  setPeriodFilter(val);
+                                  if (val === "Personalizado") setIsPeriodOpen(true);
+                                }}>
+                                  <SelectTrigger className="w-full h-12 rounded-2xl border-border/60 bg-muted/20 px-4 font-medium transition-all focus:ring-primary/20">
+                                    <SelectValue placeholder="Selecione o período" />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-2xl border-border shadow-xl">
+                                    <SelectItem value="Todas" className="rounded-xl">Todas</SelectItem>
+                                    <SelectItem value="Hoje" className="rounded-xl">Hoje</SelectItem>
+                                    <SelectItem value="Esta semana" className="rounded-xl">Esta semana</SelectItem>
+                                    <SelectItem value="Este mês" className="rounded-xl">Este mês</SelectItem>
+                                    <SelectItem value="Últimos 3 meses" className="rounded-xl">Últimos 3 meses</SelectItem>
+                                    <SelectItem value="Personalizado" className="rounded-xl">Personalizado</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Tipo</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                  {["Todas", "Entradas", "Saídas"].map((t) => (
+                                    <button
+                                      key={t}
+                                      onClick={() => setTipoFilter(t)}
+                                      className={`py-2 text-xs font-bold rounded-xl border transition-all ${tipoFilter === t ? 'bg-primary border-primary text-primary-foreground shadow-md shadow-primary/20' : 'bg-muted/20 border-transparent text-muted-foreground hover:bg-muted/40'}`}
+                                    >
+                                      {t}
+                                    </button>
+                                  ))}
                                 </div>
                               </div>
 
-                              <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Categoria</label>
-                                <select 
-                                  value={categoriaFilter} 
-                                  onChange={(e) => setCategoriaFilter(e.target.value)}
-                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm"
-                                >
-                                  <option value="Todas">Todas</option>
-                                  {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Categoria</label>
+                                <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
+                                  <SelectTrigger className="w-full h-12 rounded-2xl border-border/60 bg-muted/20 px-4 font-medium transition-all focus:ring-primary/20">
+                                    <SelectValue placeholder="Todas as categorias" />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-2xl border-border shadow-xl max-h-[300px]">
+                                    <SelectItem value="Todas" className="rounded-xl">Todas</SelectItem>
+                                    {availableCategories.map(c => <SelectItem key={c} value={c} className="rounded-xl">{c}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
                               </div>
-                              <div className="space-y-2">
-                                <label className="text-[10px] uppercase font-bold text-muted-foreground">Método</label>
-                                <select 
-                                  value={metodoFilter} 
-                                  onChange={(e) => setMetodoFilter(e.target.value)}
-                                  className="w-full h-10 px-3 rounded-xl border border-border bg-muted/30 text-sm"
-                                >
-                                  <option value="Todos">Todos</option>
-                                  {availableMethods.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
+
+                              <div className="space-y-3">
+                                <label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">Método de Pagamento</label>
+                                <Select value={metodoFilter} onValueChange={setMetodoFilter}>
+                                  <SelectTrigger className="w-full h-12 rounded-2xl border-border/60 bg-muted/20 px-4 font-medium transition-all focus:ring-primary/20">
+                                    <SelectValue placeholder="Todos os métodos" />
+                                  </SelectTrigger>
+                                  <SelectContent className="rounded-2xl border-border shadow-xl max-h-[300px]">
+                                    <SelectItem value="Todos" className="rounded-xl">Todos os métodos</SelectItem>
+                                    {availableMethods.map(m => <SelectItem key={m} value={m} className="rounded-xl">{m}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
                               </div>
+
+                              <Button 
+                                onClick={() => setIsFilterOpen(false)}
+                                className="w-full h-12 rounded-2xl font-bold text-sm shadow-lg shadow-primary/20 mt-2"
+                              >
+                                Aplicar Filtros
+                              </Button>
                           </div>
                         </PopoverContent>
                       </Popover>
