@@ -803,8 +803,9 @@ function TransactionsPage() {
                                 </tr>
                               )}
                             </Fragment>
-                          );
-                        })}
+                              );
+                            })}
+                        </AnimatePresence>
                       </tbody>
                     </table>
                   </div>
