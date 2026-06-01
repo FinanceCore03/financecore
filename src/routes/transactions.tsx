@@ -201,19 +201,45 @@ function TransactionsPage() {
       const txDate = parseISOAsLocal(tx.data_inicio);
       if (!txDate) return false;
       
-      // Mês selecionado
-      if (!isSameMonth(txDate, selectedMonth)) return false;
+      // Filtro de Período (Prioritário se não for "Este mês" padrão ou se for Personalizado)
+      if (periodFilter !== "Todas") {
+        const today = new Date();
+        if (periodFilter === "Hoje") {
+          if (!isToday(txDate)) return false;
+        } else if (periodFilter === "Esta semana") {
+          if (!isSameWeek(txDate, today, { weekStartsOn: 0 })) return false;
+        } else if (periodFilter === "Este mês") {
+          if (!isSameMonth(txDate, selectedMonth)) return false;
+        } else if (periodFilter === "Últimos 3 meses") {
+          const threeMonthsAgo = subDays(today, 90);
+          if (txDate < threeMonthsAgo || txDate > today) return false;
+        } else if (periodFilter === "Personalizado" && dateRange?.from) {
+          const from = startOfDay(dateRange.from);
+          const to = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
+          if (txDate < from || txDate > to) return false;
+        }
+      } else {
+        // Se for "Todas", ainda respeitamos o selectedMonth se o usuário não mudou nada? 
+        // Na verdade, se o usuário selecionou "Todas", deve mostrar tudo ignorando o mês?
+        // O pedido diz: "navegar por mês... ou usar a opção Personalizado".
+        // Vamos manter a lógica do selectedMonth como fallback se for "Todas" mas selectedMonth estiver ativo.
+        if (!isSameMonth(txDate, selectedMonth)) return false;
+      }
       
       // Outros filtros
       if (categoriaFilter !== "Todas" && tx.categoria !== categoriaFilter) return false;
       if (metodoFilter !== "Todos" && tx.metodo_pagamento !== metodoFilter) return false;
+      if (tipoFilter !== "Todas") {
+        if (tipoFilter === "Entradas" && tx.tipo !== "entrada") return false;
+        if (tipoFilter === "Saídas" && tx.tipo !== "saida") return false;
+      }
       
       // Assinatura NUNCA deve entrar como Saída nas listas e totais de transações normais
       if (tx.categoria === "Assinatura") return false;
 
       return true;
     });
-  }, [transactions, selectedMonth, categoriaFilter, metodoFilter]);
+  }, [transactions, selectedMonth, categoriaFilter, metodoFilter, tipoFilter, periodFilter, dateRange]);
 
   const totals = useMemo(() => {
     let totalAccount = 0;
