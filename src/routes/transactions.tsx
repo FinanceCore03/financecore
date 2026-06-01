@@ -357,9 +357,13 @@ function TransactionsPage() {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   }, [currentPage]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedMonth, categoriaFilter, metodoFilter]);
+  const handleResetFilters = () => {
+    setCategoriaFilter("Todas");
+    setMetodoFilter("Todos");
+    setTipoFilter("Todas");
+    setPeriodFilter("Este mês");
+    setDateRange(undefined);
+  };
 
   const availableCategories = useMemo(() => {
     const set = new Set<string>();
