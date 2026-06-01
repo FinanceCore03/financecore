@@ -411,10 +411,15 @@ function TransactionsPage() {
               <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-4">
                   <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
-                  
-                  <div className="flex items-center gap-1.5 p-1 bg-muted/50 rounded-2xl border border-border/50">
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 p-1 bg-white/50 backdrop-blur-sm rounded-2xl border border-border/40 shadow-sm">
                     <button 
-                      onClick={() => setSelectedMonth(prev => subMonths(prev, 1))}
+                      onClick={() => {
+                        setSelectedMonth(prev => subMonths(prev, 1));
+                        setPeriodFilter("Este mês");
+                      }}
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronLeft className="size-4" />
@@ -423,59 +428,83 @@ function TransactionsPage() {
                     <Popover>
                       <PopoverTrigger asChild>
                         <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-sm font-bold text-slate-900 group">
-                          <span className="capitalize">{format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}</span>
+                          <span className="capitalize">
+                            {periodFilter === "Personalizado" && dateRange?.from 
+                              ? `${format(dateRange.from, "dd/MM")} - ${dateRange.to ? format(dateRange.to, "dd/MM") : ""}`
+                              : format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+                          </span>
                           <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent align="center" className="w-64 p-3 rounded-3xl border-border shadow-2xl bg-white animate-in fade-in zoom-in duration-200">
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {Array.from({ length: 12 }).map((_, i) => {
-                            const monthDate = new Date(selectedMonth.getFullYear(), i, 1);
-                            const isSelected = i === selectedMonth.getMonth();
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => setSelectedMonth(monthDate)}
-                                className={`py-2.5 text-xs rounded-xl transition-all capitalize font-medium ${isSelected ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'hover:bg-muted text-muted-foreground hover:text-slate-900'}`}
-                              >
-                                {format(monthDate, "MMM", { locale: ptBR })}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between px-1">
-                          <button 
-                            onClick={() => setSelectedMonth(prev => subMonths(prev, 12))}
-                            className="p-1.5 hover:bg-muted rounded-xl transition-colors"
-                          >
-                            <ChevronLeft className="size-4" />
-                          </button>
-                          <span className="text-sm font-black tracking-tight text-slate-900">{selectedMonth.getFullYear()}</span>
-                          <button 
-                            onClick={() => setSelectedMonth(prev => addMonths(prev, 12))}
-                            className="p-1.5 hover:bg-muted rounded-xl transition-colors"
-                          >
-                            <ChevronRight className="size-4" />
-                          </button>
+                      <PopoverContent align="center" className="w-[320px] p-0 rounded-3xl border-border shadow-2xl bg-white overflow-hidden">
+                        <div className="p-4">
+                          <div className="grid grid-cols-3 gap-1.5 mb-4">
+                            {Array.from({ length: 12 }).map((_, i) => {
+                              const monthDate = new Date(selectedMonth.getFullYear(), i, 1);
+                              const isSelected = i === selectedMonth.getMonth() && periodFilter === "Este mês";
+                              return (
+                                <button
+                                  key={i}
+                                  onClick={() => {
+                                    setSelectedMonth(monthDate);
+                                    setPeriodFilter("Este mês");
+                                  }}
+                                  className={`py-2 text-xs rounded-xl transition-all capitalize font-medium ${isSelected ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20' : 'hover:bg-muted text-muted-foreground hover:text-slate-900'}`}
+                                >
+                                  {format(monthDate, "MMM", { locale: ptBR })}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          
+                          <div className="pt-3 border-t border-border/50 flex items-center justify-between px-1 mb-4">
+                            <button 
+                              onClick={() => setSelectedMonth(prev => subMonths(prev, 12))}
+                              className="p-1.5 hover:bg-muted rounded-xl transition-colors"
+                            >
+                              <ChevronLeft className="size-4" />
+                            </button>
+                            <span className="text-sm font-bold tracking-tight text-slate-900">{selectedMonth.getFullYear()}</span>
+                            <button 
+                              onClick={() => setSelectedMonth(prev => addMonths(prev, 12))}
+                              className="p-1.5 hover:bg-muted rounded-xl transition-colors"
+                            >
+                              <ChevronRight className="size-4" />
+                            </button>
+                          </div>
+
+                          <div className="pt-3 border-t border-border/50">
+                            <button 
+                              onClick={() => {
+                                setPeriodFilter("Personalizado");
+                                setIsPeriodOpen(true);
+                              }}
+                              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all ${periodFilter === "Personalizado" ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-muted-foreground'}`}
+                            >
+                              <CalendarDays className="size-4" />
+                              Personalizado
+                            </button>
+                          </div>
                         </div>
                       </PopoverContent>
                     </Popover>
 
                     <button 
-                      onClick={() => setSelectedMonth(prev => addMonths(prev, 1))}
+                      onClick={() => {
+                        setSelectedMonth(prev => addMonths(prev, 1));
+                        setPeriodFilter("Este mês");
+                      }}
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronRight className="size-4" />
                     </button>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-3">
+
                   <button 
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition shadow-sm"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-2xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95"
                   >
-                    <Plus className="size-4" />
+                    <Plus className="size-4" strokeWidth={3} />
                     <span>Adicionar</span>
                   </button>
                 </div>
