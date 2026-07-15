@@ -134,6 +134,7 @@ export function SubscriptionsCard({ usuarioId, moeda }: SubscriptionsCardProps) 
               <button
                 onClick={prevPage}
                 disabled={currentPage === 0}
+                aria-label="Página anterior"
                 className="p-1 rounded-lg hover:bg-muted disabled:opacity-30 transition-colors"
               >
                 <ChevronLeft className="size-4" />
@@ -141,6 +142,7 @@ export function SubscriptionsCard({ usuarioId, moeda }: SubscriptionsCardProps) 
               <button
                 onClick={nextPage}
                 disabled={currentPage === totalPages - 1}
+                aria-label="Próxima página"
                 className="p-1 rounded-lg hover:bg-muted disabled:opacity-30 transition-colors"
               >
                 <ChevronRight className="size-4" />

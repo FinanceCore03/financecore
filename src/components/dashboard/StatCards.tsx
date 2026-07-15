@@ -68,7 +68,7 @@ function StatCard({ title, value, change, icon, sparklineData, color, infoText, 
   const displayValue = isPrivate ? `${currencySymbol} - - - - - -` : value;
 
   return (
-    <div className="bg-white border border-border rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col justify-between">
+    <div className="bg-white border border-border rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md hover:border-border/70 transition-all duration-300 flex flex-col justify-between">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[13px] font-medium text-muted-foreground">{title}</span>
         <div className="p-2 rounded-lg bg-slate-50 text-slate-400">

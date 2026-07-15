@@ -3,6 +3,7 @@ import { formatCurrency } from "@/lib/currency";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { startOfDay, format } from "date-fns";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -205,7 +206,8 @@ export function InvoiceCard({ moeda, transactions, subscriptions: propsSubscript
             </div>
           </DialogHeader>
 
-          <div className={`p-6 pt-2 max-h-[70vh] overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out ${animating ? 'opacity-0 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
+          <ScrollArea className={`max-h-[70vh] transition-all duration-300 ease-in-out ${animating ? 'opacity-0 scale-[0.98] blur-[2px]' : 'opacity-100 scale-100 blur-0'}`}>
+          <div className="p-6 pt-2">
             {view === 'main' && (
               <div className="space-y-4">
                 <button 
@@ -338,6 +340,7 @@ export function InvoiceCard({ moeda, transactions, subscriptions: propsSubscript
               </div>
             )}
           </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </>

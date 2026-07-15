@@ -117,7 +117,7 @@ export function UpcomingCommitments({ transactions, creditTransactions = [], sub
   const displayedCommitments = showAll ? commitments : commitments.slice(0, 5);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm h-full flex flex-col">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-bold tracking-tight text-slate-900">Próximos Compromissos</h3>
         <div className="p-2 bg-primary/10 rounded-xl">

@@ -1,4 +1,4 @@
-import { motion, Variants } from "framer-motion";
+import { motion, Variants, useReducedMotion } from "framer-motion";
 import { ReactNode } from "react";
 
 const container: Variants = {
@@ -12,10 +12,15 @@ const container: Variants = {
   }
 };
 
+const containerReduced: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 0.15 } }
+};
+
 const item: Variants = {
   hidden: { opacity: 0, y: 15 },
-  show: { 
-    opacity: 1, 
+  show: {
+    opacity: 1,
     y: 0,
     transition: {
       duration: 0.4,
@@ -24,12 +29,18 @@ const item: Variants = {
   }
 };
 
+const itemReduced: Variants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 0.15 } }
+};
+
 export function PageTransition({ children }: { children: ReactNode }) {
+  const reduced = useReducedMotion();
   return (
     <motion.div
       initial="hidden"
       animate="show"
-      variants={container}
+      variants={reduced ? containerReduced : container}
       className="w-full"
     >
       {children}
@@ -38,8 +49,9 @@ export function PageTransition({ children }: { children: ReactNode }) {
 }
 
 export function AnimatedItem({ children, className }: { children: ReactNode, className?: string }) {
+  const reduced = useReducedMotion();
   return (
-    <motion.div variants={item} className={className}>
+    <motion.div variants={reduced ? itemReduced : item} className={className}>
       {children}
     </motion.div>
   );

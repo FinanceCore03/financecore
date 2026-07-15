@@ -2,11 +2,11 @@ import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-import { Sidebar } from "@/components/dashboard/Sidebar";
-import { TopBar } from "@/components/dashboard/TopBar";
+import { AppLayout } from "@/components/dashboard/AppLayout";
 import { createFileRoute } from "@tanstack/react-router";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { PageTransition, AnimatedItem } from "@/components/PageTransition";
+import { AnimatedItem } from "@/components/PageTransition";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -97,6 +97,7 @@ const categoryColors: Record<string, string> = {
 function PlanningPage() {
   const { transactions, creditTransactions, loading: dashboardLoading, usuarioId: contextUsuarioId, user: contextUser, moeda } = useDashboardData();
   const { user: authUser } = useAuth();
+  const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("overview");
   const [dbBudgets, setDbBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -353,11 +354,9 @@ function PlanningPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar />
-      <div className="flex-1 min-w-0 flex flex-col">
-        <PageTransition>
-          <main className="flex-1 px-8 py-8 space-y-8">
+    <>
+    <AppLayout>
+      <div className="space-y-8">
             <AnimatedItem>
               <header className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
@@ -657,8 +656,8 @@ function PlanningPage() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="px-8 py-10">
-                      <div className="h-[500px] w-full">
+                    <CardContent className="px-4 md:px-8 py-6 md:py-10">
+                      <div className="h-[380px] md:h-[500px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
                             data={planningData.categories.filter(c => c.visible)}
@@ -666,12 +665,13 @@ function PlanningPage() {
                             barGap={12}
                           >
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                            <XAxis 
-                              dataKey="name" 
-                              axisLine={false} 
-                              tickLine={false} 
-                              tick={{ fill: '#64748B', fontSize: 13, fontWeight: 500 }}
-                              dy={15}
+                            <XAxis
+                              dataKey="name"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fill: '#64748B', fontSize: isMobile ? 10 : 13, fontWeight: 500 }}
+                              dy={isMobile ? 5 : 15}
+                              {...(isMobile ? { angle: -35, textAnchor: "end", height: 50, interval: 0 } : {})}
                             />
                             <YAxis 
                               axisLine={false} 
@@ -691,18 +691,18 @@ function PlanningPage() {
                               labelStyle={{ marginBottom: '8px', fontWeight: 700, color: '#1A1A1A' }}
                               formatter={(value: any) => [formatCurrencyVal(Number(value)), ""]}
                             />
-                            <Bar 
-                              name="Planejado" 
-                              dataKey="budget" 
-                              fill="#E2E8F0" 
-                              radius={[6, 6, 0, 0]} 
-                              barSize={40}
+                            <Bar
+                              name="Planejado"
+                              dataKey="budget"
+                              fill="#E2E8F0"
+                              radius={[6, 6, 0, 0]}
+                              barSize={isMobile ? 20 : 40}
                             />
-                            <Bar 
-                              name="Gasto Real" 
-                              dataKey="spent" 
-                              radius={[6, 6, 0, 0]} 
-                              barSize={40}
+                            <Bar
+                              name="Gasto Real"
+                              dataKey="spent"
+                              radius={[6, 6, 0, 0]}
+                              barSize={isMobile ? 20 : 40}
                             >
                               {planningData.categories.filter(c => c.visible).map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.isOver ? '#EF4444' : 'oklch(0.62 0.18 290)'} />
@@ -721,9 +721,8 @@ function PlanningPage() {
           <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
             Financeiro Core © 2025
           </footer>
-          </main>
-        </PageTransition>
       </div>
+    </AppLayout>
 
       <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
         <DialogContent className="rounded-2xl sm:max-w-md">
@@ -749,7 +748,7 @@ function PlanningPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
 

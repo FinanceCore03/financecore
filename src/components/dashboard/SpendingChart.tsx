@@ -152,7 +152,7 @@ export function SpendingChart({ data: annualData, moeda, transactions, creditTra
   }, [chartData]);
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-[450px] flex flex-col">
+    <div className="bg-card border border-border rounded-2xl p-4 md:p-6 shadow-[0_1px_2px_rgba(16,24,40,0.04)] h-[320px] md:h-[450px] flex flex-col">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h3 className="text-lg font-bold tracking-tight text-slate-900">Fluxo de Caixa</h3>

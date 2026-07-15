@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Mail, Lock, Check, Loader2, BarChart3 } from "lucide-react";
+import { Mail, Lock, Check, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { WaveLoader } from "@/components/ui/wave-loader";
 
 export const Route = createFileRoute("/login")({
   component: () => <Login />,
@@ -22,7 +23,6 @@ function Login() {
     // Check for user ONLY after a submission has been made or if we need to redirect
     // but don't auto-redirect just by landing on the page if that was causing loops
     if (user && showFinalAnimation) {
-      console.log("User authenticated, redirecting to dashboard");
       const timer = setTimeout(() => {
         navigate({ to: "/", replace: true });
       }, 2000);
@@ -35,7 +35,6 @@ function Login() {
     
     if (isSubmitting || showFinalAnimation) return;
 
-    console.log("Login attempt initiated", { email });
     setIsSubmitting(true);
     setError(null);
     
@@ -49,7 +48,6 @@ function Login() {
         throw signInError;
       }
       
-      console.log("Login success");
       setShowFinalAnimation(true);
     } catch (err: any) {
       console.error("Login error:", err);
@@ -87,13 +85,9 @@ function Login() {
                 <BarChart3 className="text-[#40E0D0] w-12 h-12" />
               </div>
             </div>
-            <div className="mt-6 flex flex-col items-center gap-2">
+            <div className="mt-6 flex flex-col items-center gap-3">
               <span className="text-[#40E0D0] font-bold text-xl">Finance Core</span>
-              <div className="flex gap-1.5">
-                <div className="w-2 h-2 bg-[#40E0D0] rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <div className="w-2 h-2 bg-[#40E0D0] rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <div className="w-2 h-2 bg-[#40E0D0] rounded-full animate-bounce" />
-              </div>
+              <WaveLoader bars={5} className="w-1.5 h-5 bg-[#40E0D0] rounded-full" />
             </div>
           </div>
         )}
@@ -185,10 +179,7 @@ function Login() {
               className="w-full h-[52px] bg-[#40E0D0] hover:bg-[#36c7ba] text-white font-semibold text-[16px] rounded-xl shadow-[0_4px_12px_rgba(64,224,208,0.2)] transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-70"
             >
               {isSubmitting ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="animate-spin" size={20} />
-                  <span>Entrando...</span>
-                </div>
+                <WaveLoader bars={4} message="Entrando..." messagePlacement="right" className="w-1 h-4 bg-white rounded-full" />
               ) : "Entrar"}
             </button>
           </div>

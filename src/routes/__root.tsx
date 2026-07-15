@@ -14,6 +14,7 @@ import { PrivacyProvider } from "@/contexts/PrivacyContext";
 import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { WaveLoader } from "@/components/ui/wave-loader";
 
 import appCss from "../styles.css?url";
 
@@ -140,10 +141,15 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-white text-gray-800">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#00CED1] border-t-transparent" />
-          <p className="text-sm font-medium">Carregando...</p>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="flex flex-col items-center gap-4"
+        >
+          <WaveLoader bars={5} className="w-1.5 h-6 bg-[#00CED1] rounded-full" />
+          <p className="text-sm font-medium text-gray-600">Carregando...</p>
+        </motion.div>
       </div>
     );
   }

@@ -4,25 +4,100 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const items = [
+export const sidebarNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Transações", icon: ArrowLeftRight, href: "/transactions" },
   { label: "Planejamento", icon: Target, href: "/planning" },
   { label: "Configurações", icon: Settings, href: "/personalization" },
 ];
 
-export function Sidebar() {
-  const { user, signOut } = useAuth();
+export function SidebarNav({ isCollapsed, onNavigate }: { isCollapsed: boolean; onNavigate?: () => void }) {
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  
+
+  return (
+    <nav className="flex-1 px-3 space-y-1.5 mt-2">
+      {sidebarNavItems.map(({ label, icon: Icon, href }) => {
+        const active = location.pathname === href;
+        return (
+          <Link
+            key={label}
+            to={href as any}
+            onClick={onNavigate}
+            className={cn(
+              "group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200",
+              active
+                ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
+                : "text-muted-foreground hover:bg-white/50 hover:text-foreground",
+              isCollapsed && "justify-center px-0"
+            )}
+            title={isCollapsed ? label : ""}
+          >
+            {active && (
+              <div className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />
+            )}
+            <Icon
+              className={cn(
+                "size-[20px] shrink-0 transition-colors",
+                active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+              )}
+              strokeWidth={active ? 2.2 : 1.8}
+            />
+            {!isCollapsed && <span className={cn("font-semibold", active ? "text-foreground" : "text-muted-foreground")}>{label}</span>}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function SidebarFooter({
+  isCollapsed,
+  user,
+  onSignOut,
+}: {
+  isCollapsed: boolean;
+  user: { email?: string | null } | null | undefined;
+  onSignOut: () => void;
+}) {
   const userInitial = user?.email?.[0].toUpperCase() || "U";
   const userEmail = user?.email || "Usuário";
 
   return (
-    <aside 
+    <div className={cn(
+      "p-3 rounded-2xl bg-white border border-border/50 shadow-sm flex items-center gap-3",
+      isCollapsed && "flex-col p-2"
+    )}>
+      <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center text-primary-foreground text-sm font-bold shrink-0 shadow-inner">
+        {userInitial}
+      </div>
+      {!isCollapsed && (
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-bold truncate text-foreground">{userEmail.split('@')[0]}</div>
+          <div className="text-[10px] text-muted-foreground truncate font-medium">{userEmail}</div>
+        </div>
+      )}
+      <button
+        onClick={onSignOut}
+        className={cn(
+          "p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors",
+          isCollapsed && "w-full flex justify-center"
+        )}
+        title="Sair"
+      >
+        <LogOut size={18} />
+      </button>
+    </div>
+  );
+}
+
+export function Sidebar() {
+  const { user, signOut } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  return (
+    <aside
       className={cn(
-        "shrink-0 bg-transparent flex flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out",
+        "hidden md:flex shrink-0 bg-transparent flex-col h-screen sticky top-0 transition-all duration-300 ease-in-out",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
@@ -40,37 +115,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1.5 mt-2">
-        {items.map(({ label, icon: Icon, href }) => {
-          const active = location.pathname === href;
-          return (
-            <Link
-              key={label}
-              to={href as any}
-              className={cn(
-                "group relative flex items-center gap-3 px-3 py-3 rounded-xl text-sm transition-all duration-200",
-                active
-                  ? "bg-white text-primary shadow-sm ring-1 ring-black/5"
-                  : "text-muted-foreground hover:bg-white/50 hover:text-foreground",
-                isCollapsed && "justify-center px-0"
-              )}
-              title={isCollapsed ? label : ""}
-            >
-              {active && (
-                <div className="absolute left-0 w-1 h-6 bg-primary rounded-r-full" />
-              )}
-              <Icon 
-                className={cn(
-                  "size-[20px] shrink-0 transition-colors",
-                  active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-                )} 
-                strokeWidth={active ? 2.2 : 1.8} 
-              />
-              {!isCollapsed && <span className={cn("font-semibold", active ? "text-foreground" : "text-muted-foreground")}>{label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+      <SidebarNav isCollapsed={isCollapsed} />
 
       <div className="px-3 pb-6 space-y-4">
         <button
@@ -80,30 +125,7 @@ export function Sidebar() {
           {isCollapsed ? <ChevronRight size={18} /> : <div className="flex items-center gap-2"><ChevronLeft size={18} /><span className="text-xs font-bold uppercase tracking-wider">Recolher Menu</span></div>}
         </button>
 
-        <div className={cn(
-          "p-3 rounded-2xl bg-white border border-border/50 shadow-sm flex items-center gap-3",
-          isCollapsed && "flex-col p-2"
-        )}>
-          <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-chart-2 flex items-center justify-center text-primary-foreground text-sm font-bold shrink-0 shadow-inner">
-            {userInitial}
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold truncate text-foreground">{userEmail.split('@')[0]}</div>
-              <div className="text-[10px] text-muted-foreground truncate font-medium">{userEmail}</div>
-            </div>
-          )}
-          <button 
-            onClick={() => signOut()}
-            className={cn(
-              "p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-lg transition-colors",
-              isCollapsed && "w-full flex justify-center"
-            )}
-            title="Sair"
-          >
-            <LogOut size={18} />
-          </button>
-        </div>
+        <SidebarFooter isCollapsed={isCollapsed} user={user} onSignOut={signOut} />
       </div>
     </aside>
   );

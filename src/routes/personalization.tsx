@@ -1,8 +1,7 @@
 import React from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sidebar } from "@/components/dashboard/Sidebar";
-import { TopBar } from "@/components/dashboard/TopBar";
-import { PageTransition, AnimatedItem } from "@/components/PageTransition";
+import { AppLayout } from "@/components/dashboard/AppLayout";
+import { AnimatedItem } from "@/components/PageTransition";
 import { Tags, CreditCard, Plus, Trash2, Info, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -16,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/personalization")({
@@ -263,11 +263,8 @@ function SettingsPage() {
   const isUpdateButtonEnabled = isCardDataChanged && dueDay !== "" && !isSubmitting;
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar />
-      <div className="flex-1 min-w-0 flex flex-col">
-        <PageTransition>
-          <main className="flex-1 px-8 py-8 space-y-6">
+    <>
+    <AppLayout>
             <AnimatedItem>
               <header>
                 <h1 className="text-2xl font-semibold tracking-tight text-[#1A1A1A]">Configurações</h1>
@@ -371,7 +368,8 @@ function SettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-1 mb-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                    <ScrollArea className="mb-6 max-h-[500px] pr-2 -mr-2">
+                    <div className="space-y-1">
                       {loading ? (
                         <div className="flex justify-center py-8">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -415,8 +413,9 @@ function SettingsPage() {
                         })
                       )}
                     </div>
-                    <Button 
-                      onClick={() => setIsCategoryModalOpen(true)} 
+                    </ScrollArea>
+                    <Button
+                      onClick={() => setIsCategoryModalOpen(true)}
                       className="w-full bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 h-11"
                     >
                       <Plus className="w-4 h-4" />
@@ -437,7 +436,8 @@ function SettingsPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-1 mb-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                    <ScrollArea className="mb-6 max-h-[500px] pr-2 -mr-2">
+                    <div className="space-y-1">
                       {loading ? (
                         <div className="flex justify-center py-8">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -483,8 +483,9 @@ function SettingsPage() {
                         })
                       )}
                     </div>
-                    <Button 
-                      onClick={() => setIsPaymentModalOpen(true)} 
+                    </ScrollArea>
+                    <Button
+                      onClick={() => setIsPaymentModalOpen(true)}
                       className="w-full bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-2 h-11"
                     >
                       <Plus className="w-4 h-4" />
@@ -498,9 +499,7 @@ function SettingsPage() {
             <footer className="text-center text-xs text-muted-foreground pt-4 pb-2">
               Finance Core © 2025
             </footer>
-          </main>
-        </PageTransition>
-      </div>
+    </AppLayout>
 
       <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
         <DialogContent className="rounded-2xl sm:max-w-md">
@@ -577,6 +576,6 @@ function SettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

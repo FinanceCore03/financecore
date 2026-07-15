@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { Sidebar } from "@/components/dashboard/Sidebar";
-import { TopBar } from "@/components/dashboard/TopBar";
+import { AppLayout } from "@/components/dashboard/AppLayout";
 import { Wallet, TrendingUp, TrendingDown, MoreHorizontal, Search, Filter, Plus, ShoppingBag, Car, Utensils, Briefcase, Tv, Dumbbell, Home, Pill as PillIcon, PiggyBank, Trash2, ChevronDown, X, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Eye, EyeOff, CalendarDays } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
@@ -11,6 +10,7 @@ import { InvoiceCard } from "@/components/transactions/InvoiceCard";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, isWithinInterval, startOfDay, endOfDay, isSameDay, isSameMonth, startOfMonth, endOfMonth, addMonths, subMonths, isSameWeek, isToday, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,11 +19,12 @@ import { DateRange } from "react-day-picker";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { PageTransition, AnimatedItem } from "@/components/PageTransition";
+import { AnimatedItem } from "@/components/PageTransition";
 import { usePrivacy } from "@/contexts/PrivacyContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Route = createFileRoute("/transactions")({
   validateSearch: (search: Record<string, unknown>) => {
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/transactions")({
 
 function TransactionsPage() {
   const { isPrivate, togglePrivacy } = usePrivacy();
+  const isMobile = useIsMobile();
   const searchParams = useSearch({ from: '/transactions' });
   const navigate = useNavigate();
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
@@ -388,31 +390,23 @@ function TransactionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex">
-        <Sidebar />
-        <div className="flex-1 min-w-0 flex flex-col">
-          <main className="flex-1 px-8 py-8 space-y-6">
-            <header className="flex flex-row items-center justify-between gap-4">
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-            </header>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
-            </div>
-          </main>
+      <AppLayout>
+        <header className="flex flex-row items-center justify-between gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </header>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 rounded-2xl" />)}
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      <Sidebar />
-      <div className="flex-1 min-w-0 flex flex-col">
-        <PageTransition>
-          <main className="flex-1 px-8 py-8 space-y-6">
+    <>
+    <AppLayout>
             <AnimatedItem>
               <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-4">
@@ -426,6 +420,7 @@ function TransactionsPage() {
                         setSelectedMonth(prev => subMonths(prev, 1));
                         setPeriodFilter("Este mês");
                       }}
+                      aria-label="Mês anterior"
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronLeft className="size-4" />
@@ -442,7 +437,7 @@ function TransactionsPage() {
                           <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent align="center" className="w-[320px] p-0 rounded-3xl border-border shadow-2xl bg-white overflow-hidden">
+                      <PopoverContent align="center" className="w-[320px] max-w-[calc(100vw-2rem)] p-0 rounded-3xl border-border shadow-2xl bg-white overflow-hidden">
                         <div className="p-4">
                           <div className="grid grid-cols-3 gap-1.5 mb-4">
                             {Array.from({ length: 12 }).map((_, i) => {
@@ -466,6 +461,7 @@ function TransactionsPage() {
                           <div className="pt-3 border-t border-border/50 flex items-center justify-between px-1 mb-4">
                             <button 
                               onClick={() => setSelectedMonth(prev => subMonths(prev, 12))}
+                              aria-label="Ano anterior"
                               className="p-1.5 hover:bg-muted rounded-xl transition-colors"
                             >
                               <ChevronLeft className="size-4" />
@@ -473,6 +469,7 @@ function TransactionsPage() {
                             <span className="text-sm font-bold tracking-tight text-slate-900">{selectedMonth.getFullYear()}</span>
                             <button 
                               onClick={() => setSelectedMonth(prev => addMonths(prev, 12))}
+                              aria-label="Próximo ano"
                               className="p-1.5 hover:bg-muted rounded-xl transition-colors"
                             >
                               <ChevronRight className="size-4" />
@@ -500,19 +497,20 @@ function TransactionsPage() {
                         setSelectedMonth(prev => addMonths(prev, 1));
                         setPeriodFilter("Este mês");
                       }}
+                      aria-label="Próximo mês"
                       className="p-1.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-muted-foreground hover:text-primary active:scale-95"
                     >
                       <ChevronRight className="size-4" />
                     </button>
                   </div>
 
-                  <button 
+                  <Button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-2xl text-sm font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95"
+                    className="rounded-2xl h-auto px-5 py-2.5 font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all"
                   >
                     <Plus className="size-4" strokeWidth={3} />
                     <span>Adicionar</span>
-                  </button>
+                  </Button>
                 </div>
               </header>
             </AnimatedItem>
@@ -587,6 +585,7 @@ function TransactionsPage() {
                         <button 
                           onClick={goToPreviousPage}
                           disabled={currentPage === 1}
+                          aria-label="Página anterior"
                           className="p-1.5 hover:bg-card rounded-lg disabled:opacity-40 transition-colors"
                         >
                           <ChevronLeft className="size-4" />
@@ -594,6 +593,7 @@ function TransactionsPage() {
                         <button 
                           onClick={goToNextPage}
                           disabled={currentPage === totalPages}
+                          aria-label="Próxima página"
                           className="p-1.5 hover:bg-card rounded-lg disabled:opacity-40 transition-colors"
                         >
                           <ChevronRight className="size-4" />
@@ -606,7 +606,8 @@ function TransactionsPage() {
                             <span>Filtrar</span>
                           </button>
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="w-[340px] rounded-[2rem] p-6 shadow-2xl border-border bg-white max-h-[85vh] overflow-y-auto custom-scrollbar">
+                        <PopoverContent align="end" className="w-[340px] max-w-[calc(100vw-2rem)] rounded-[2rem] p-6 shadow-2xl border-border bg-white max-h-[85vh] overflow-hidden">
+                          <ScrollArea className="max-h-[calc(85vh-3rem)] pr-4 -mr-4">
                           <div className="space-y-6">
                               <div className="flex items-center justify-between">
                                 <h4 className="font-bold text-lg tracking-tight">Filtros</h4>
@@ -686,11 +687,12 @@ function TransactionsPage() {
                                 Aplicar Filtros
                               </Button>
                           </div>
+                          </ScrollArea>
                         </PopoverContent>
                       </Popover>
                     </div>
                   </div>
-                  <div className="overflow-x-auto">
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="text-[11px] text-muted-foreground uppercase tracking-wider border-b border-border">
@@ -713,9 +715,9 @@ function TransactionsPage() {
 
                           return (
                             <Fragment key={tx.id}>
-                              <motion.tr 
+                              <motion.tr
                                 key={tx.id}
-                                id={`tx-${tx.id}`}
+                                id={isMobile ? undefined : `tx-${tx.id}`}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
@@ -821,6 +823,98 @@ function TransactionsPage() {
                     </table>
                   </div>
 
+                  <div className="md:hidden space-y-3">
+                    {paginatedTransactions.map((tx) => {
+                      const isCredit = tx.metodo_pagamento === "Crédito à vista" || tx.metodo_pagamento === "Crédito Parcelado";
+                      const isExpanded = expandedTxId === tx.id;
+                      const relatedInstallments = creditTransactions
+                        .filter(ctx => ctx.id_transacao === tx.id)
+                        .sort((a, b) => new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime());
+
+                      return (
+                        <div
+                          key={tx.id}
+                          id={isMobile ? `tx-${tx.id}` : undefined}
+                          onClick={() => isCredit && setExpandedTxId(isExpanded ? null : tx.id)}
+                          className={`rounded-2xl border border-border bg-card p-4 transition-all duration-500 ${isCredit ? 'cursor-pointer' : ''} ${isExpanded ? 'bg-muted/40' : ''} ${highlightedId === tx.id ? 'highlight-row ring-1 ring-blue-200/50' : ''}`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="font-medium text-sm">{tx.categoria || "Geral"}</div>
+                              <div className="text-xs text-muted-foreground mt-0.5 truncate">{tx.descricao || "—"}</div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <div className={`font-semibold text-sm ${tx.tipo === 'entrada' ? 'text-success' : 'text-danger'}`}>
+                                {tx.tipo === 'entrada' ? '+' : '-'}{formatCurrency(tx.valor, effectiveMoeda)}
+                              </div>
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
+                                {tx.data_fim && tx.data_fim !== tx.data_inicio ? `${formatDisplayDate(tx.data_inicio)} - ${formatDisplayDate(tx.data_fim)}` : formatDisplayDate(tx.data_inicio)}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <span className="font-medium text-foreground">{tx.metodo_pagamento || "—"}</span>
+                              {isCredit && (
+                                <>
+                                  <span className="text-slate-300">•</span>
+                                  <span>{tx.metodo_pagamento === "Crédito à vista" ? "1x" : `${relatedInstallments.length}x`}</span>
+                                  <div className="bg-slate-100 p-0.5 rounded-md">
+                                    <ChevronRight className={`size-3 text-slate-500 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(tx);
+                              }}
+                              className="p-1 text-muted-foreground hover:text-danger transition-colors"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+
+                          {isCredit && (
+                            <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[1000px] opacity-100 mt-3 pt-3 border-t border-border/50' : 'max-h-0 opacity-0'}`}>
+                              {relatedInstallments.length > 0 ? (
+                                <div className="space-y-2">
+                                  {relatedInstallments.map((ctx, idx) => {
+                                    const dueDate = parseISOAsLocal(ctx.data_vencimento);
+                                    const isOverdue = dueDate && dueDate < startOfDay(new Date());
+                                    return (
+                                      <div key={ctx.id} className="flex items-center justify-between text-xs py-1.5">
+                                        <div className="flex flex-col">
+                                          <span className="text-foreground font-medium">
+                                            {ctx.numero_parcela ? `Parcela ${ctx.numero_parcela}` : `Item ${idx + 1}`}
+                                          </span>
+                                          <span className="text-muted-foreground text-[11px]">{formatDisplayDate(ctx.data_vencimento)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-foreground font-medium">{formatCurrency(ctx.valor, effectiveMoeda)}</span>
+                                          <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] tracking-tight ${isOverdue ? 'bg-danger/10 text-danger border border-danger/10' : 'bg-success/10 text-success border border-success/10'}`}>
+                                            <div className={`size-1.5 rounded-full ${isOverdue ? 'bg-danger' : 'bg-success'}`} />
+                                            {isOverdue ? 'Vencida' : 'A vencer'}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="text-xs text-muted-foreground text-center py-2">
+                                  Nenhuma parcela encontrada para esta transação.
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
                   {totalPages > 1 && (
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
                       <p className="text-xs text-muted-foreground">Página {currentPage} de {totalPages}</p>
@@ -828,6 +922,7 @@ function TransactionsPage() {
                         <button 
                           onClick={goToPreviousPage}
                           disabled={currentPage === 1}
+                          aria-label="Página anterior"
                           className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition shadow-sm"
                         >
                           <ChevronLeft className="size-4" />
@@ -835,6 +930,7 @@ function TransactionsPage() {
                         <button 
                           onClick={goToNextPage}
                           disabled={currentPage === totalPages}
+                          aria-label="Próxima página"
                           className="p-2 border border-border rounded-lg disabled:opacity-50 hover:bg-muted transition shadow-sm"
                         >
                           <ChevronRight className="size-4" />
@@ -895,25 +991,27 @@ function TransactionsPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="space-y-3 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                      {distributionData.map((item) => (
-                        <div 
-                          key={item.name} 
-                          onMouseEnter={() => setActiveCategory(item.name)}
-                          onMouseLeave={() => setActiveCategory(null)}
-                          className={`flex items-center justify-between group py-1.5 px-2 rounded-xl transition-all duration-300 cursor-default ${activeCategory === item.name ? 'bg-muted shadow-sm scale-[1.02]' : ''}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="size-2.5 rounded-full shrink-0 transition-transform duration-300" style={{ backgroundColor: item.color, transform: activeCategory === item.name ? 'scale(1.2)' : 'scale(1)' }} />
-                            <span className={`text-xs truncate max-w-[100px] transition-colors duration-300 ${activeCategory === item.name ? 'text-foreground font-medium' : 'text-muted-foreground'}`} title={item.name}>{item.name}</span>
+                    <ScrollArea className="max-h-[250px] pr-2 -mr-2">
+                      <div className="space-y-3">
+                        {distributionData.map((item) => (
+                          <div
+                            key={item.name}
+                            onMouseEnter={() => setActiveCategory(item.name)}
+                            onMouseLeave={() => setActiveCategory(null)}
+                            className={`flex items-center justify-between group py-1.5 px-2 rounded-xl transition-all duration-300 cursor-default ${activeCategory === item.name ? 'bg-muted shadow-sm scale-[1.02]' : ''}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="size-2.5 rounded-full shrink-0 transition-transform duration-300" style={{ backgroundColor: item.color, transform: activeCategory === item.name ? 'scale(1.2)' : 'scale(1)' }} />
+                              <span className={`text-xs truncate max-w-[100px] transition-colors duration-300 ${activeCategory === item.name ? 'text-foreground font-medium' : 'text-muted-foreground'}`} title={item.name}>{item.name}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className={`text-[10px] font-medium transition-colors duration-300 ${activeCategory === item.name ? 'text-primary' : 'text-muted-foreground/70'}`}>{item.value}%</span>
+                              <span className={`text-xs font-semibold transition-colors duration-300 ${activeCategory === item.name ? 'text-foreground' : ''}`}>{formatCurrency(item.amount, effectiveMoeda)}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className={`text-[10px] font-medium transition-colors duration-300 ${activeCategory === item.name ? 'text-primary' : 'text-muted-foreground/70'}`}>{item.value}%</span>
-                            <span className={`text-xs font-semibold transition-colors duration-300 ${activeCategory === item.name ? 'text-foreground' : ''}`}>{formatCurrency(item.amount, effectiveMoeda)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
                   </div>
                 </AnimatedItem>
 
@@ -922,11 +1020,9 @@ function TransactionsPage() {
                 </AnimatedItem>
               </div>
             </div>
-          </main>
-        </PageTransition>
-      </div>
+    </AppLayout>
 
-      <AddTransactionModal 
+      <AddTransactionModal
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         onSuccess={fetchTransactions}
@@ -1009,6 +1105,6 @@ function TransactionsPage() {
           </div>
         </PopoverContent>
       </Popover>
-    </div>
+    </>
   );
 }
